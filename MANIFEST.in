@@ -2,4 +2,11 @@ include pyproject.toml
 include *.md
 include LICENSE.txt
 
+# Include ANTLR generated files
+recursive-include src/refind_btrfs/boot/antlr4 *.py
+
+# Include data
 recursive-include src/refind_btrfs/data *
+
+# Exclude all bytecode
+global-exclude *.py[cdo]
