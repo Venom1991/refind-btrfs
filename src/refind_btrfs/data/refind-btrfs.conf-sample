@@ -76,8 +76,8 @@ max_depth = 2
 
 [snapshot-manipulation]
 refind_config = "refind.conf"
-count = 3
-include_sub_menus = true
+count = 5
+include_sub_menus = false
 modify_read_only_flag = false
 destination_dir = "/root/.refind-btrfs"
 cleanup_exclusion = []

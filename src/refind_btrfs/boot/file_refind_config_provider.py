@@ -41,8 +41,7 @@ from refind_btrfs.common.exceptions import RefindConfigError, RefindSyntaxError
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.utility import helpers
 
-from .antlr4.RefindConfigLexer import RefindConfigLexer
-from .antlr4.RefindConfigParser import RefindConfigParser
+from .antlr4 import RefindConfigLexer, RefindConfigParser
 from .boot_stanza import BootStanza
 from .refind_config import RefindConfig
 from .refind_listeners import RefindErrorListener

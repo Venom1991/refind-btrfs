@@ -103,7 +103,7 @@ class CommonModule(Module):
         persistence_provider: BasePersistenceProvider,
     ) -> List[Type[State]]:
         return [
-            State(name=States.START.value),
+            State(name=States.INITIAL.value),
             InitBlockDevicesState(device_command_factory),
             InitBtrfsMetadataState(subvolume_command_factory),
             InitRefindConfigState(refind_config_provider),
@@ -114,6 +114,7 @@ class CommonModule(Module):
                 refind_config_provider,
                 persistence_provider,
             ),
+            State(name=States.FINAL.value),
         ]
 
 

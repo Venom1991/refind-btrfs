@@ -149,9 +149,10 @@ class GraphicsParameter(Enum):
 
 @unique
 class States(Enum):
-    START = "start"
+    INITIAL = "initial"
     INIT_BLOCK_DEVICES = "init_block_devices"
     INIT_BTRFS_METADATA = "init_btrfs_metadata"
     INIT_REFIND_CONFIG = "init_refind_config"
     PREPARE_SNAPSHOTS = "prepare_snapshots"
     PROCESS_CHANGES = "process_changes"
+    FINAL = "final"

@@ -72,7 +72,7 @@ class RefindBtrfsMachine(Machine):
 
         try:
             while model.next_state():
-                if model.is_process_changes():
+                if model.is_final():
                     return True
         except UnchangedConfiguration as e:
             logger.warning(e.formatted_message)

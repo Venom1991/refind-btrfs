@@ -200,6 +200,9 @@ class Model:
 
         return True
 
+    def check_final_state(self) -> bool:
+        return True
+
     def initialize_block_devices_from(
         self, all_block_devices: List[BlockDevice]
     ) -> None:
@@ -235,6 +238,7 @@ class Model:
             self.check_btrfs_metadata.__name__,
             self.check_refind_config.__name__,
             self.check_prepared_snapshots.__name__,
+            self.check_final_state.__name__,
         ]
 
     @property

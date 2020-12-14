@@ -32,8 +32,7 @@ from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, OSTypeParameter, RefindOption
 from refind_btrfs.common.exceptions import RefindConfigError
 
-from .antlr4.RefindConfigParser import RefindConfigParser
-from .antlr4.RefindConfigParserVisitor import RefindConfigParserVisitor
+from .antlr4 import RefindConfigParser, RefindConfigParserVisitor
 from .boot_options import BootOptions
 from .boot_stanza import BootStanza
 from .sub_menu import SubMenu
