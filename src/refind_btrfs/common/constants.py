@@ -84,9 +84,11 @@ DEFAULT_PATH = Path()
 ROOT_DIR = Path("/")
 BOOT_DIR = Path("boot")
 ETC_DIR = Path("etc")
+VAR_DIR = Path("var")
+LIB_DIR = Path("lib")
 SNAPSHOT_STANZAS_CONFIG_DIR = Path("btrfs-snapshot-stanzas")
-PACKAGE_DIR = ROOT_DIR / ETC_DIR / "refind-btrfs"
+PACKAGE_DIR = Path("refind-btrfs")
 
 FSTAB_FILE = ETC_DIR / "fstab"
-PACKAGE_CONFIG_FILE = PACKAGE_DIR / "refind-btrfs.conf"
-DB_FILE = PACKAGE_DIR / "local_db"
+PACKAGE_CONFIG_FILE = ROOT_DIR / ETC_DIR / "refind-btrfs.conf"
+DB_FILE = ROOT_DIR / VAR_DIR / LIB_DIR / PACKAGE_DIR / "local_db"
