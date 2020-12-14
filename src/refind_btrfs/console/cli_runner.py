@@ -25,11 +25,11 @@ import os
 
 from injector import inject
 
-from common import constants
-from common.abc import BaseLoggerFactory, BaseRunner
-from common.exceptions import PackageConfigError, UnsupportedConfiguration
-from state_management import RefindBtrfsMachine
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
+from refind_btrfs.common.exceptions import PackageConfigError, UnsupportedConfiguration
+from refind_btrfs.state_management import RefindBtrfsMachine
+from refind_btrfs.utility import helpers
 
 
 class CLIRunner(BaseRunner):

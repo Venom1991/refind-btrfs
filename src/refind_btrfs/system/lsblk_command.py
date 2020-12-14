@@ -28,16 +28,16 @@ from typing import Any, Generator, cast
 
 from more_itertools import always_iterable, one
 
-from common import constants
-from common.abc import BaseLoggerFactory, DeviceCommand
-from common.enums import LsblkColumn, LsblkJsonKey
-from common.exceptions import PartitionError
-from device.block_device import BlockDevice
-from device.filesystem import Filesystem
-from device.partition import Partition
-from device.partition_table import PartitionTable
-from device.subvolume import Subvolume
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.abc import BaseLoggerFactory, DeviceCommand
+from refind_btrfs.common.enums import LsblkColumn, LsblkJsonKey
+from refind_btrfs.common.exceptions import PartitionError
+from refind_btrfs.device.block_device import BlockDevice
+from refind_btrfs.device.filesystem import Filesystem
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.device.partition_table import PartitionTable
+from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.utility import helpers
 
 
 class LsblkCommand(DeviceCommand):

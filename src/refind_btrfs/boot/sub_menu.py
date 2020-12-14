@@ -25,9 +25,9 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from common import constants
-from common.enums import RefindOption
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.utility import helpers
 
 from .boot_options import BootOptions
 

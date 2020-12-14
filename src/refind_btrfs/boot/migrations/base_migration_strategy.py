@@ -25,9 +25,9 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Optional
 
-from common import constants
-from device.subvolume import Subvolume
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.utility import helpers
 
 from ..boot_options import BootOptions
 from .state import State

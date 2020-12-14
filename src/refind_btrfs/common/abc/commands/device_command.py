@@ -25,9 +25,9 @@ from abc import ABC, abstractmethod
 from functools import singledispatchmethod
 from typing import Any, Generator
 
-from device.block_device import BlockDevice
-from device.partition_table import PartitionTable
-from device.subvolume import Subvolume
+from refind_btrfs.device.block_device import BlockDevice
+from refind_btrfs.device.partition_table import PartitionTable
+from refind_btrfs.device.subvolume import Subvolume
 
 
 class DeviceCommand(ABC):

@@ -34,13 +34,13 @@ from watchdog.events import (
     FileSystemEventHandler,
 )
 
-from common.abc import (
+from refind_btrfs.common.abc import (
     BaseLoggerFactory,
     BasePackageConfigProvider,
     BaseSubvolumeCommandFactory,
 )
-from common.exceptions import SubvolumeError
-from state_management import RefindBtrfsMachine
+from refind_btrfs.common.exceptions import SubvolumeError
+from refind_btrfs.state_management import RefindBtrfsMachine
 
 
 class SnapshotEventHandler(FileSystemEventHandler):

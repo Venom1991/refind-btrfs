@@ -34,16 +34,21 @@ from tomlkit.items import AoT, Table
 from tomlkit.toml_document import TOMLDocument
 from tomlkit.toml_file import TOMLFile
 
-from common import PackageConfig, SnapshotManipulation, SnapshotSearch, constants
-from common.abc import BaseLoggerFactory, BasePackageConfigProvider
-from common.enums import (
+from refind_btrfs.common import (
+    PackageConfig,
+    SnapshotManipulation,
+    SnapshotSearch,
+    constants,
+)
+from refind_btrfs.common.abc import BaseLoggerFactory, BasePackageConfigProvider
+from refind_btrfs.common.enums import (
     PathRelation,
     SnapshotManipulationConfigKey,
     SnapshotSearchConfigKey,
     TopLevelConfigKey,
 )
-from common.exceptions import PackageConfigError
-from device.subvolume import NumIdRelation, Subvolume, UuidRelation
+from refind_btrfs.common.exceptions import PackageConfigError
+from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
 
 from . import helpers
 

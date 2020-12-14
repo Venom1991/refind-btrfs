@@ -26,9 +26,9 @@ from typing import Dict, List, Tuple, cast
 
 from more_itertools import first, last
 
-from common import constants
-from common.exceptions import PartitionError
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.exceptions import PartitionError
+from refind_btrfs.utility import helpers
 
 from .subvolume import Subvolume
 

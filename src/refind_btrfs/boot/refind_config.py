@@ -30,11 +30,11 @@ from typing import Generator, Iterable, List, Optional
 
 from more_itertools import always_iterable
 
-from common import constants
-from common.exceptions import RefindConfigError
-from device.partition import Partition
-from device.subvolume import Subvolume
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.exceptions import RefindConfigError
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.utility import helpers
 
 from .boot_stanza import BootStanza
 from .migrations import Migration

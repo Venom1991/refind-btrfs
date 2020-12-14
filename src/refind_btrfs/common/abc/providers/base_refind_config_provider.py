@@ -23,8 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
 
-from boot import RefindConfig
-from device.partition import Partition
+from refind_btrfs.boot import RefindConfig
+from refind_btrfs.device.partition import Partition
 
 
 class BaseRefindConfigProvider(ABC):

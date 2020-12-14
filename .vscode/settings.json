@@ -39,8 +39,10 @@
         "pttype",
         "ptuuid",
         "pylint",
+        "pyproject",
         "refind",
         "rootflags",
+        "setuptools",
         "submenuentry",
         "subvol",
         "subvolid",
@@ -65,6 +67,6 @@
         "**/.venv": true
     },
     "terminal.integrated.env.linux": {
-        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src/refind_btrfs"
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src"
     }
 }

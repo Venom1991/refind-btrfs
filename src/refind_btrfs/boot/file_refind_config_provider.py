@@ -29,17 +29,17 @@ from antlr4 import CommonTokenStream, FileStream
 from injector import inject
 from more_itertools import last, one
 
-from common import constants
-from common.abc import (
+from refind_btrfs.common import constants
+from refind_btrfs.common.abc import (
     BaseLoggerFactory,
     BasePackageConfigProvider,
     BasePersistenceProvider,
     BaseRefindConfigProvider,
 )
-from common.enums import RefindOption
-from common.exceptions import RefindConfigError, RefindSyntaxError
-from device.partition import Partition
-from utility import helpers
+from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.common.exceptions import RefindConfigError, RefindSyntaxError
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.utility import helpers
 
 from .antlr4.RefindConfigLexer import RefindConfigLexer
 from .antlr4.RefindConfigParser import RefindConfigParser

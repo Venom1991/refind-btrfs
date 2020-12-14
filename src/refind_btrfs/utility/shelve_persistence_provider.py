@@ -27,11 +27,11 @@ import shelve
 from pathlib import Path
 from typing import Dict, List, Optional, cast
 
-from boot import RefindConfig
-from common import constants
-from common.abc import BasePersistenceProvider
-from common.enums import LocalDbKey
-from device.subvolume import Subvolume
+from refind_btrfs.boot import RefindConfig
+from refind_btrfs.common import constants
+from refind_btrfs.common.abc import BasePersistenceProvider
+from refind_btrfs.common.enums import LocalDbKey
+from refind_btrfs.device.subvolume import Subvolume
 
 
 class ShelvePersistenceProvider(BasePersistenceProvider):

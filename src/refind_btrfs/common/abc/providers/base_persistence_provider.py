@@ -25,8 +25,8 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Optional
 
-from boot import RefindConfig
-from device.subvolume import Subvolume
+from refind_btrfs.boot import RefindConfig
+from refind_btrfs.device.subvolume import Subvolume
 
 
 class BasePersistenceProvider(ABC):

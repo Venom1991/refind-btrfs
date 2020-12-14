@@ -27,7 +27,7 @@ from typing import Type
 
 from systemd.journal import JournalHandler
 
-from common.abc import BaseLoggerFactory
+from refind_btrfs.common.abc import BaseLoggerFactory
 
 
 class StreamLoggerFactory(BaseLoggerFactory):

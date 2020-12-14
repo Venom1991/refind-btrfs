@@ -27,15 +27,15 @@ from typing import Generator, cast
 
 from transitions import EventData, State
 
-from common.abc import (
+from refind_btrfs.common.abc import (
     BaseDeviceCommandFactory,
     BasePersistenceProvider,
     BaseRefindConfigProvider,
     BaseSubvolumeCommandFactory,
 )
-from common.enums import States
-from device.block_device import BlockDevice
-from utility import helpers
+from refind_btrfs.common.enums import States
+from refind_btrfs.device.block_device import BlockDevice
+from refind_btrfs.utility import helpers
 
 from .model import Model
 

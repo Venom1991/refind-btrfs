@@ -28,9 +28,9 @@ from typing import Any, Callable, Dict, Generator, NamedTuple, Tuple
 from antlr4 import ParserRuleContext
 from more_itertools import always_iterable, only
 
-from common import constants
-from common.enums import GraphicsParameter, OSTypeParameter, RefindOption
-from common.exceptions import RefindConfigError
+from refind_btrfs.common import constants
+from refind_btrfs.common.enums import GraphicsParameter, OSTypeParameter, RefindOption
+from refind_btrfs.common.exceptions import RefindConfigError
 
 from .antlr4.RefindConfigParser import RefindConfigParser
 from .antlr4.RefindConfigParserVisitor import RefindConfigParserVisitor

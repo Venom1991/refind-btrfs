@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from utility import helpers
+from refind_btrfs.utility import helpers
 
 from .partition import Partition
 from .partition_table import PartitionTable

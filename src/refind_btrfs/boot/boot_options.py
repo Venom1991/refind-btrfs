@@ -25,11 +25,11 @@ from __future__ import annotations
 
 from typing import Iterable, List, Optional, Tuple
 
-from common import constants
-from common.exceptions import RefindConfigError
-from device.mount_options import MountOptions
-from device.subvolume import Subvolume
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.exceptions import RefindConfigError
+from refind_btrfs.device.mount_options import MountOptions
+from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.utility import helpers
 
 
 class BootOptions:

@@ -27,14 +27,17 @@ from typing import Callable, List, NamedTuple, Optional
 
 from more_itertools import only
 
-from boot import RefindConfig
-from common import PackageConfig, constants
-from common.abc import BaseLoggerFactory, BasePackageConfigProvider
-from common.exceptions import UnchangedConfiguration, UnsupportedConfiguration
-from device.block_device import BlockDevice
-from device.partition import Partition
-from device.subvolume import SnapshotPreparationResult, Subvolume
-from utility import helpers
+from refind_btrfs.boot import RefindConfig
+from refind_btrfs.common import PackageConfig, constants
+from refind_btrfs.common.abc import BaseLoggerFactory, BasePackageConfigProvider
+from refind_btrfs.common.exceptions import (
+    UnchangedConfiguration,
+    UnsupportedConfiguration,
+)
+from refind_btrfs.device.block_device import BlockDevice
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.device.subvolume import SnapshotPreparationResult, Subvolume
+from refind_btrfs.utility import helpers
 
 
 class BlockDevices(NamedTuple):

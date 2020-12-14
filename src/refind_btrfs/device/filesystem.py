@@ -26,13 +26,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from utility import helpers
+from refind_btrfs.utility import helpers
 
 from .mount_options import MountOptions
 from .subvolume import Subvolume
 
 if TYPE_CHECKING:
-    from common.abc import SubvolumeCommand
+    from refind_btrfs.common.abc import SubvolumeCommand
 
 
 class Filesystem:

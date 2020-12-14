@@ -28,11 +28,15 @@ from typing import Generator, List, Optional, cast
 
 import btrfsutil
 
-from common import PackageConfig, constants
-from common.abc import BaseLoggerFactory, BasePackageConfigProvider, SubvolumeCommand
-from common.exceptions import SubvolumeError
-from device.subvolume import NumIdRelation, Subvolume, UuidRelation
-from utility import helpers
+from refind_btrfs.common import PackageConfig, constants
+from refind_btrfs.common.abc import (
+    BaseLoggerFactory,
+    BasePackageConfigProvider,
+    SubvolumeCommand,
+)
+from refind_btrfs.common.exceptions import SubvolumeError
+from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
+from refind_btrfs.utility import helpers
 
 
 class BtrfsUtilCommand(SubvolumeCommand):

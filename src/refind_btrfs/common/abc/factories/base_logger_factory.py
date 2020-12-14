@@ -26,7 +26,7 @@ from abc import ABC, abstractmethod
 from logging import Handler, Logger
 from typing import Type
 
-from utility import LevelAwareFormatter
+from refind_btrfs.utility import LevelAwareFormatter
 
 
 class BaseLoggerFactory(ABC):

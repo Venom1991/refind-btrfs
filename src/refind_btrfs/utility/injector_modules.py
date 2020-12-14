@@ -27,9 +27,9 @@ from injector import Binder, Module, SingletonScope, multiprovider, provider
 from transitions.core import State
 from watchdog.events import FileSystemEventHandler
 
-from boot.file_refind_config_provider import FileRefindConfigProvider
-from common import CheckableObserver
-from common.abc import (
+from refind_btrfs.boot.file_refind_config_provider import FileRefindConfigProvider
+from refind_btrfs.common import CheckableObserver
+from refind_btrfs.common.abc import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
     BasePackageConfigProvider,
@@ -38,18 +38,21 @@ from common.abc import (
     BaseRunner,
     BaseSubvolumeCommandFactory,
 )
-from common.enums import States
-from console import CLIRunner
-from service import SnapshotEventHandler, SnapshotObserver, WatchdogRunner
-from state_management import Model, RefindBtrfsMachine
-from state_management.states import (
+from refind_btrfs.common.enums import States
+from refind_btrfs.console import CLIRunner
+from refind_btrfs.service import SnapshotEventHandler, SnapshotObserver, WatchdogRunner
+from refind_btrfs.state_management import Model, RefindBtrfsMachine
+from refind_btrfs.state_management.states import (
     InitBlockDevicesState,
     InitBtrfsMetadataState,
     InitRefindConfigState,
     PrepareSnapshotsState,
     ProcessChangesState,
 )
-from system import BtrfsUtilSubvolumeCommandFactory, SystemDeviceCommandFactory
+from refind_btrfs.system import (
+    BtrfsUtilSubvolumeCommandFactory,
+    SystemDeviceCommandFactory,
+)
 
 from .file_package_config_provider import FilePackageConfigProvider
 from .logger_factories import StreamLoggerFactory, SystemdLoggerFactory

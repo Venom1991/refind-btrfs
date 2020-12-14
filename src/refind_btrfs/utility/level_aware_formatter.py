@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 from logging import Formatter, LogRecord
 
-from common import constants
+from refind_btrfs.common import constants
 
 
 class LevelAwareFormatter(Formatter):

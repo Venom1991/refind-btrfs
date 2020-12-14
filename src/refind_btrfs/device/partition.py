@@ -27,8 +27,8 @@ from pathlib import Path
 from typing import List, Optional
 from uuid import UUID
 
-from common import constants
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.utility import helpers
 
 from .filesystem import Filesystem
 

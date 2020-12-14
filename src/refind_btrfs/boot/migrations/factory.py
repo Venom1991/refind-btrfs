@@ -24,8 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from functools import singledispatchmethod
 from typing import Any, Optional, Type
 
-from device.subvolume import Subvolume
-from utility import helpers
+from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.utility import helpers
 
 from ..boot_stanza import BootStanza
 from ..sub_menu import SubMenu

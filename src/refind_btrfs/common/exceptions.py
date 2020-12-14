@@ -25,7 +25,7 @@ from typing import cast
 
 from more_itertools import first_true
 
-from common import constants
+from refind_btrfs.common import constants
 
 
 class RefindBtrfsError(Exception):

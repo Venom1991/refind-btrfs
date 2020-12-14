@@ -25,7 +25,7 @@ from typing import Type
 
 from injector import inject
 
-from common.abc import (
+from refind_btrfs.common.abc import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
     BasePackageConfigProvider,

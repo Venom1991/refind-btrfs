@@ -28,8 +28,8 @@ from pathlib import Path
 from typing import Generator, Iterable, List, Optional, Tuple, TypeVar, Union
 from uuid import UUID
 
-from common import constants
-from common.enums import PathRelation
+from refind_btrfs.common import constants
+from refind_btrfs.common.enums import PathRelation
 
 
 def check_access_rights() -> None:

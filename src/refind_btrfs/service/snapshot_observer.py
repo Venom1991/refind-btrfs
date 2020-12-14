@@ -25,9 +25,9 @@ import queue
 
 from injector import inject
 
-from common import CheckableObserver, constants
-from common.abc import BaseLoggerFactory
-from common.exceptions import UnsupportedConfiguration
+from refind_btrfs.common import CheckableObserver, constants
+from refind_btrfs.common.abc import BaseLoggerFactory
+from refind_btrfs.common.exceptions import UnsupportedConfiguration
 
 
 class SnapshotObserver(CheckableObserver):

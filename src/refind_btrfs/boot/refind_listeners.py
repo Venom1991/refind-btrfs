@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from antlr4.error.ErrorListener import ErrorListener
 
-from common.exceptions import RefindSyntaxError
+from refind_btrfs.common.exceptions import RefindSyntaxError
 
 
 class RefindErrorListener(ErrorListener):

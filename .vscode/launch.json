@@ -2,11 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Python: Module",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
             "console": "integratedTerminal",
+            "module": "refind_btrfs",
+            "cwd": "${workspaceRoot}/src",
+            "envFile": "${workspaceFolder}/env_files/.env",
             "args": [
                 "--run-mode",
                 "one-time"

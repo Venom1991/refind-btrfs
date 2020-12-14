@@ -26,8 +26,8 @@ from typing import List, Type, cast
 from more_itertools import first
 from transitions import Machine, State
 
-from common.abc import BaseLoggerFactory
-from common.exceptions import (
+from refind_btrfs.common.abc import BaseLoggerFactory
+from refind_btrfs.common.exceptions import (
     PartitionError,
     RefindConfigError,
     SubvolumeError,

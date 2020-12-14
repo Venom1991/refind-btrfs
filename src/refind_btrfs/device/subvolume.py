@@ -30,11 +30,11 @@ from uuid import UUID
 
 from more_itertools import take
 
-from utility import helpers
-from common import constants
+from refind_btrfs.utility import helpers
+from refind_btrfs.common import constants
 
 if TYPE_CHECKING:
-    from common.abc import DeviceCommand
+    from refind_btrfs.common.abc import DeviceCommand
 
 
 class NumIdRelation(NamedTuple):

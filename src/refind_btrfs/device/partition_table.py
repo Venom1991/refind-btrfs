@@ -28,7 +28,7 @@ from typing import Iterable, List, Optional
 
 from more_itertools import only
 
-from utility import helpers
+from refind_btrfs.utility import helpers
 
 from .partition import Partition
 from .subvolume import Subvolume

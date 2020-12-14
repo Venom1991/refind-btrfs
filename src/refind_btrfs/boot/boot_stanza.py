@@ -28,10 +28,10 @@ from typing import Iterable, List, Optional
 
 from more_itertools import last
 
-from common import constants
-from common.enums import RefindOption
-from device.partition import Partition
-from utility import helpers
+from refind_btrfs.common import constants
+from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.utility import helpers
 
 from .boot_options import BootOptions
 from .sub_menu import SubMenu
