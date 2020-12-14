@@ -1,0 +1,69 @@
+{
+    "antlr4.generation": {
+        "language": "Python3",
+        "listeners": false,
+        "mode": "external",
+        "visitors": true
+    },
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.runInTerminal": true,
+    "cSpell.words": [
+        "Btrfs",
+        "ELILO",
+        "EPERM",
+        "IMODE",
+        "INITRD",
+        "Lsblk",
+        "PTABLE",
+        "PYTHONPATH",
+        "SPDX",
+        "antlr",
+        "btrfsutil",
+        "errno",
+        "findmnt",
+        "fstype",
+        "getpid",
+        "getuid",
+        "inplace",
+        "itertools",
+        "levelno",
+        "menuentry",
+        "mtab",
+        "nargs",
+        "nodeps",
+        "nofsroot",
+        "ostype",
+        "otime",
+        "partuuid",
+        "pidfile",
+        "pttype",
+        "ptuuid",
+        "pylint",
+        "refind",
+        "rootflags",
+        "submenuentry",
+        "subvol",
+        "subvolid",
+        "subvolume",
+        "tomlkit",
+        "vfat"
+    ],
+    "python.analysis.completeFunctionParens": true,
+    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.extraPaths": [
+        "src/refind_btrfs"
+    ],
+    "python.analysis.memory.keepLibraryAst": true,
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.formatting.provider": "black",
+    "python.languageServer": "Pylance",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "/home/luka/Projects/Python/refind-btrfs/.venv/bin/python",
+    "search.exclude": {
+        "**/.venv": true
+    },
+    "terminal.integrated.env.linux": {
+        "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src/refind_btrfs"
+    }
+}

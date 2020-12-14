@@ -1,0 +1,283 @@
+# region Licensing
+# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+""" refind-btrfs - Generate rEFInd manual boot stanzas from btrfs snapshots
+Copyright (C) 2020  Luka Žaja
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+# endregion
+
+from datetime import datetime
+from itertools import chain
+from pathlib import Path
+from typing import Generator, List, Optional, cast
+
+import btrfsutil
+
+from common import PackageConfig, constants
+from common.abc import BaseLoggerFactory, BasePackageConfigProvider, SubvolumeCommand
+from common.exceptions import SubvolumeError
+from device.subvolume import NumIdRelation, Subvolume, UuidRelation
+from utility import helpers
+
+
+class BtrfsUtilCommand(SubvolumeCommand):
+    def __init__(
+        self,
+        logger_factory: BaseLoggerFactory,
+        package_config_provider: BasePackageConfigProvider,
+    ) -> None:
+        self._logger = logger_factory.logger(__name__)
+        self._package_config_provider = package_config_provider
+        self._searched_directories: List[Path] = []
+
+    def get_subvolume_from(self, filesystem_path: Path) -> Optional[Subvolume]:
+        logger = self._logger
+
+        if not filesystem_path.exists():
+            raise SubvolumeError(f"Path '{filesystem_path}' does not exist!")
+
+        if not filesystem_path.is_dir():
+            raise SubvolumeError(f"Path '{filesystem_path}' is not a directory!")
+
+        try:
+            filesystem_path_str = str(filesystem_path)
+
+            if btrfsutil.is_subvolume(filesystem_path_str):
+                subvolume_id = btrfsutil.subvolume_id(filesystem_path_str)
+                subvolume_path = btrfsutil.subvolume_path(
+                    filesystem_path_str, subvolume_id
+                )
+                subvolume_read_only = btrfsutil.get_subvolume_read_only(
+                    filesystem_path_str
+                )
+                subvolume_info = btrfsutil.subvolume_info(
+                    filesystem_path_str, subvolume_id
+                )
+                self_uuid = helpers.default_if_none(
+                    helpers.try_convert_bytes_to_uuid(subvolume_info.uuid),
+                    constants.EMPTY_UUID,
+                )
+                parent_uuid = helpers.default_if_none(
+                    helpers.try_convert_bytes_to_uuid(subvolume_info.parent_uuid),
+                    constants.EMPTY_UUID,
+                )
+
+                return Subvolume(
+                    filesystem_path,
+                    subvolume_path,
+                    datetime.fromtimestamp(subvolume_info.otime),
+                    UuidRelation(self_uuid, parent_uuid),
+                    NumIdRelation(subvolume_info.id, subvolume_info.parent_id),
+                    subvolume_read_only,
+                )
+        except btrfsutil.BtrfsUtilError as e:
+            logger.exception("btrfsutil call failed!")
+            raise SubvolumeError(
+                f"Could not initialize the subvolume for '{filesystem_path}'!"
+            ) from e
+
+        return None
+
+    def get_snapshots_for(self, parent: Subvolume) -> Generator[Subvolume, None, None]:
+        self._searched_directories.clear()
+
+        snapshot_searches = self.package_config.snapshot_searches
+        search_results = (
+            self._search_for_snapshots_in(
+                parent,
+                snapshot_search.directory,
+                snapshot_search.is_nested,
+                snapshot_search.max_depth,
+            )
+            for snapshot_search in snapshot_searches
+        )
+
+        yield from chain.from_iterable(search_results)
+
+    def get_bootable_snapshot_from(self, source: Subvolume) -> Subvolume:
+        destination: Optional[Subvolume] = None
+
+        if source.is_read_only:
+            snapshot_manipulation = self.package_config.snapshot_manipulation
+            modify_read_only_flag = snapshot_manipulation.modify_read_only_flag
+
+            if modify_read_only_flag:
+                destination = self._modify_read_only_flag_for(source)
+            else:
+                destination = self._create_writable_snapshot_from(source)
+        else:
+            destination = source
+
+        return destination.named()
+
+    def delete_snapshot(self, snapshot: Subvolume) -> None:
+        logger = self._logger
+        filesystem_path = snapshot.filesystem_path
+        logical_path = snapshot.logical_path
+
+        try:
+            filesystem_path_str = str(filesystem_path)
+            is_subvolume = filesystem_path.exists() and btrfsutil.is_subvolume(
+                filesystem_path_str
+            )
+
+            if is_subvolume:
+                root_dir_str = str(constants.ROOT_DIR)
+                num_id = snapshot.num_id
+                deleted_subvolumes = cast(
+                    List[int], btrfsutil.deleted_subvolumes(root_dir_str)
+                )
+
+                if num_id not in deleted_subvolumes:
+                    logger.info(f"Deleting snapshot '{logical_path}'.")
+
+                    btrfsutil.delete_subvolume(filesystem_path_str)
+                else:
+                    logger.warning(
+                        f"Snapshot '{logical_path}' has already "
+                        "been deleted but not yet cleaned up."
+                    )
+            else:
+                logger.warning(f"Directory '{filesystem_path}' is not a subvolume.")
+        except btrfsutil.BtrfsUtilError as e:
+            logger.exception("btrfsutil call failed!")
+            raise SubvolumeError(f"Could not delete snapshot '{logical_path}'!") from e
+
+    def _search_for_snapshots_in(
+        self,
+        parent: Subvolume,
+        directory: Path,
+        is_nested: bool,
+        max_depth: int,
+        current_depth: int = 0,
+    ) -> Generator[Subvolume, None, None]:
+        if current_depth > max_depth:
+            return
+
+        logger = self._logger
+        is_initial_call = not bool(current_depth)
+        logical_path = parent.logical_path
+        resolved_path = directory.resolve()
+
+        if is_initial_call:
+            logger.info(
+                f"Searching for snapshots of subvolume '{logical_path}' in '{directory}' directory."
+            )
+
+        searched_directories = self._searched_directories
+
+        if resolved_path not in searched_directories:
+            subvolume = self.get_subvolume_from(resolved_path)
+
+            searched_directories.append(resolved_path)
+
+            if subvolume is not None:
+                if subvolume.is_snapshot_of(parent):
+                    yield subvolume
+
+                    if not is_nested:
+                        return
+
+            subdirectories = (child for child in directory.iterdir() if child.is_dir())
+
+            for subdirectory in subdirectories:
+                yield from self._search_for_snapshots_in(
+                    parent, subdirectory, is_nested, max_depth, current_depth + 1
+                )
+
+    def _modify_read_only_flag_for(self, source: Subvolume) -> Subvolume:
+        logger = self._logger
+        source_logical_path = source.logical_path
+
+        try:
+            logger.info(f"Modifying the read-only flag for '{source_logical_path}'.")
+
+            source_filesystem_path_str = str(source.filesystem_path)
+
+            btrfsutil.set_subvolume_read_only(source_filesystem_path_str, False)
+        except btrfsutil.BtrfsUtilError as e:
+            logger.exception("btrfsutil call failed!")
+            raise SubvolumeError(
+                f"Could not modify the read-only flag for '{source_logical_path}'!"
+            ) from e
+
+        return source.as_writable()
+
+    def _create_writable_snapshot_from(self, source: Subvolume) -> Subvolume:
+        logger = self._logger
+        snapshot_manipulation = self.package_config.snapshot_manipulation
+        destination_directory = snapshot_manipulation.destination_directory
+
+        if not destination_directory.exists():
+            directory_permissions = constants.SNAPSHOTS_ROOT_DIR_PERMISSIONS
+            octal_permissions = "{0:o}".format(directory_permissions)
+
+            try:
+                logger.info(
+                    f"Creating the '{destination_directory}' destination "
+                    f"directory with {octal_permissions} permissions."
+                )
+
+                destination_directory.mkdir(mode=directory_permissions, parents=True)
+            except OSError as e:
+                logger.exception("Path.mkdir() call failed!")
+                raise SubvolumeError(
+                    f"Could not create the destination directory '{destination_directory}'!"
+                ) from e
+
+        destination = source.to_destination().named().located_in(destination_directory)
+
+        source_logical_path = source.logical_path
+        snapshot_directory = destination.filesystem_path
+
+        try:
+            logger.info(
+                f"Creating a new writable snapshot from '{source_logical_path}' "
+                f"at '{snapshot_directory}'."
+            )
+
+            snapshot_directory_str = str(snapshot_directory)
+            is_subvolume = snapshot_directory.exists() and btrfsutil.is_subvolume(
+                snapshot_directory_str
+            )
+
+            if not is_subvolume:
+                source_filesystem_path_str = str(source.filesystem_path)
+
+                btrfsutil.create_snapshot(
+                    source_filesystem_path_str, snapshot_directory_str, read_only=False
+                )
+            else:
+                logger.warning(
+                    f"Directory '{snapshot_directory}' is already a subvolume."
+                )
+        except btrfsutil.BtrfsUtilError as e:
+            logger.exception("btrfsutil call failed!")
+            raise SubvolumeError(
+                f"Could not create a new writable snapshot at '{snapshot_directory}'!"
+            ) from e
+
+        return self.get_subvolume_from(snapshot_directory).as_newly_created_at(
+            destination.time_created
+        )
+
+    @property
+    def package_config(self) -> PackageConfig:
+        package_config_provider = self._package_config_provider
+
+        return package_config_provider.get_config()

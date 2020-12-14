@@ -1,0 +1,13 @@
+[Unit]
+Description=Generate rEFInd manual boot stanzas from btrfs snapshots
+After=multi-user.target
+
+[Service]
+Type=notify
+KillMode=mixed
+KillSignal=SIGTERM
+RestartKillSignal=SIGTERM
+ExecStart=/usr/bin/refind-btrfs --run-mode background
+
+[Install]
+WantedBy=multi-user.target
