@@ -1,2 +1,2 @@
 #!/bin/bash
-python -m refind_btrfs "$@"
+python -m refind_btrfs --run-mode one-time
