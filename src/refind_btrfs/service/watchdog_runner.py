@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import signal
-from signal import Signals  # pylint: disable=no-name-in-module
 from signal import signal as register_signal_handler
 from types import FrameType
 from typing import Optional
@@ -123,12 +122,14 @@ class WatchdogRunner(BaseRunner):
 
         return exit_code
 
-    def _terminate(self, signal_number: Signals, frame: Optional[FrameType]) -> None:
+    def _terminate(self, signal_number: int, frame: Optional[FrameType]) -> None:
         # pylint: disable=unused-argument
         logger = self._logger
         observer = self._observer
 
-        logger.info(f"Received {signal_number.name}, stopping the observer...")
+        logger.info(
+            f"Received terminating signal {signal_number}, stopping the observer..."
+        )
 
         if observer.is_alive():
             observer.stop()
