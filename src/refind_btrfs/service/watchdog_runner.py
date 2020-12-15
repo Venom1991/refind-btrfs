@@ -26,9 +26,8 @@ import signal
 from signal import Signals  # pylint: disable=no-name-in-module
 from signal import signal as register_signal_handler
 from types import FrameType
-from typing import Optional, cast
+from typing import Optional
 
-import systemd.daemon as systemd_daemon
 from injector import inject
 from pid import PidFile, PidFileAlreadyRunningError
 from watchdog.events import FileSystemEventHandler
@@ -102,15 +101,7 @@ class WatchdogRunner(BaseRunner):
             logger.error(e.strerror)
         except PidFileAlreadyRunningError as e:
             exit_code = constants.EX_NOT_OK
-            running_pid = cast(int, e.pid)
-
             logger.error(e.message)
-            systemd_daemon.notify(
-                constants.NOTIFICATION_STATUS.format(
-                    f"Detected an attempt to run subsequently with PID {current_pid}."
-                ),
-                pid=running_pid,
-            )
         except PackageConfigError as e:
             exit_code = constants.EX_NOT_OK
             logger.error(e.formatted_message)
@@ -118,8 +109,6 @@ class WatchdogRunner(BaseRunner):
             exit_code = constants.EX_NOT_OK
             logger.exception(constants.MESSAGE_UNEXPECTED_ERROR)
         else:
-            systemd_daemon.notify(constants.NOTIFICATION_READY, pid=current_pid)
-
             while observer.is_alive():
                 observer.join(constants.WATCH_TIMEOUT)
 
@@ -132,21 +121,14 @@ class WatchdogRunner(BaseRunner):
             except Exception:
                 exit_code = constants.EX_NOT_OK
 
-        if exit_code != os.EX_OK:
-            systemd_daemon.notify(
-                constants.NOTIFICATION_ERRNO.format(exit_code), pid=current_pid
-            )
-
         return exit_code
 
     def _terminate(self, signal_number: Signals, frame: Optional[FrameType]) -> None:
         # pylint: disable=unused-argument
         logger = self._logger
         observer = self._observer
-        current_pid = self._current_pid
 
         logger.info(f"Received {signal_number.name}, stopping the observer...")
-        systemd_daemon.notify(constants.NOTIFICATION_STOPPING, pid=current_pid)
 
         if observer.is_alive():
             observer.stop()
