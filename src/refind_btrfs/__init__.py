@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-""" refind-btrfs - Generate rEFInd manual boot stanzas from btrfs snapshots
+""" refind-btrfs - Generate rEFInd manual boot stanzas from Btrfs snapshots
 Copyright (C) 2020  Luka Žaja
 
 This program is free software: you can redistribute it and/or modify
@@ -39,7 +39,7 @@ def main() -> None:
     parser = ArgumentParser(
         prog="refind-btrfs",
         usage="%(prog)s [options]",
-        description="Generate rEFInd manual boot stanzas from btrfs snapshots",
+        description="Generate rEFInd manual boot stanzas from Btrfs snapshots",
     )
 
     parser.add_argument(
