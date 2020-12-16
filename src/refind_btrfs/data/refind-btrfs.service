@@ -1,6 +1,7 @@
 [Unit]
 Description=Generate rEFInd manual boot stanzas from btrfs snapshots
 After=multi-user.target
+Before=snapper-boot.service
 
 [Service]
 Type=simple
