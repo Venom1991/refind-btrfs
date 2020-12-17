@@ -24,9 +24,7 @@ parser grammar RefindConfigParser;
 
 options { tokenVocab=RefindConfigLexer; }
 
-refind
-    : config_option* EOF
-    ;
+refind : config_option* EOF ;
 
 config_option
     : boot_stanza

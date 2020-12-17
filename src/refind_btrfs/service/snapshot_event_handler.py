@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from pathlib import Path
+from threading import Lock
 from typing import Set, cast
 
 from injector import inject
@@ -62,6 +63,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
         self._persistence_provider = persistence_provider
         self._machine = machine
         self._deleted_snapshots: Set[Subvolume] = set()
+        self._deletion_lock = Lock()
 
     def on_created(self, event: FileSystemEvent) -> None:
         is_dir_created_event = (
@@ -129,10 +131,13 @@ class SnapshotEventHandler(FileSystemEventHandler):
             )
 
             if deleted_snapshot is not None:
-                if not deleted_snapshot in deleted_snapshots:
-                    deleted_snapshots.add(deleted_snapshot)
+                deletion_lock = self._deletion_lock
 
-                    return True
+                with deletion_lock:
+                    if not deleted_snapshot in deleted_snapshots:
+                        deleted_snapshots.add(deleted_snapshot)
+
+                        return True
 
         return False
 
