@@ -72,14 +72,11 @@ class SnapshotEventHandler(FileSystemEventHandler):
             dir_created_event = cast(DirCreatedEvent, event)
             logger = self._logger
             created_directory = Path(dir_created_event.src_path)
-            is_snapshot_created = self._is_snapshot_created(created_directory)
 
-            if is_snapshot_created:
+            if self._is_snapshot_created(created_directory):
                 machine = self._machine
 
-                logger.info(
-                    f"Directory '{created_directory}' containing a snapshot has been created."
-                )
+                logger.info(f"Directory '{created_directory}' has been created.")
 
                 machine.run()
 
@@ -92,14 +89,11 @@ class SnapshotEventHandler(FileSystemEventHandler):
             dir_deleted_event = cast(DirDeletedEvent, event)
             logger = self._logger
             deleted_directory = Path(dir_deleted_event.src_path)
-            is_snapshot_deleted = self._is_snapshot_deleted(deleted_directory)
 
-            if is_snapshot_deleted:
+            if self._is_snapshot_deleted(deleted_directory):
                 machine = self._machine
 
-                logger.info(
-                    f"Directory '{deleted_directory}' containing a snapshot has been deleted."
-                )
+                logger.info(f"Directory '{deleted_directory}' has been deleted.")
 
                 machine.run()
 

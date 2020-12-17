@@ -1,6 +1,6 @@
 # refind-btrfs
 
-### Table of contents
+### Table of Contents
   - [Description](#description)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -28,7 +28,7 @@ What it does is the following:
 * Finally, it saves the generated manual boot stanzas in separate config files (outputs them to a subdirectory) and includes each file in the main config file so as not to needlessly clutter it
 
 In case a separate /boot partition is detected only the fields relevant to / are modified ("subvol" and/or "subvolid") while the "loader" and "initrd" fields (the former may also be nested within the "options" field) remain unaffected.  
-It goes without saying that this kind of setup has the implication of not being able to mitigate a problematic kernel upgrade by simply booting into a snapshot.
+It goes without saying that the consequence of having this kind of a setup is being unable to mitigate a problematic kernel upgrade by simply booting into a snapshot.
 
 This tool will also detect a situation where / is mounted as a snapshot (which means that you've already booted into one), issue a warning and simply exit whereas, for instance, [Snapper](http://snapper.io/) will happily continue creating its snapshots. I could perhaps make this behavior configurable but currently it isn't.
 
@@ -45,17 +45,17 @@ The following conditions (some are probably superfluous at this point) need to b
 ## Installation
 This tool is currently available only in the [AUR](https://aur.archlinux.org/packages/refind-btrfs/) which means that [Arch Linux](https://www.archlinux.org/) users (as well as users of derivative distributions, I imagine) can easily install it.
 
-It comes with a script (refind-btrfs) which can be used to perform the described steps, on-demand (root privileges are required to run it). There is also a [systemd](https://en.wikipedia.org/wiki/Systemd) service aptly named **refind-btrfs.service** which runs the tool in a background mode of operation where the described steps are performed automatically once a change (directory creation or deletion) happens in the watched snapshot directories which are the same ones as those in which it searches for snapshots.  
-Before running the script for the first time or enabling and starting the service make sure to at least check and perhaps modify the config file (/etc/refind-btrfs.conf) to suit your needs.
+It comes with a script (refind-btrfs) which can be used to perform the described steps, on-demand (root privileges are required to run it). There is also a [systemd](https://en.wikipedia.org/wiki/Systemd) service aptly named **refind-btrfs.service** which runs the tool in a background mode of operation where the described steps are performed automatically once a change (directory creation or deletion) happens in the watched snapshot directories which are the same ones as those in which it searches for snapshots. If you are using Snapper along with its capability to take regular snapshots on boot this service should take these into account as well because it is set to start before Snapper's relevant service does so (the one named snapper-boot.service).  
+Before running the script for the first time or enabling and starting the service make sure to at least check and perhaps modify the config file (/etc/refind-btrfs.conf) to suit your own needs.
 
 If you wish to check the current status and log output of the running service you can do so by executing:
 ```
 systemctl status refind-btrfs
-journalctl -u refind-btrfs
+journalctl -u refind-btrfs -b
 ```
 
 Alternatively, there exists a PyPI [package](https://pypi.org/project/refind-btrfs/) but bear in mind that since [libbtrfsutil](https://github.com/kdave/btrfs-progs/tree/master/libbtrfsutil) isn't available on PyPI it needs to be already present in the system site packages (its Python bindings, to be precise) because it cannot be automatically pulled in as a dependency. Chances are that it is available for your distribution of choice (search for a package named "btrfs-progs") but you most probably already have it installed as I suppose you are using Btrfs, after all.  
-Also, all of the files found in [this](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data) directory should be copied to the following locations:
+Also, all files found [here](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data) should be copied to the following locations:
 * refind-btrfs script to /usr/bin (or wherever it is you keep your system-wide executables)
 * refind-btrfs.conf-sample as refind-btrfs.conf (without the "-sample" suffix) to /etc
 * refind-btrfs.service to /usr/lib/systemd/system (if you are using systemd and wish to utilize the snapshot directory watching feature)
