@@ -73,9 +73,7 @@ class WatchdogRunner(BaseRunner):
             with PidFile(lock_pidfile=False) as pid_file:
                 current_pid = pid_file.pid
                 package_config = package_config_provider.get_config()
-                watched_directories = sorted(
-                    set(package_config.get_directories_for_watch())
-                )
+                watched_directories = sorted(package_config.directories_for_watch)
                 separator = constants.COLUMN_SEPARATOR + constants.SPACE
                 watched_directories_str = separator.join(
                     [str(directory) for directory in watched_directories]

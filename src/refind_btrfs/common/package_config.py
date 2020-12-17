@@ -60,15 +60,17 @@ class PackageConfig:
     ) -> None:
         self._snapshot_searches = snapshot_searches
         self._snapshot_manipulation = snapshot_manipulation
+        self._directories_for_watch = set(self._get_directories_for_watch())
 
-    def get_directories_for_watch(self) -> Generator[Path, None, None]:
+    def _get_directories_for_watch(self) -> Generator[Path, None, None]:
         snapshot_searches = self.snapshot_searches
 
-        for snapshot_search in snapshot_searches:
-            directory = snapshot_search.directory
-            max_depth = snapshot_search.max_depth - 1
+        if helpers.has_items(snapshot_searches):
+            for snapshot_search in snapshot_searches:
+                directory = snapshot_search.directory
+                max_depth = snapshot_search.max_depth - 1
 
-            yield from helpers.find_all_directories_in(directory, max_depth)
+                yield from helpers.find_all_directories_in(directory, max_depth)
 
     @property
     def snapshot_searches(self) -> List[SnapshotSearch]:
@@ -77,3 +79,7 @@ class PackageConfig:
     @property
     def snapshot_manipulation(self) -> SnapshotManipulation:
         return self._snapshot_manipulation
+
+    @property
+    def directories_for_watch(self) -> Set[Path]:
+        return self._directories_for_watch

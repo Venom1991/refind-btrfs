@@ -32,6 +32,7 @@ from more_itertools import take
 
 from refind_btrfs.utility import helpers
 from refind_btrfs.common import constants
+from refind_btrfs.common.enums import PathRelation
 
 if TYPE_CHECKING:
     from refind_btrfs.common.abc import DeviceCommand
@@ -72,7 +73,7 @@ class Subvolume:
         self._num_id = num_id_relation.self_id
         self._parent_num_id = num_id_relation.parent_id
         self._is_read_only = is_read_only
-        self._is_newly_created: bool = False
+        self._created_from: Optional[Subvolume] = None
         self._snapshots: Optional[Set[Subvolume]] = None
 
     def __eq__(self, other: object) -> bool:
@@ -119,9 +120,11 @@ class Subvolume:
 
         return self
 
-    def as_newly_created_at(self, time_created: datetime) -> Subvolume:
-        self._time_created = time_created
-        self._is_newly_created = True
+    def as_newly_created_from(self, created_from: Subvolume) -> Subvolume:
+        original_time_created = created_from.time_created
+
+        self._time_created = original_time_created
+        self._created_from = created_from
 
         return self
 
@@ -194,6 +197,20 @@ class Subvolume:
 
         return False
 
+    def is_located_in(self, parent_directory: Path) -> bool:
+        if self.is_newly_created:
+            created_from = self._created_from
+            filesystem_path = created_from.filesystem_path
+        else:
+            filesystem_path = self.filesystem_path
+
+        path_relation = helpers.discern_path_relation_of(
+            parent_directory, filesystem_path
+        )
+        expected_results = [PathRelation.SAME, PathRelation.SECOND_NESTED_IN_FIRST]
+
+        return path_relation in expected_results
+
     def modify_partition_table_using(
         self, current_subvolume: Subvolume, device_command: DeviceCommand
     ) -> None:
@@ -240,7 +257,7 @@ class Subvolume:
 
     @property
     def is_newly_created(self) -> bool:
-        return self._is_newly_created
+        return self._created_from is not None
 
     @property
     def time_created(self) -> datetime:

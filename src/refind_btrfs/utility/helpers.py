@@ -100,20 +100,15 @@ def item_count_suffix(value: Iterable) -> str:
 def find_all_matched_files_in(
     root_directory: Path, file_name: str
 ) -> Generator[Path, None, None]:
-    if not root_directory.exists():
-        raise ValueError(f"Path '{root_directory}' does not exist!")
+    if root_directory.exists() and root_directory.is_dir():
+        children = root_directory.iterdir()
 
-    if not root_directory.is_dir():
-        raise ValueError(f"'{root_directory}' is not a directory!")
-
-    children = root_directory.iterdir()
-
-    for child in children:
-        if child.is_file():
-            if child.name == file_name:
-                yield child
-        elif child.is_dir():
-            yield from find_all_matched_files_in(child, file_name)
+        for child in children:
+            if child.is_file():
+                if child.name == file_name:
+                    yield child
+            elif child.is_dir():
+                yield from find_all_matched_files_in(child, file_name)
 
 
 def find_all_directories_in(
@@ -122,48 +117,46 @@ def find_all_directories_in(
     if current_depth > max_depth:
         return
 
-    if not root_directory.exists():
-        raise ValueError(f"Path '{root_directory}' does not exist!")
+    if root_directory.exists() and root_directory.is_dir():
+        yield root_directory.resolve()
 
-    if not root_directory.is_dir():
-        raise ValueError(f"'{root_directory}' is not a directory!")
+        subdirectories = (child for child in root_directory.iterdir() if child.is_dir())
 
-    yield root_directory.resolve()
-
-    subdirectories = (child for child in root_directory.iterdir() if child.is_dir())
-
-    for subdirectory in subdirectories:
-        yield from find_all_directories_in(subdirectory, max_depth, current_depth + 1)
+        for subdirectory in subdirectories:
+            yield from find_all_directories_in(
+                subdirectory, max_depth, current_depth + 1
+            )
 
 
-def discern_distance_between(first: Path, second: Path) -> int:
-    distance = 0
+def discern_distance_between(first: Path, second: Path) -> Optional[int]:
     path_relation = discern_path_relation_of(first, second)
 
-    if path_relation == PathRelation.UNRELATED:
-        raise ValueError("Paths are unrelated!")
+    if path_relation != PathRelation.UNRELATED:
+        distance = 0
 
-    if path_relation != PathRelation.SAME:
-        if path_relation == PathRelation.FIRST_NESTED_IN_SECOND:
-            first_parts = first.parts
-            second_stem = second.stem
+        if path_relation != PathRelation.SAME:
+            if path_relation == PathRelation.FIRST_NESTED_IN_SECOND:
+                first_parts = first.parts
+                second_stem = second.stem
 
-            for part in reversed(first_parts):
-                if part != second_stem:
-                    distance += 1
-                else:
-                    break
-        elif path_relation == PathRelation.SECOND_NESTED_IN_FIRST:
-            first_stem = first.stem
-            second_parts = second.parts
+                for part in reversed(first_parts):
+                    if part != second_stem:
+                        distance += 1
+                    else:
+                        break
+            elif path_relation == PathRelation.SECOND_NESTED_IN_FIRST:
+                first_stem = first.stem
+                second_parts = second.parts
 
-            for part in reversed(second_parts):
-                if part != first_stem:
-                    distance += 1
-                else:
-                    break
+                for part in reversed(second_parts):
+                    if part != first_stem:
+                        distance += 1
+                    else:
+                        break
 
-    return distance
+        return distance
+
+    return None
 
 
 def discern_path_relation_of(first: Path, second: Path) -> PathRelation:

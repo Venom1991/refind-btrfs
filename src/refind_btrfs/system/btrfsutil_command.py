@@ -276,9 +276,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
                 f"Could not create a new writable snapshot at '{snapshot_directory}'!"
             ) from e
 
-        return self.get_subvolume_from(snapshot_directory).as_newly_created_at(
-            destination.time_created
-        )
+        return self.get_subvolume_from(snapshot_directory).as_newly_created_from(source)
 
     @property
     def package_config(self) -> PackageConfig:

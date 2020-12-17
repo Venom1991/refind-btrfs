@@ -30,14 +30,14 @@ from systemd.journal import JournalHandler
 from refind_btrfs.common.abc import BaseLoggerFactory
 
 
-class StreamLoggerFactory(BaseLoggerFactory):
-    def get_handler(self) -> Type[Handler]:
-        return StreamHandler(sys.stdout)
-
-
 class NullLoggerFactory(BaseLoggerFactory):
     def get_handler(self) -> Type[Handler]:
         return NullHandler()
+
+
+class StreamLoggerFactory(BaseLoggerFactory):
+    def get_handler(self) -> Type[Handler]:
+        return StreamHandler(sys.stdout)
 
 
 class SystemdLoggerFactory(BaseLoggerFactory):

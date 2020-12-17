@@ -22,9 +22,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from pathlib import Path
-from typing import Optional, Set, cast
+from typing import Set, cast
 
 from injector import inject
+from more_itertools import only
 from watchdog.events import (
     EVENT_TYPE_CREATED,
     EVENT_TYPE_DELETED,
@@ -37,10 +38,12 @@ from watchdog.events import (
 from refind_btrfs.common.abc import (
     BaseLoggerFactory,
     BasePackageConfigProvider,
+    BasePersistenceProvider,
     BaseSubvolumeCommandFactory,
 )
-from refind_btrfs.common.exceptions import SubvolumeError
+from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine
+from refind_btrfs.utility import helpers
 
 
 class SnapshotEventHandler(FileSystemEventHandler):
@@ -48,15 +51,17 @@ class SnapshotEventHandler(FileSystemEventHandler):
     def __init__(
         self,
         logger_factory: BaseLoggerFactory,
-        package_config_provider: BasePackageConfigProvider,
         subvolume_command_factory: BaseSubvolumeCommandFactory,
+        package_config_provider: BasePackageConfigProvider,
+        persistence_provider: BasePersistenceProvider,
         machine: RefindBtrfsMachine,
     ) -> None:
         self._logger = logger_factory.logger(__name__)
-        self._package_config_provider = package_config_provider
         self._subvolume_command = subvolume_command_factory.subvolume_command()
+        self._package_config_provider = package_config_provider
+        self._persistence_provider = persistence_provider
         self._machine = machine
-        self._directories_with_snapshots: Optional[Set[Path]] = None
+        self._deleted_snapshots: Set[Subvolume] = set()
 
     def on_created(self, event: FileSystemEvent) -> None:
         is_dir_created_event = (
@@ -66,19 +71,17 @@ class SnapshotEventHandler(FileSystemEventHandler):
         if is_dir_created_event:
             dir_created_event = cast(DirCreatedEvent, event)
             logger = self._logger
-            directories_with_snapshots = self.directories_with_snapshots
-            filesystem_path = Path(dir_created_event.src_path)
-            is_snapshot_created = self._is_snapshot_contained_in(filesystem_path)
+            created_directory = Path(dir_created_event.src_path)
+            is_snapshot_created = self._is_snapshot_created(created_directory)
 
             if is_snapshot_created:
                 machine = self._machine
 
                 logger.info(
-                    f"Directory '{filesystem_path}' containing a snapshot has been created."
+                    f"Directory '{created_directory}' containing a snapshot has been created."
                 )
 
                 machine.run()
-                directories_with_snapshots.add(filesystem_path)
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         is_dir_deleted_event = (
@@ -88,58 +91,77 @@ class SnapshotEventHandler(FileSystemEventHandler):
         if is_dir_deleted_event:
             dir_deleted_event = cast(DirDeletedEvent, event)
             logger = self._logger
-            directories_with_snapshots = self.directories_with_snapshots
-            filesystem_path = Path(dir_deleted_event.src_path)
-            is_snapshot_deleted = filesystem_path in directories_with_snapshots
+            deleted_directory = Path(dir_deleted_event.src_path)
+            is_snapshot_deleted = self._is_snapshot_deleted(deleted_directory)
 
             if is_snapshot_deleted:
                 machine = self._machine
 
                 logger.info(
-                    f"Directory '{filesystem_path}' containing a snapshot has been deleted."
+                    f"Directory '{deleted_directory}' containing a snapshot has been deleted."
                 )
 
                 machine.run()
-                directories_with_snapshots.remove(filesystem_path)
 
-    def _is_snapshot_contained_in(
-        self,
-        directory: Path,
+    def _is_snapshot_created(self, created_directory: Path) -> bool:
+        package_config = self._package_config_provider.get_config()
+        snapshot_searches = package_config.snapshot_searches
+        parents = created_directory.parents
+
+        for snapshot_search in snapshot_searches:
+            search_directory = snapshot_search.directory
+
+            if snapshot_search.directory in parents:
+                distance = helpers.discern_distance_between(
+                    search_directory, created_directory
+                )
+
+                if distance is not None:
+                    max_depth = snapshot_search.max_depth - distance
+
+                    if self._is_or_contains_snapshot(created_directory, max_depth):
+                        return True
+
+    def _is_snapshot_deleted(self, deleted_directory: Path) -> bool:
+        persistence_provider = self._persistence_provider
+        bootable_snapshots = persistence_provider.get_bootable_snapshots()
+        deleted_snapshots = self._deleted_snapshots
+
+        if helpers.has_items(bootable_snapshots):
+            deleted_snapshot = only(
+                snapshot
+                for snapshot in bootable_snapshots
+                if snapshot.is_located_in(deleted_directory)
+            )
+
+            if deleted_snapshot is not None:
+                if not deleted_snapshot in deleted_snapshots:
+                    deleted_snapshots.add(deleted_snapshot)
+
+                    return True
+
+        return False
+
+    def _is_or_contains_snapshot(
+        self, directory: Path, max_depth: int, current_depth: int = 0
     ) -> bool:
-        subvolume_command = self._subvolume_command
-        subdirectories = (child for child in directory.iterdir() if child.is_dir())
-
-        for subdirectory in subdirectories:
-            resolved_path = subdirectory.resolve()
+        if current_depth <= max_depth:
+            subvolume_command = self._subvolume_command
+            resolved_path = directory.resolve()
             subvolume = subvolume_command.get_subvolume_from(resolved_path)
             is_snapshot = subvolume is not None and subvolume.is_snapshot()
 
             if is_snapshot:
                 return True
 
+            subdirectories = (child for child in directory.iterdir() if child.is_dir())
+
+            if any(
+                self._is_or_contains_snapshot(
+                    subdirectory, max_depth, current_depth + 1
+                )
+                for subdirectory in subdirectories
+            ):
+                return True
+
         return False
-
-    @property
-    def directories_with_snapshots(self) -> Set[Path]:
-        directories_with_snapshots = self._directories_with_snapshots
-
-        if directories_with_snapshots is None:
-            logger = self._logger
-            package_config = self._package_config_provider.get_config()
-            watched_directories = package_config.get_directories_for_watch()
-
-            try:
-                directories_with_snapshots = {
-                    *[
-                        directory
-                        for directory in watched_directories
-                        if self._is_snapshot_contained_in(directory)
-                    ]
-                }
-            except SubvolumeError as e:
-                logger.exception("Could not prepare for handling filesystem events!")
-                raise e
-            else:
-                self._directories_with_snapshots = directories_with_snapshots
-
-        return directories_with_snapshots

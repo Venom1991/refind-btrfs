@@ -30,7 +30,7 @@ What it does is the following:
 In case a separate /boot partition is detected only the fields relevant to / are modified ("subvol" and/or "subvolid") while the "loader" and "initrd" fields (the former may also be nested within the "options" field) remain unaffected.  
 It goes without saying that this kind of setup has the implication of not being able to mitigate a problematic kernel upgrade by simply booting into a snapshot.
 
-This tool will also detect a situation where / is mounted as a snapshot (which means you've already booted into one), issue a warning and simply exit whereas, for instance, [Snapper](http://snapper.io/) will happily continue creating its snapshots. I could perhaps make this behavior configurable but currently it isn't.
+This tool will also detect a situation where / is mounted as a snapshot (which means that you've already booted into one), issue a warning and simply exit whereas, for instance, [Snapper](http://snapper.io/) will happily continue creating its snapshots. I could perhaps make this behavior configurable but currently it isn't.
 
 ## Prerequisites
 The following conditions (some are probably superfluous at this point) need to be satisfied in order for this tool to function correctly:
@@ -66,7 +66,7 @@ You should also create an empty directory named refind-btrfs in /var/lib as the 
 Every option is thoroughly explained in the sample config [file](https://github.com/Venom1991/refind-btrfs/blob/master/src/refind_btrfs/data/refind-btrfs.conf-sample).  
 In case you've opted to use the provided systemd service and wish to change the config file while it is running you must restart it after doing so because the config file is read only once (during startup).  
 The default configuration is meant to enable seamless integration with Snapper simply because I'm using it but the tool itself doesn't depend on it and ought to function with different setups. Also, by default the tool is configured for creating new writable snapshots intended for booting instead of in-place modification of the found snapshots' read-only flag as I believe this is the safer choice.  
-It is imperative that you don't just blindly try to boot into a snapshot before checking the generated manual boot stanza, either by inspecting the file contents in which it was saved or by viewing the boot loader [options](https://www.rodsbooks.com/refind/using.html#boot_options) using rEFInd.
+It is imperative that you don't just blindly try to boot into a snapshot before verifying the generated manual boot stanza, either by inspecting the file contents in which it was saved or by viewing the boot loader [options](https://www.rodsbooks.com/refind/using.html#boot_options) using rEFInd and also not before verifying the fstab file of at least one included snapshot.
 
 ## Example
 Given a setup such as this one:
@@ -105,21 +105,22 @@ menuentry "Arch Linux - Stable" {
 
 When run, this tool should select the latest three snapshots (3, 4 and 5 from the list) and create new, writable ones from these in the directory configured by the "destination_dir" option where each snapshot is named by formatting the time of creation ("YYYY-mm-dd_HH-MM-SS") of the snapshot it was created from and adding a "rwsnap_" prefix to it which means that, for example, snapshot number 5 is going to result in the creation of a snapshot named "rwsnap_2020-12-14_05-00-00".  
 <br/>
-The resultant snapshots should appear like this where the names are correct but the subvolid's are completely made up:
-| Name                       | Subvolid |
-| -------------------------- | -------- |
-| rwsnap_2020-12-12_03-00-00 | 500      |
-| rwsnap_2020-12-13_04-00-00 | 501      |
-| rwsnap_2020-12-14_05-00-00 | 502      |
+The resultant snapshots should appear like this where the names are correct but the ID's are completely made up:
+| Name                       | ID  |
+| -------------------------- | --- |
+| rwsnap_2020-12-12_03-00-00 | 500 |
+| rwsnap_2020-12-13_04-00-00 | 501 |
+| rwsnap_2020-12-14_05-00-00 | 502 |
 <br/>
-This naming scheme makes sense to me because when choosing a snapshot to boot from you most probably want to know when the original snapshot was created and not the one created from it because the time delay depends on when this tool was run and, if sufficiently large, can completely mislead you. If you've chosen to use the systemd service this delay shouldn't be significant (measuring seconds, ideally).  
-The snapshot's fstab file should (after being modified) contain a / mount point which looks like this:
+This naming scheme makes sense to me because when choosing a snapshot to boot from you most probably want to know when the original snapshot was created and not the one created from it because the time delay depends on when this tool was run and, if sufficiently large, can completely mislead you. If you've chosen to use the systemd service this delay shouldn't be significant (measuring a mere few seconds at worst, ideally).  
+
+The snapshot's fstab file should (after being modified) contain a / mount point which looks like this:  
 
 ```
 UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=502,subvol=/@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00 0 0
 ```
 With this setup the newly created snapshot ended up being nested under the root subvolume but you can of course make your own adjustments as you see fit. This tool will only create the destination directory in case it doesn't exist. It wont do anything other than that.  
-I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it as /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00.
+I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it at /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00.
 
 A generated manual boot stanza's file name is formatted like "{volume}_{loader}.conf" and turned to all lowercase letter which would result in, for this example, a file named "arch_vmlinuz-linux.conf". This file is then saved in a subdirectory (relative to rEFInd's root directory) named "btrfs-snapshot-stanzas" and finally included in the main config file by appending an "include" option which would, again for this example, look like this: "include btrfs-snapshot-stanzas/arch_vmlinuz-linux.conf". This last step is performed only once, during an initial run. Afterwards, it is detected as already being included in the main config file.
 
@@ -206,11 +207,12 @@ Most relevant dependencies:
 The directory watching mechanism is a bit unfortunate in a sense that it is way overkill for the task at hand. Even though Watchdog is a great, battle-tested library and many people use it, I feel that this solution isn't particularly well suited to this tool but it will simply have to suffice for now as I don't have a better idea, at least until the Btrfs authors develop [this](https://btrfs.wiki.kernel.org/index.php/Project_ideas#Send_notifications_about_important_events) useful feature or something akin to it.
 
 ## Further Efforts
-Currently, this tool won't clean up after itself in case, for instance, creating writable snapshots succeeds but generating a manual boot stanza from them fails (for whatever reason). The correct thing to do would be to delete these snapshots altogether (thus undoing the changes made by the previous step) meaning that the whole run is considered to be successful if and only if all of the performed steps were successful.  
-This behavior would then be comparable with the [atomicity](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) principle to which most database systems adhere. This exact scenario is covered in a different way by issuing a relevant warning on the next attempt to run the tool (because the writable snapshots already exist at this point in time) but also continuing to perform successive steps. This isn't a general solution, of course, but more of a workaround for this one possible scenario.
+Currently, this tool won't clean up after itself in case, for instance, creating writable snapshots succeeds but generating a manual boot stanza from them fails (for whatever reason). The correct thing to do would be to delete these snapshots altogether (thus undoing the changes made by the previous step or roll-backing as it is often called) meaning that the whole run is considered to be successful if and only if all of the steps it performed were successful.  
+This behavior would then be comparable with the [atomicity](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) principle to which most database systems adhere. The previously mentioned scenario is covered in a different way by issuing a relevant warning on the next attempt to run the tool (because the writable snapshots already exist at this point in time and they aren't expected to) but also continuing to perform successive steps. This isn't a general solution, of course, but more of a workaround for this one possible scenario.  
+With that said, being somehow able to preview changes proposed by this tool would also be beneficial, especially after changing the configuration.
 
 A more elaborate snapshot selection mechanism would be appreciated, comparable to what Snapper does, that is selecting a configurable number of daily, weekly, etc. snapshots to be included in the generated manual boot stanza.
 
-Generated boot stanzas use the same OS icon as the original boot stanza but a custom icon would help to visually differentiate these stanzas. Incorporating the Btrfs logo into the original icon would perhaps suffice, either by generating a new icon on-demand or by creating and packaging a whole icon set ahead of time. It would also be useful if the formatting of the strings used to identify bootable snapshots was configurable, that is the format string itself.
+Generated boot stanzas use the same OS icon as the original boot stanza but a custom icon would help to visually differentiate these stanzas. Somehow incorporating the Btrfs logo into the currently used OS icon would perhaps suffice, either by generating a new icon on-demand or by creating and packaging a whole icon set ahead of time. It would also be useful if the formatting of the strings used to identify bootable snapshots was configurable, that is the format string itself.
 
 But, before trying to implement any of these shiny features this project's source code should be properly documented and tests should be written for it because, presently, there aren't any. The latter is also a pretty considerable effort due to the sheer number of different test cases.
