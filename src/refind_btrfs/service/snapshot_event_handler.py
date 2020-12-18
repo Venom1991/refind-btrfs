@@ -78,7 +78,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
             if self._is_snapshot_created(created_directory):
                 machine = self._machine
 
-                logger.info(f"Directory '{created_directory}' has been created.")
+                logger.info(f"The '{created_directory}' directory has been created.")
 
                 machine.run()
 
@@ -95,7 +95,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
             if self._is_snapshot_deleted(deleted_directory):
                 machine = self._machine
 
-                logger.info(f"Directory '{deleted_directory}' has been deleted.")
+                logger.info(f"The '{deleted_directory}' directory has been deleted.")
 
                 machine.run()
 

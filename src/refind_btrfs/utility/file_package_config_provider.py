@@ -76,16 +76,20 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             config_file_path = constants.PACKAGE_CONFIG_FILE
 
             if not config_file_path.exists():
-                raise PackageConfigError(f"Path '{config_file_path}' does not exist!")
+                raise PackageConfigError(
+                    f"The '{config_file_path}' path does not exist!"
+                )
 
             if not config_file_path.is_file():
-                raise PackageConfigError(f"'{config_file_path}' is not a file!")
+                raise PackageConfigError(
+                    f"The '{config_file_path}' does not represent a file!"
+                )
 
             try:
                 toml_file = TOMLFile(str(config_file_path))
                 toml_document = toml_file.read()
             except TOMLKitError as e:
-                logger.exception(f"Error while parsing file '{config_file_path}'")
+                logger.exception(f"Error while parsing the '{config_file_path}' file")
                 raise PackageConfigError(
                     "Could not load the package configuration from file'!"
                 ) from e
@@ -133,19 +137,19 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
             if path_relation == PathRelation.SAME:
                 raise PackageConfigError(
-                    "Search directory and output directory cannot be the same!"
+                    "The search and output directories cannot be the same!"
                 )
 
             if path_relation == PathRelation.FIRST_NESTED_IN_SECOND:
                 raise PackageConfigError(
-                    f"Output directory '{output_directory}' is nested in "
-                    f"search directory '{search_directory}'!"
+                    f"The output directory '{output_directory}' is nested in "
+                    f"the search directory '{search_directory}'!"
                 )
 
             if path_relation == PathRelation.SECOND_NESTED_IN_FIRST:
                 raise PackageConfigError(
-                    f"Search directory '{search_directory}' is nested in "
-                    f"output directory '{output_directory}'!"
+                    f"The search directory '{search_directory}' is nested in "
+                    f"the output directory '{output_directory}'!"
                 )
 
         return PackageConfig(snapshot_searches, snapshot_manipulation)
@@ -167,22 +171,28 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             directory_value = value[directory_key]
 
             if not isinstance(directory_value, str):
-                raise PackageConfigError(f"Option '{directory_key}' must be a string!")
+                raise PackageConfigError(
+                    f"The '{directory_key}' option must be a string!"
+                )
             else:
                 directory = Path(directory_value)
 
                 if not directory.exists():
                     raise PackageConfigError(
-                        f"Path '{directory_value}' does not exist!"
+                        f"The '{directory_value}' path does not exist!"
                     )
 
                 if not directory.is_dir():
-                    raise PackageConfigError(f"'{directory_value}' is not a directory!")
+                    raise PackageConfigError(
+                        f"The '{directory_value}' path does not represent a directory!"
+                    )
 
             is_nested_value = value[is_nested_key]
 
             if not isinstance(is_nested_value, bool):
-                raise PackageConfigError(f"Option '{is_nested_key}' must be a bool!")
+                raise PackageConfigError(
+                    f"The '{is_nested_key}' option must be a bool!"
+                )
             else:
                 is_nested = bool(is_nested_value)
 
@@ -190,14 +200,14 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
             if not isinstance(max_depth_value, int):
                 raise PackageConfigError(
-                    f"Option '{max_depth_key}' must be an integer!"
+                    f"The '{max_depth_key}' option must be an integer!"
                 )
             else:
                 max_depth = int(max_depth_value)
 
                 if max_depth <= 0:
                     raise PackageConfigError(
-                        f"Option '{max_depth_key}' must be greater than zero!"
+                        f"The '{max_depth_key}' option must be greater than zero!"
                     )
 
             yield SnapshotSearch(directory, is_nested, max_depth)
@@ -235,7 +245,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         refind_config_value = snapshot_manipulation_value[refind_config_key]
 
         if not isinstance(refind_config_value, str):
-            raise PackageConfigError(f"Option '{refind_config_key}' must be a string!")
+            raise PackageConfigError(
+                f"The '{refind_config_key}' option must be a string!"
+            )
         else:
             refind_config = str(refind_config_value)
 
@@ -246,7 +258,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
             if count <= 0:
                 raise PackageConfigError(
-                    f"Option '{count_key}' must be greater than zero!"
+                    f"The '{count_key}' option must be greater than zero!"
                 )
         elif isinstance(count_value, str):
             actual_str = str(count_value).strip()
@@ -254,21 +266,21 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
             if actual_str != expected_str:
                 raise PackageConfigError(
-                    f"In case the option '{count_key}' is a string "
+                    f"In case the '{count_key}' option is a string "
                     f"it can only be set to '{expected_str}'!"
                 )
 
             count = sys.maxsize
         else:
             raise PackageConfigError(
-                f"Option '{count_key}' must be either an integer or a string!"
+                f"The '{count_key}' option must be either an integer or a string!"
             )
 
         include_sub_menus_value = snapshot_manipulation_value[include_sub_menus_key]
 
         if not isinstance(include_sub_menus_value, bool):
             raise PackageConfigError(
-                f"Option '{include_sub_menus_key}' must be a bool!"
+                f"The '{include_sub_menus_key}' option must be a bool!"
             )
         else:
             include_sub_menus = bool(include_sub_menus_value)
@@ -279,7 +291,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         if not isinstance(modify_read_only_flag_value, bool):
             raise PackageConfigError(
-                f"Option '{modify_read_only_flag_key}' must be a bool!"
+                f"The '{modify_read_only_flag_key}' option must be a bool!"
             )
         else:
             modify_read_only_flag = bool(modify_read_only_flag_value)
@@ -290,7 +302,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         if not isinstance(destination_directory_value, str):
             raise PackageConfigError(
-                f"Option '{destination_directory_key}' must be a string!"
+                f"The '{destination_directory_key}' option must be a string!"
             )
         else:
             destination_directory = Path(destination_directory_value)
@@ -299,7 +311,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         if not isinstance(cleanup_exclusion_value, list):
             raise PackageConfigError(
-                f"Option '{cleanup_exclusion_key}' must be a string!"
+                f"The '{cleanup_exclusion_key}' option must be a string!"
             )
 
         cleanup_exclusion = list(cleanup_exclusion_value)

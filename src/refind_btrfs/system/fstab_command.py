@@ -71,7 +71,7 @@ class FstabCommand(DeviceCommand):
         filesystem = helpers.none_throws(root.filesystem)
 
         try:
-            logger.info(f"Writing to file '{fstab_path}'.")
+            logger.info(f"Writing to the '{fstab_path}' file.")
 
             with fileinput.input(str(fstab_path), inplace=True) as fstab_file:
                 for line in fstab_file:
@@ -91,7 +91,7 @@ class FstabCommand(DeviceCommand):
                             mount_point = filesystem.mount_point
 
                             raise PartitionError(
-                                f"Could not find expected mount options "
+                                f"Could not find the expected mount options "
                                 f"in '{fstab_path}' for '{mount_point}'!"
                             )
 
@@ -106,22 +106,22 @@ class FstabCommand(DeviceCommand):
                     print(line, end=constants.EMPTY_STR)
         except OSError as e:
             logger.exception("fileinput.input() call failed!")
-            raise PartitionError(f"Could not write to file '{fstab_path}'!") from e
+            raise PartitionError(f"Could not write to the '{fstab_path}' file!") from e
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         filesystem_path = subvolume.filesystem_path
         fstab_path = filesystem_path / constants.FSTAB_FILE
 
         if not fstab_path.exists():
-            raise PartitionError(f"File '{fstab_path}' does not exist!")
+            raise PartitionError(f"The '{fstab_path}' file does not exist!")
 
         logger = self._logger
         logical_path = subvolume.logical_path
 
         try:
             logger.info(
-                "Initializing static partition table for "
-                f"subvolume '{logical_path}' from file '{fstab_path}'."
+                "Initializing the static partition table for "
+                f"subvolume '{logical_path}' from the '{fstab_path}' file."
             )
 
             with fstab_path.open("r") as fstab_file:
@@ -136,7 +136,7 @@ class FstabCommand(DeviceCommand):
                     mount_point = str(constants.ROOT_DIR)
 
                     raise PartitionError(
-                        f"Could not find line matched with "
+                        f"Could not find a line matched with "
                         f"'{mount_point}' in '{fstab_path}'!"
                     )
 
@@ -145,7 +145,7 @@ class FstabCommand(DeviceCommand):
                 return partition_table
         except OSError as e:
             logger.exception("Path.open('r') call failed!")
-            raise PartitionError(f"Could not read from file '{fstab_path}'!") from e
+            raise PartitionError(f"Could not read from the '{fstab_path}' file!") from e
 
     @staticmethod
     def _is_line_matched_with_filesystem(line: str, filesystem: Filesystem) -> bool:

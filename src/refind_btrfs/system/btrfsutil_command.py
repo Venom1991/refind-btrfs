@@ -53,10 +53,12 @@ class BtrfsUtilCommand(SubvolumeCommand):
         logger = self._logger
 
         if not filesystem_path.exists():
-            raise SubvolumeError(f"Path '{filesystem_path}' does not exist!")
+            raise SubvolumeError(f"The '{filesystem_path}' path does not exist!")
 
         if not filesystem_path.is_dir():
-            raise SubvolumeError(f"Path '{filesystem_path}' is not a directory!")
+            raise SubvolumeError(
+                f"The '{filesystem_path}' path does not represent a directory!"
+            )
 
         try:
             filesystem_path_str = str(filesystem_path)
@@ -148,19 +150,21 @@ class BtrfsUtilCommand(SubvolumeCommand):
                 )
 
                 if num_id not in deleted_subvolumes:
-                    logger.info(f"Deleting snapshot '{logical_path}'.")
+                    logger.info(f"Deleting the '{logical_path}' snapshot.")
 
                     btrfsutil.delete_subvolume(filesystem_path_str)
                 else:
                     logger.warning(
-                        f"Snapshot '{logical_path}' has already "
+                        f"The '{logical_path}' snapshot has already "
                         "been deleted but not yet cleaned up."
                     )
             else:
-                logger.warning(f"Directory '{filesystem_path}' is not a subvolume.")
+                logger.warning(f"The '{filesystem_path}' directory is not a subvolume.")
         except btrfsutil.BtrfsUtilError as e:
             logger.exception("btrfsutil call failed!")
-            raise SubvolumeError(f"Could not delete snapshot '{logical_path}'!") from e
+            raise SubvolumeError(
+                f"Could not delete the '{logical_path}' snapshot!"
+            ) from e
 
     def _search_for_snapshots_in(
         self,
@@ -180,8 +184,8 @@ class BtrfsUtilCommand(SubvolumeCommand):
 
         if is_initial_call:
             logger.info(
-                "Searching for snapshots of subvolume "
-                f"'{logical_path}' in the '{directory}' directory."
+                f"Searching for snapshots of the '{logical_path}' "
+                f"subvolume  in the '{directory}' directory."
             )
 
         searched_directories = self._searched_directories
@@ -210,7 +214,9 @@ class BtrfsUtilCommand(SubvolumeCommand):
         source_logical_path = source.logical_path
 
         try:
-            logger.info(f"Modifying the read-only flag for '{source_logical_path}'.")
+            logger.info(
+                f"Modifying the '{source_logical_path}' snapshot's read-only flag."
+            )
 
             source_filesystem_path_str = str(source.filesystem_path)
 
@@ -218,7 +224,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
         except btrfsutil.BtrfsUtilError as e:
             logger.exception("btrfsutil call failed!")
             raise SubvolumeError(
-                f"Could not modify the read-only flag for '{source_logical_path}'!"
+                f"Could not modify the '{source_logical_path}' snapshot's read-only flag!"
             ) from e
 
         return source.as_writable()
@@ -242,7 +248,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
             except OSError as e:
                 logger.exception("Path.mkdir() call failed!")
                 raise SubvolumeError(
-                    f"Could not create the destination directory '{destination_directory}'!"
+                    f"Could not create the '{destination_directory}' destination directory!"
                 ) from e
 
         destination = source.to_destination().named().located_in(destination_directory)
@@ -252,8 +258,8 @@ class BtrfsUtilCommand(SubvolumeCommand):
 
         try:
             logger.info(
-                f"Creating a new writable snapshot from '{source_logical_path}' "
-                f"at '{snapshot_directory}'."
+                "Creating a new writable snapshot from the read-only "
+                f"'{source_logical_path}' snapshot at '{snapshot_directory}'."
             )
 
             snapshot_directory_str = str(snapshot_directory)
@@ -269,7 +275,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
                 )
             else:
                 logger.warning(
-                    f"Directory '{snapshot_directory}' is already a subvolume."
+                    f"The '{snapshot_directory}' directory is already a subvolume."
                 )
         except btrfsutil.BtrfsUtilError as e:
             logger.exception("btrfsutil call failed!")

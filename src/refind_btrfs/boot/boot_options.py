@@ -54,7 +54,7 @@ class BootOptions:
                             )
 
                             raise RefindConfigError(
-                                f"Boot option '{rootflags_option}' "
+                                f"The '{rootflags_option}' boot option"
                                 f"cannot be defined multiple times!"
                             )
 

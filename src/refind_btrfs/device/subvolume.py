@@ -104,7 +104,7 @@ class Subvolume:
         name = self.name
 
         if helpers.is_none_or_whitespace(name):
-            raise ValueError("Property 'name' must be initialized beforehand!")
+            raise ValueError("The 'name' property must be initialized beforehand!")
 
         self._filesystem_path = parent_directory / name
 

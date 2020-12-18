@@ -91,7 +91,7 @@ class Model:
         esp_device = self.esp_device
 
         if esp_device is None:
-            logger.error("ESP not found!")
+            logger.error("Could not find the ESP!")
 
             return False
 
@@ -99,25 +99,25 @@ class Model:
         esp_filesystem = esp.filesystem
 
         logger.info(
-            f"Found ESP mounted at '{esp_filesystem.mount_point}' on '{esp.name}'."
+            f"Found the ESP mounted at '{esp_filesystem.mount_point}' on '{esp.name}'."
         )
 
         root_device = self.root_device
 
         if root_device is None:
-            logger.error("Root partition not found!")
+            logger.error("Could not find the root partition!")
 
             return False
 
         root = root_device.root
         root_filesystem = root.filesystem
 
-        logger.info(f"Found root partition on '{root.name}'.")
+        logger.info(f"Found the root partition on '{root.name}'.")
 
         btrfs_type = constants.BTRFS_TYPE
 
         if not root_filesystem.is_of_type(btrfs_type):
-            logger.error(f"Root is not a '{btrfs_type}' partition!")
+            logger.error(f"The root partition's filesystem is not '{btrfs_type}'!")
 
             return False
 
@@ -126,7 +126,7 @@ class Model:
         if boot_device is not None:
             boot = esp_device.boot
 
-            logger.info(f"Found separate boot partition on '{boot.name}'.")
+            logger.info(f"Found a separate boot partition on '{boot.name}'.")
 
         return True
 
@@ -137,7 +137,7 @@ class Model:
         root_filesystem = root.filesystem
 
         if not root_filesystem.has_subvolume():
-            logger.error("Root partition is not mounted as a subvolume!")
+            logger.error("The root partition is not mounted as a subvolume!")
 
             return False
 

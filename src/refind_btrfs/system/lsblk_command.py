@@ -57,7 +57,7 @@ class LsblkCommand(DeviceCommand):
         lsblk_command = f"lsblk --json --nodeps --merge --paths --output {output}"
 
         try:
-            logger.info("Initializing block devices using lsblk.")
+            logger.info("Initializing the block devices using lsblk.")
             logger.debug(f"Running command '{lsblk_command}'.")
 
             lsblk_process = subprocess.run(
@@ -72,7 +72,7 @@ class LsblkCommand(DeviceCommand):
                 message = f"lsblk execution failed: '{stderr.rstrip()}'!"
 
             logger.exception(message)
-            raise PartitionError("Could not initialize block devices!") from e
+            raise PartitionError("Could not initialize the block devices!") from e
 
         lsblk_parsed_output = json.loads(lsblk_process.stdout)
         lsblk_blockdevices = always_iterable(
@@ -124,7 +124,7 @@ class LsblkCommand(DeviceCommand):
 
         try:
             logger.info(
-                f"Initializing physical partition table for device '{device_name}' using lsblk."
+                f"Initializing the physical partition table for device '{device_name}' using lsblk."
             )
             logger.debug(f"Running command '{lsblk_command}'.")
 
@@ -141,7 +141,7 @@ class LsblkCommand(DeviceCommand):
 
             logger.exception(message)
             raise PartitionError(
-                f"Could not initialize partition table for '{device_name}'!"
+                f"Could not initialize the physical partition table for '{device_name}'!"
             ) from e
 
         lsblk_parsed_output = json.loads(lsblk_process.stdout)

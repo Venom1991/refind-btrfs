@@ -73,13 +73,15 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
             refind_config_file = snapshot_manipulation.refind_config
 
             logger.info(
-                f"Searching for '{refind_config_file}' file on '{partition.name}'."
+                f"Searching for the '{refind_config_file}' file on '{partition.name}'."
             )
 
             refind_config_search_result = partition.search_paths_for(refind_config_file)
 
             if not helpers.has_items(refind_config_search_result):
-                raise RefindConfigError(f"Could not find '{refind_config_file}' file!")
+                raise RefindConfigError(
+                    f"Could not find the '{refind_config_file}' file!"
+                )
 
             if not helpers.is_singleton(refind_config_search_result):
                 raise RefindConfigError(
@@ -99,12 +101,14 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         destination_directory = config_file_path.parent
 
         if not destination_directory.exists():
-            logger.info(f"Creating '{destination_directory}' destination directory.")
+            logger.info(
+                f"Creating the '{destination_directory}' destination directory."
+            )
 
             destination_directory.mkdir()
 
         try:
-            logger.info(f"Writing to file '{config_file_path}'.")
+            logger.info(f"Writing to the '{config_file_path}' file.")
 
             with config_file_path.open("w") as config_file:
                 lines_for_writing: List[str] = []
@@ -120,7 +124,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         except OSError as e:
             logger.exception("Path.open('w') call failed!")
             raise RefindConfigError(
-                f"Could not write to file '{config_file_path}'!"
+                f"Could not write to the '{config_file_path}' file!"
             ) from e
 
         config.refresh_file_stat()
@@ -148,11 +152,11 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
             except OSError as e:
                 logger.exception("Path.open('r') call failed!")
                 raise RefindConfigError(
-                    f"Could not read from file '{config_file_path}'!"
+                    f"Could not read from the '{config_file_path}' file!"
                 ) from e
             else:
                 try:
-                    logger.info(f"Appending to file '{config_file_path}'.")
+                    logger.info(f"Appending to the '{config_file_path}' file.")
 
                     with config_file_path.open("a") as config_file:
                         lines_for_appending: List[str] = []
@@ -184,7 +188,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 except OSError as e:
                     logger.exception("Path.open('a') call failed!")
                     raise RefindConfigError(
-                        f"Could not append to file '{config_file_path}'!"
+                        f"Could not append to the '{config_file_path}' file!"
                     ) from e
 
             config.refresh_file_stat()
@@ -209,7 +213,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
             return refind_config
 
-        logger.info(f"Analyzing '{config_file_path.name}' file.")
+        logger.info(f"Analyzing the '{config_file_path.name}' file.")
 
         try:
             input_stream = FileStream(str(config_file_path))
@@ -223,7 +227,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
             refind_context = parser.refind()
         except RefindSyntaxError as e:
-            logger.exception(f"Error while parsing file '{config_file_path}'")
+            logger.exception(f"Error while parsing the '{config_file_path}' file!")
             raise RefindConfigError(
                 "Could not load rEFInd configuration from file!"
             ) from e
@@ -262,7 +266,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 yield self._read_config_from(included_config_file_path.resolve())
             else:
                 logger.warning(
-                    f"Included config file '{included_config_file_path}' does not exist."
+                    f"The included config file '{included_config_file_path}' does not exist."
                 )
 
     @staticmethod

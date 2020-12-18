@@ -93,7 +93,7 @@ class Partition:
 
     def search_paths_for(self, file_name: str) -> Optional[List[Path]]:
         if helpers.is_none_or_whitespace(file_name):
-            raise ValueError("Parameter 'file_name' must be initialized!")
+            raise ValueError("The 'file_name' parameter must be initialized!")
 
         filesystem = helpers.none_throws(self.filesystem)
 

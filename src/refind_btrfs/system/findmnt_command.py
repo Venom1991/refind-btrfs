@@ -76,7 +76,7 @@ class FindmntCommand(DeviceCommand):
 
         try:
             logger.info(
-                f"Initializing live partition table for device '{device_name}' using findmnt."
+                f"Initializing the live partition table for device '{device_name}' using findmnt."
             )
             logger.debug(f"Running command '{findmnt_command}'.")
 
@@ -93,7 +93,7 @@ class FindmntCommand(DeviceCommand):
 
             logger.exception(message)
             raise PartitionError(
-                f"Could not initialize partition table for '{device_name}'!"
+                f"Could not initialize the live partition table for '{device_name}'!"
             ) from e
 
         findmnt_parsed_output = json.loads(findmnt_process.stdout)

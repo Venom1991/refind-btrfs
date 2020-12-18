@@ -83,11 +83,11 @@ def is_none_or_whitespace(value: Optional[str]) -> bool:
     return value == constants.EMPTY_STR or value.isspace()
 
 
-def has_items(value: Iterable) -> bool:
+def has_items(value: Optional[Iterable]) -> bool:
     return value is not None and len(value) > 0
 
 
-def is_singleton(value: Iterable) -> bool:
+def is_singleton(value: Optional[Iterable]) -> bool:
     return value is not None and len(value) == 1
 
 
@@ -128,6 +128,26 @@ def find_all_directories_in(
             )
 
 
+def discern_path_relation_of(first: Path, second: Path) -> PathRelation:
+    first_resolved = first.resolve()
+    second_resolved = second.resolve()
+
+    if first_resolved == second_resolved:
+        return PathRelation.SAME
+
+    first_parents = first_resolved.parents
+
+    if second_resolved in first_parents:
+        return PathRelation.FIRST_NESTED_IN_SECOND
+
+    second_parents = second_resolved.parents
+
+    if first_resolved in second_parents:
+        return PathRelation.SECOND_NESTED_IN_FIRST
+
+    return PathRelation.UNRELATED
+
+
 def discern_distance_between(first: Path, second: Path) -> Optional[int]:
     path_relation = discern_path_relation_of(first, second)
 
@@ -157,26 +177,6 @@ def discern_distance_between(first: Path, second: Path) -> Optional[int]:
         return distance
 
     return None
-
-
-def discern_path_relation_of(first: Path, second: Path) -> PathRelation:
-    first_resolved = first.resolve()
-    second_resolved = second.resolve()
-
-    if first_resolved == second_resolved:
-        return PathRelation.SAME
-
-    first_parents = first_resolved.parents
-
-    if second_resolved in first_parents:
-        return PathRelation.FIRST_NESTED_IN_SECOND
-
-    second_parents = second_resolved.parents
-
-    if first_resolved in second_parents:
-        return PathRelation.SECOND_NESTED_IN_FIRST
-
-    return PathRelation.UNRELATED
 
 
 def replace_root_in_path(
