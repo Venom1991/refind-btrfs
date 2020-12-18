@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from typing import Generator, cast
 
+from more_itertools import take
 from transitions import EventData, State
 
 from refind_btrfs.common.abc import (
@@ -37,7 +38,7 @@ from refind_btrfs.common.enums import States
 from refind_btrfs.device.block_device import BlockDevice
 from refind_btrfs.utility import helpers
 
-from .model import Model
+from .model import Model, ProcessingResult
 
 
 class InitBlockDevicesState(State):
@@ -114,12 +115,28 @@ class PrepareSnapshotsState(State):
         package_config = model.package_config
         subvolume = model.root_subvolume
         snapshot_manipulation = package_config.snapshot_manipulation
-        bootable_snapshots = persistence_provider.get_bootable_snapshots()
-
-        model.snapshot_preparation_result = subvolume.prepare_snapshots(
+        previous_run_result = persistence_provider.get_previous_run_result()
+        bootable_snapshots = previous_run_result.bootable_snapshots
+        selected_snapshots = take(
             snapshot_manipulation.count,
-            bootable_snapshots,
-            snapshot_manipulation.cleanup_exclusion,
+            sorted(helpers.none_throws(subvolume.snapshots), reverse=True),
+        )
+        snapshots_union = snapshot_manipulation.cleanup_exclusion.union(
+            selected_snapshots
+        )
+        snapshots_for_addition = [
+            snapshot
+            for snapshot in selected_snapshots
+            if snapshot.can_be_added(bootable_snapshots)
+        ]
+        snapshots_for_removal = [
+            snapshot
+            for snapshot in bootable_snapshots
+            if snapshot.can_be_removed(snapshots_union)
+        ]
+
+        model.initialize_preparation_result_from(
+            snapshots_for_addition, snapshots_for_removal
         )
 
 
@@ -143,8 +160,9 @@ class ProcessChangesState(State):
         persistence_provider = self._persistence_provider
         subvolume_command_factory = self._subvolume_command_factory
         subvolume_command = subvolume_command_factory.subvolume_command()
-        bootable_snapshots = persistence_provider.get_bootable_snapshots()
-        snapshot_preparation_result = model.snapshot_preparation_result
+        previous_run_result = persistence_provider.get_previous_run_result()
+        bootable_snapshots = previous_run_result.bootable_snapshots
+        snapshot_preparation_result = model.preparation_result
         snapshots_for_addition = snapshot_preparation_result.snapshots_for_addition
         snapshots_for_removal = snapshot_preparation_result.snapshots_for_removal
 
@@ -179,18 +197,18 @@ class ProcessChangesState(State):
         package_config = model.package_config
         snapshot_manipulation = package_config.snapshot_manipulation
         refind_config = model.refind_config
-
         generated_refind_configs = refind_config.generate_new_from(
             root,
             sorted_bootable_snapshots,
             include_paths,
             snapshot_manipulation.include_sub_menus,
         )
-
         refind_config_provider = self._refind_config_provider
 
         for generated_refind_config in generated_refind_configs:
             refind_config_provider.save_config(generated_refind_config)
 
         refind_config_provider.append_to_config(refind_config)
-        persistence_provider.save_bootable_snapshots(sorted_bootable_snapshots)
+        persistence_provider.save_current_run_result(
+            ProcessingResult(sorted_bootable_snapshots, snapshot_manipulation)
+        )

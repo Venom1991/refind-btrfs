@@ -24,6 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from pathlib import Path
 from typing import Generator, List, NamedTuple, Set
 
+from refind_btrfs.common import constants
+from refind_btrfs.common.abc import BaseConfig
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility import helpers
 
@@ -34,6 +36,9 @@ class SnapshotSearch(NamedTuple):
     max_depth: int
 
     def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
         if isinstance(other, SnapshotSearch):
             self_directory_resolved = self.directory.resolve()
             other_directory_resolved = other.directory.resolve()
@@ -51,13 +56,27 @@ class SnapshotManipulation(NamedTuple):
     destination_directory: Path
     cleanup_exclusion: Set[Subvolume]
 
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
 
-class PackageConfig:
+        if isinstance(other, SnapshotManipulation):
+            return (
+                self.count == other.count
+                and self.include_sub_menus == other.include_sub_menus
+            )
+
+        return False
+
+
+class PackageConfig(BaseConfig):
     def __init__(
         self,
         snapshot_searches: List[SnapshotSearch],
         snapshot_manipulation: SnapshotManipulation,
     ) -> None:
+        super().__init__(constants.PACKAGE_CONFIG_FILE)
+
         self._snapshot_searches = snapshot_searches
         self._snapshot_manipulation = snapshot_manipulation
         self._directories_for_watch = set(self._get_directories_for_watch())

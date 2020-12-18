@@ -62,18 +62,21 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         self._package_config_provider = package_config_provider
         self._persistence_provider = persistence_provider
 
-    def get_config(self, esp: Partition) -> RefindConfig:
+    def get_config(self, partition: Partition) -> RefindConfig:
         logger = self._logger
-        config_file_path = FileRefindConfigProvider.all_config_file_paths.get(esp)
+        config_file_path = FileRefindConfigProvider.all_config_file_paths.get(partition)
+        should_begin_search = config_file_path is None or not config_file_path.exists()
 
-        if config_file_path is None:
+        if should_begin_search:
             package_config = self._package_config_provider.get_config()
             snapshot_manipulation = package_config.snapshot_manipulation
             refind_config_file = snapshot_manipulation.refind_config
 
-            logger.info(f"Searching for '{refind_config_file}' file on ESP.")
+            logger.info(
+                f"Searching for '{refind_config_file}' file on '{partition.name}'."
+            )
 
-            refind_config_search_result = esp.search_paths_for(refind_config_file)
+            refind_config_search_result = partition.search_paths_for(refind_config_file)
 
             if not helpers.has_items(refind_config_search_result):
                 raise RefindConfigError(f"Could not find '{refind_config_file}' file!")
@@ -85,7 +88,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
             config_file_path = cast(Path, one(refind_config_search_result)).resolve()
 
-            FileRefindConfigProvider.all_config_file_paths[esp] = config_file_path
+            FileRefindConfigProvider.all_config_file_paths[partition] = config_file_path
 
         return self._read_config_from(config_file_path)
 

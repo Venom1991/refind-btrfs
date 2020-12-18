@@ -21,9 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from antlr4.error.ErrorListener import ErrorListener
-
 from refind_btrfs.common.exceptions import RefindSyntaxError
+
+from antlr4.error.ErrorListener import ErrorListener
 
 
 class RefindErrorListener(ErrorListener):

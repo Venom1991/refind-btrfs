@@ -91,8 +91,9 @@ class CommonModule(Module):
         self,
         logger_factory: BaseLoggerFactory,
         package_config_provider: BasePackageConfigProvider,
+        persistence_provider: BasePersistenceProvider,
     ) -> Model:
-        return Model(logger_factory, package_config_provider)
+        return Model(logger_factory, package_config_provider, persistence_provider)
 
     @multiprovider
     def provide_states(

@@ -21,15 +21,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from refind_btrfs.boot import RefindConfig
-from refind_btrfs.device.partition import Partition
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from refind_btrfs.boot import RefindConfig
+    from refind_btrfs.device.partition import Partition
 
 
 class BaseRefindConfigProvider(ABC):
     @abstractmethod
-    def get_config(self, esp: Partition) -> RefindConfig:
+    def get_config(self, partition: Partition) -> RefindConfig:
         pass
 
     @abstractmethod

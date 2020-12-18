@@ -28,15 +28,19 @@ from typing import Callable, List, NamedTuple, Optional
 from more_itertools import only
 
 from refind_btrfs.boot import RefindConfig
-from refind_btrfs.common import PackageConfig, constants
-from refind_btrfs.common.abc import BaseLoggerFactory, BasePackageConfigProvider
+from refind_btrfs.common import PackageConfig, SnapshotManipulation, constants
+from refind_btrfs.common.abc import (
+    BaseLoggerFactory,
+    BasePackageConfigProvider,
+    BasePersistenceProvider,
+)
 from refind_btrfs.common.exceptions import (
     UnchangedConfiguration,
     UnsupportedConfiguration,
 )
 from refind_btrfs.device.block_device import BlockDevice
 from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.subvolume import SnapshotPreparationResult, Subvolume
+from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility import helpers
 
 
@@ -46,8 +50,23 @@ class BlockDevices(NamedTuple):
     boot_device: Optional[BlockDevice]
 
     @classmethod
-    def empty(cls) -> BlockDevices:
+    def none(cls) -> BlockDevices:
         return BlockDevices(None, None, None)
+
+
+class PreparationResult(NamedTuple):
+    has_changes: bool
+    snapshots_for_addition: List[Subvolume]
+    snapshots_for_removal: List[Subvolume]
+
+
+class ProcessingResult(NamedTuple):
+    bootable_snapshots: List[Subvolume]
+    snapshot_manipulation: SnapshotManipulation
+
+    @classmethod
+    def none(cls) -> ProcessingResult:
+        return ProcessingResult([], None)
 
 
 class Model:
@@ -55,12 +74,14 @@ class Model:
         self,
         logger_factory: BaseLoggerFactory,
         package_config_provider: BasePackageConfigProvider,
+        persistence_provider: BasePersistenceProvider,
     ) -> None:
         self._logger = logger_factory.logger(__name__)
         self._package_config_provider = package_config_provider
+        self._persistence_provider = persistence_provider
         self._refind_config: Optional[RefindConfig] = None
         self._block_devices: Optional[BlockDevices] = None
-        self._snapshot_preparation_result: Optional[SnapshotPreparationResult] = None
+        self._preparation_result: Optional[PreparationResult] = None
 
     def check_initial_state(self) -> bool:
         return True
@@ -75,30 +96,28 @@ class Model:
             return False
 
         esp = esp_device.esp
-        name = esp.name
-        filesystem = esp.filesystem
-        mount_point = filesystem.mount_point
+        esp_filesystem = esp.filesystem
 
-        logger.info(f"Found ESP mounted at '{mount_point}' on '{name}'.")
+        logger.info(
+            f"Found ESP mounted at '{esp_filesystem.mount_point}' on '{esp.name}'."
+        )
 
         root_device = self.root_device
 
         if root_device is None:
-            logger.error(f"'{mount_point}' not found!")
+            logger.error("Root partition not found!")
 
             return False
 
         root = root_device.root
-        name = root.name
-        filesystem = root.filesystem
-        mount_point = filesystem.mount_point
+        root_filesystem = root.filesystem
 
-        logger.info(f"Found '{mount_point}' on '{name}'.")
+        logger.info(f"Found root partition on '{root.name}'.")
 
         btrfs_type = constants.BTRFS_TYPE
 
-        if not filesystem.is_of_type(btrfs_type):
-            logger.error(f"'{mount_point}' is not a '{btrfs_type}' partition!")
+        if not root_filesystem.is_of_type(btrfs_type):
+            logger.error(f"Root is not a '{btrfs_type}' partition!")
 
             return False
 
@@ -106,11 +125,8 @@ class Model:
 
         if boot_device is not None:
             boot = esp_device.boot
-            name = boot.name
-            filesystem = boot.filesystem
-            mount_point = filesystem.mount_point
 
-            logger.info(f"Found separate '{mount_point}' on '{name}'.")
+            logger.info(f"Found separate boot partition on '{boot.name}'.")
 
         return True
 
@@ -118,24 +134,24 @@ class Model:
         logger = self._logger
         root_device = self.root_device
         root = root_device.root
-        filesystem = root.filesystem
-        mount_point = filesystem.mount_point
+        root_filesystem = root.filesystem
 
-        if not filesystem.has_subvolume():
-            logger.error(f"'{mount_point}' is not a subvolume!")
+        if not root_filesystem.has_subvolume():
+            logger.error("Root partition is not mounted as a subvolume!")
 
             return False
 
-        subvolume = filesystem.subvolume
+        subvolume = root_filesystem.subvolume
         logical_path = subvolume.logical_path
 
-        logger.info(f"Found '{logical_path}' subvolume for '{mount_point}'.")
+        logger.info(f"Found subvolume '{logical_path}' mounted as the root partition.")
 
         if subvolume.is_snapshot():
             parent_uuid = subvolume.parent_uuid
 
             raise UnsupportedConfiguration(
-                f"'{logical_path}' is itself a snapshot (parent UUID - '{parent_uuid}'), exiting..."
+                f"Subvolume '{logical_path}' is itself a snapshot "
+                f"(parent UUID - '{parent_uuid}'), exiting..."
             )
 
         if not subvolume.has_snapshots():
@@ -156,33 +172,43 @@ class Model:
         logger = self._logger
         root_device = self.root_device
         root = root_device.root
-        filesystem = root.filesystem
-        mount_point = filesystem.mount_point
         refind_config = self._refind_config
         matched_boot_stanzas = refind_config.find_boot_stanzas_matched_with(root)
 
         if not helpers.has_items(matched_boot_stanzas):
-            logger.error(f"Could not find boot stanzas matched with '{mount_point}'!")
+            logger.error(
+                "Could not find a boot stanza matched with the root partition!"
+            )
 
             return False
 
         suffix = helpers.item_count_suffix(matched_boot_stanzas)
 
         logger.info(
-            f"Found {len(matched_boot_stanzas)} boot stanza{suffix} matched with '{mount_point}'."
+            f"Found {len(matched_boot_stanzas)} boot "
+            f"stanza{suffix} matched with the root partition."
         )
 
         return True
 
     def check_prepared_snapshots(self) -> bool:
         logger = self._logger
-        snapshot_preparation_result = self.snapshot_preparation_result
-        has_changes = snapshot_preparation_result.has_changes
+        persistence_provider = self._persistence_provider
+        package_config = self.package_config
+        snapshot_preparation_result = self.preparation_result
+        previous_run_result = persistence_provider.get_previous_run_result()
+        previous_snapshot_manipulation = previous_run_result.snapshot_manipulation
+        current_snapshot_manipulation = package_config.snapshot_manipulation
+        changes_detected = (
+            snapshot_preparation_result.has_changes
+            or current_snapshot_manipulation != previous_snapshot_manipulation
+        )
+
+        if not changes_detected:
+            raise UnchangedConfiguration("No changes were detected, aborting...")
+
         snapshots_for_addition = snapshot_preparation_result.snapshots_for_addition
         snapshots_for_removal = snapshot_preparation_result.snapshots_for_removal
-
-        if not has_changes:
-            raise UnchangedConfiguration("No changes were detected, aborting...")
 
         if helpers.has_items(snapshots_for_addition):
             suffix = helpers.item_count_suffix(snapshots_for_addition)
@@ -223,9 +249,22 @@ class Model:
                 block_device_filter(BlockDevice.has_boot),
             )
         else:
-            block_devices = BlockDevices.empty()
+            block_devices = BlockDevices.none()
 
         self._block_devices = block_devices
+
+    def initialize_preparation_result_from(
+        self,
+        snapshots_for_addition: List[Subvolume],
+        snapshots_for_removal: List[Subvolume],
+    ) -> None:
+        has_changes = helpers.has_items(snapshots_for_addition) or helpers.has_items(
+            snapshots_for_removal
+        )
+
+        self._preparation_result = PreparationResult(
+            has_changes, snapshots_for_addition, snapshots_for_removal
+        )
 
     def should_migrate_paths_in_options(self) -> bool:
         return self.boot_device is None
@@ -287,9 +326,5 @@ class Model:
         self._refind_config = value
 
     @property
-    def snapshot_preparation_result(self) -> SnapshotPreparationResult:
-        return helpers.none_throws(self._snapshot_preparation_result)
-
-    @snapshot_preparation_result.setter
-    def snapshot_preparation_result(self, value: SnapshotPreparationResult) -> None:
-        self._snapshot_preparation_result = value
+    def preparation_result(self) -> PreparationResult:
+        return helpers.none_throws(self._preparation_result)

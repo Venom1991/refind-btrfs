@@ -6,8 +6,9 @@
 
 # [[snapshot-search]]
 ## Array of objects used to configure the behavior of searching for snapshots.
-## The directory (or directories) listed in this array are also
-## used to configure the systemd path unit.
+## The directory (or directories) listed in this array (including nested
+## directories, up to "max_depth" - 1) are also watched for changes by the
+## background running mode.
 #
 # dir = <string>
 ## Directory in which to search for snapshots (absolute filesystem path).
@@ -22,8 +23,9 @@
 #
 # max_depth = <int>
 ## Maximum depth relative to the search directory.
-## WARNING: Defining a large value can seriously impact performance in case
-## the tree (whose root is the search directory) is sufficiently large.
+## WARNING: Defining a large value can seriously impact performance (of both
+## searching for snapshots and watching for directory changes) in case the tree
+## (whose root is the search directory) is sufficiently large (deep and/or wide).
 
 [[snapshot-search]]
 dir = "/.snapshots"

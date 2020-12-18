@@ -28,11 +28,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, List, NamedTuple, Optional, Set
 from uuid import UUID
 
-from more_itertools import take
-
-from refind_btrfs.utility import helpers
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
+from refind_btrfs.utility import helpers
 
 if TYPE_CHECKING:
     from refind_btrfs.common.abc import DeviceCommand
@@ -46,12 +44,6 @@ class NumIdRelation(NamedTuple):
 class UuidRelation(NamedTuple):
     self_uuid: UUID
     parent_uuid: UUID
-
-
-class SnapshotPreparationResult(NamedTuple):
-    snapshots_for_addition: List[Subvolume]
-    snapshots_for_removal: List[Subvolume]
-    has_changes: bool
 
 
 class Subvolume:
@@ -77,6 +69,9 @@ class Subvolume:
         self._snapshots: Optional[Set[Subvolume]] = None
 
     def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
         if isinstance(other, Subvolume):
             return self.uuid == other.uuid
 
@@ -136,36 +131,6 @@ class Subvolume:
             UuidRelation(constants.EMPTY_UUID, self.uuid),
             NumIdRelation(0, self.num_id),
             False,
-        )
-
-    def prepare_snapshots(
-        self,
-        count: int,
-        bootable_snapshots: List[Subvolume],
-        cleanup_exclusion: Set[Subvolume],
-    ) -> SnapshotPreparationResult:
-        selected_snapshots = take(
-            count, sorted(helpers.none_throws(self.snapshots), reverse=True)
-        )
-        snapshots_union = cleanup_exclusion.union(selected_snapshots)
-        snapshots_for_addition = [
-            snapshot
-            for snapshot in selected_snapshots
-            if snapshot.can_be_added(bootable_snapshots)
-        ]
-        snapshots_for_removal = [
-            snapshot
-            for snapshot in bootable_snapshots
-            if snapshot.can_be_removed(snapshots_union)
-        ]
-
-        return SnapshotPreparationResult(
-            snapshots_for_addition,
-            snapshots_for_removal,
-            (
-                helpers.has_items(snapshots_for_addition)
-                or helpers.has_items(snapshots_for_removal)
-            ),
         )
 
     def is_snapshot(self) -> bool:

@@ -21,9 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from refind_btrfs.common import PackageConfig
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from refind_btrfs.common import PackageConfig
 
 
 class BasePackageConfigProvider(ABC):

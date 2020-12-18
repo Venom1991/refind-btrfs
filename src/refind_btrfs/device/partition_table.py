@@ -41,6 +41,9 @@ class PartitionTable:
         self._partitions: Optional[List[Partition]] = None
 
     def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
         if isinstance(other, PartitionTable):
             return self.uuid == other.uuid
 

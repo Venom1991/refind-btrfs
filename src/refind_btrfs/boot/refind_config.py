@@ -24,13 +24,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import chain
-from os import stat_result
 from pathlib import Path
 from typing import Generator, Iterable, List, Optional
 
 from more_itertools import always_iterable
 
 from refind_btrfs.common import constants
+from refind_btrfs.common.abc import BaseConfig
 from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.subvolume import Subvolume
@@ -40,23 +40,12 @@ from .boot_stanza import BootStanza
 from .migrations import Migration
 
 
-class RefindConfig:
+class RefindConfig(BaseConfig):
     def __init__(self, file_path: Path) -> None:
-        self._file_path = file_path
-        self._file_stat: Optional[stat_result] = None
+        super().__init__(file_path)
+
         self._boot_stanzas: Optional[List[BootStanza]] = None
         self._included_configs: Optional[List[RefindConfig]] = None
-
-        self.refresh_file_stat()
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, RefindConfig):
-            self_file_path_resolved = self.file_path.resolve()
-            other_file_path_resolved = other.file_path.resolve()
-
-            return self_file_path_resolved == other_file_path_resolved
-
-        return False
 
     def with_boot_stanzas(self, boot_stanzas: Iterable[BootStanza]) -> RefindConfig:
         self._boot_stanzas = list(boot_stanzas)
@@ -69,21 +58,6 @@ class RefindConfig:
         self._included_configs = list(include_configs)
 
         return self
-
-    def refresh_file_stat(self):
-        file_path = self.file_path
-
-        if file_path.exists():
-            self._file_stat = file_path.stat()
-
-    def has_been_modified(self, file_path: Path) -> bool:
-        if file_path.exists():
-            current_file_stat = helpers.none_throws(self.file_stat)
-            actual_file_stat = file_path.stat()
-
-            return current_file_stat.st_mtime != actual_file_stat.st_mtime
-
-        return True
 
     def find_boot_stanzas_matched_with(self, partition: Partition) -> List[BootStanza]:
         all_boot_stanzas = self.all_boot_stanzas
@@ -133,14 +107,6 @@ class RefindConfig:
                 included_configs[index] = boot_stanza_config
 
             yield boot_stanza_config
-
-    @property
-    def file_path(self) -> Path:
-        return self._file_path
-
-    @property
-    def file_stat(self) -> Optional[stat_result]:
-        return self._file_stat
 
     @property
     def boot_stanzas(self) -> Optional[List[BootStanza]]:

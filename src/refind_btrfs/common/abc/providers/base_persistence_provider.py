@@ -21,15 +21,27 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING, Optional
 
-from refind_btrfs.boot import RefindConfig
-from refind_btrfs.device.subvolume import Subvolume
+if TYPE_CHECKING:
+    from refind_btrfs.boot import RefindConfig
+    from refind_btrfs.common import PackageConfig
+    from refind_btrfs.state_management.model import ProcessingResult
 
 
 class BasePersistenceProvider(ABC):
+    @abstractmethod
+    def get_package_config(self) -> Optional[PackageConfig]:
+        pass
+
+    @abstractmethod
+    def save_package_config(self, value: PackageConfig) -> None:
+        pass
+
     @abstractmethod
     def get_refind_config(self, file_path: Path) -> Optional[RefindConfig]:
         pass
@@ -39,9 +51,9 @@ class BasePersistenceProvider(ABC):
         pass
 
     @abstractmethod
-    def get_bootable_snapshots(self) -> List[Subvolume]:
+    def get_previous_run_result(self) -> ProcessingResult:
         pass
 
     @abstractmethod
-    def save_bootable_snapshots(self, value: List[Subvolume]) -> None:
+    def save_current_run_result(self, value: ProcessingResult) -> None:
         pass

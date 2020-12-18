@@ -43,6 +43,9 @@ class Partition:
         self._filesystem: Optional[Filesystem] = None
 
     def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
         if isinstance(other, Partition):
             return self.uuid == other.uuid
 

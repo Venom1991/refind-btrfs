@@ -112,8 +112,9 @@ class SnapshotManipulationConfigKey(Enum):
 
 @unique
 class LocalDbKey(Enum):
+    PACKAGE_CONFIG = "package_config"
     REFIND_CONFIGS = "refind_configs"
-    BOOTABLE_SNAPSHOTS = "bootable_snapshots"
+    PROCESSING_RESULT = "processing_result"
 
 
 @unique

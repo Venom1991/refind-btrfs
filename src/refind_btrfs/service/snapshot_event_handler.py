@@ -120,7 +120,8 @@ class SnapshotEventHandler(FileSystemEventHandler):
 
     def _is_snapshot_deleted(self, deleted_directory: Path) -> bool:
         persistence_provider = self._persistence_provider
-        bootable_snapshots = persistence_provider.get_bootable_snapshots()
+        previous_run_result = persistence_provider.get_previous_run_result()
+        bootable_snapshots = previous_run_result.bootable_snapshots
         deleted_snapshots = self._deleted_snapshots
 
         if helpers.has_items(bootable_snapshots):

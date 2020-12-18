@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, List, Optional, cast
+from typing import Generator, List, cast
 from uuid import UUID
 
 from injector import inject
@@ -40,7 +40,11 @@ from refind_btrfs.common import (
     SnapshotSearch,
     constants,
 )
-from refind_btrfs.common.abc import BaseLoggerFactory, BasePackageConfigProvider
+from refind_btrfs.common.abc import (
+    BaseLoggerFactory,
+    BasePackageConfigProvider,
+    BasePersistenceProvider,
+)
 from refind_btrfs.common.enums import (
     PathRelation,
     SnapshotManipulationConfigKey,
@@ -55,12 +59,17 @@ from . import helpers
 
 class FilePackageConfigProvider(BasePackageConfigProvider):
     @inject
-    def __init__(self, logger_factory: BaseLoggerFactory) -> None:
+    def __init__(
+        self,
+        logger_factory: BaseLoggerFactory,
+        persistence_provider: BasePersistenceProvider,
+    ) -> None:
         self._logger = logger_factory.logger(__name__)
-        self._config: Optional[PackageConfig] = None
+        self._persistence_provider = persistence_provider
 
     def get_config(self) -> PackageConfig:
-        config = self._config
+        persistence_provider = self._persistence_provider
+        config = persistence_provider.get_package_config()
 
         if config is None:
             logger = self._logger
@@ -83,7 +92,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             else:
                 config = FilePackageConfigProvider._read_config_from(toml_document)
 
-            self._config = config
+            persistence_provider.save_package_config(config)
 
         return config
 

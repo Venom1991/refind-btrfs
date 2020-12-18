@@ -21,6 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+from .base_config import BaseConfig
+from .base_runner import BaseRunner
 from .commands import DeviceCommand, SubvolumeCommand
 from .factories import (
     BaseDeviceCommandFactory,
@@ -32,4 +34,3 @@ from .providers import (
     BasePersistenceProvider,
     BaseRefindConfigProvider,
 )
-from .base_runner import BaseRunner
