@@ -33,7 +33,7 @@ It goes without saying that the consequence of having this kind of a setup is be
 This tool will also detect a situation where / is mounted as a snapshot (which means that you've already booted into one), issue a warning and simply exit whereas, for instance, [Snapper](http://snapper.io/) will happily continue creating its snapshots. I could perhaps make this behavior configurable but currently it isn't.
 
 ## Prerequisites
-The following conditions (some are probably superfluous at this point) need to be satisfied in order for this tool to function correctly:
+The following conditions (some are probably superfluous at this point) must be satisfied in order for this tool to function correctly:
 * mounted ESP (no automatic discovery and/or mounting is supported)
 * Btrfs formatted filesystem with a subvolume mounted as /
 * at least one snapshot of the root subvolume
@@ -201,8 +201,9 @@ Most relevant dependencies:
 * block device and ESP information is gathered using [lsblk](https://man7.org/linux/man-pages/man8/lsblk.8.html) (supports JSON output)
 * mtab information is gathered using [findmnt](https://man7.org/linux/man-pages/man8/findmnt.8.html) (same remark applies regarding the output)
 * all of the mentioned subvolume and snapshot operations are performed using [libbtrfsutil](https://github.com/kdave/btrfs-progs/tree/master/libbtrfsutil)
-* [ANLTR4](https://github.com/antlr/antlr4) was used to generate the lexer and parser used to analyze rEFInd config files
+* [ANLTR4](https://github.com/antlr/antlr4) was used to generate the lexer and parser required for rEFInd config files' analyses
 * [Watchdog](https://github.com/gorakhargosh/watchdog) is used for the snapshot directory watching feature and is utilized in a non-recursive fashion (watches all of the configured search directories as well as directories nested under these, up to configured maximum depth reduced by one)
+* [python-systemd](https://github.com/systemd/python-systemd) is used for notifying systemd about the service's readiness (because its type is set to "notify") and also for logging to the journal
 
 [Shelve](https://docs.python.org/3/library/shelve.html) is used to keep track of currently selected snapshots and also to avoid analyzing the rEFInd config file each time as it is quite an expensive task. A new analysis is performed in case the current and actual times of modification differ ([st_mtime](https://docs.python.org/3/library/os.html#os.stat_result.st_mtime) is used for that purpose) which means that simply touching the file should also trigger a new analysis (file hashes aren't computed nor consequently compared). This fact also explains the need for a directory in /var/lib as the database file resides in it.
 
