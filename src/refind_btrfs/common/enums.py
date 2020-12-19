@@ -91,6 +91,7 @@ class PathRelation(Enum):
 class TopLevelConfigKey(Enum):
     SNAPSHOT_SEARCH = "snapshot-search"
     SNAPSHOT_MANIPULATION = "snapshot-manipulation"
+    BOOT_STANZA_GENERATION = "boot-stanza-generation"
 
 
 @unique
@@ -102,12 +103,17 @@ class SnapshotSearchConfigKey(Enum):
 
 @unique
 class SnapshotManipulationConfigKey(Enum):
-    REFIND_CONFIG = "refind_config"
     COUNT = "count"
-    INCLUDE_SUB_MENUS = "include_sub_menus"
     MODIFY_READ_ONLY_FLAG = "modify_read_only_flag"
     DESTINATION_DIRECTORY = "destination_dir"
     CLEANUP_EXCLUSION = "cleanup_exclusion"
+
+
+@unique
+class BootStanzaGenerationConfigKey(Enum):
+    REFIND_CONFIG = "refind_config"
+    INCLUDE_PATHS = "include_paths"
+    INCLUDE_SUB_MENUS = "include_sub_menus"
 
 
 @unique

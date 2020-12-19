@@ -68,9 +68,10 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         should_begin_search = config_file_path is None or not config_file_path.exists()
 
         if should_begin_search:
-            package_config = self._package_config_provider.get_config()
-            snapshot_manipulation = package_config.snapshot_manipulation
-            refind_config_file = snapshot_manipulation.refind_config
+            package_config_provider = self._package_config_provider
+            package_config = package_config_provider.get_config()
+            boot_stanza_generation = package_config.boot_stanza_generation
+            refind_config_file = boot_stanza_generation.refind_config
 
             logger.info(
                 f"Searching for the '{refind_config_file}' file on '{partition.name}'."

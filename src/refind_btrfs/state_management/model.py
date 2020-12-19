@@ -28,7 +28,7 @@ from typing import Callable, List, NamedTuple, Optional
 from more_itertools import only
 
 from refind_btrfs.boot import RefindConfig
-from refind_btrfs.common import PackageConfig, SnapshotManipulation, constants
+from refind_btrfs.common import BootStanzaGeneration, PackageConfig, constants
 from refind_btrfs.common.abc import (
     BaseLoggerFactory,
     BasePackageConfigProvider,
@@ -62,7 +62,7 @@ class PreparationResult(NamedTuple):
 
 class ProcessingResult(NamedTuple):
     bootable_snapshots: List[Subvolume]
-    snapshot_manipulation: SnapshotManipulation
+    boot_stanza_generation: BootStanzaGeneration
 
     @classmethod
     def none(cls) -> ProcessingResult:
@@ -197,11 +197,11 @@ class Model:
         package_config = self.package_config
         snapshot_preparation_result = self.preparation_result
         previous_run_result = persistence_provider.get_previous_run_result()
-        previous_snapshot_manipulation = previous_run_result.snapshot_manipulation
-        current_snapshot_manipulation = package_config.snapshot_manipulation
+        previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
+        current_boot_stanza_generation = package_config.boot_stanza_generation
         changes_detected = (
             snapshot_preparation_result.has_changes
-            or current_snapshot_manipulation != previous_snapshot_manipulation
+            or current_boot_stanza_generation != previous_boot_stanza_generation
         )
 
         if not changes_detected:
@@ -266,8 +266,20 @@ class Model:
             has_changes, snapshots_for_addition, snapshots_for_removal
         )
 
-    def should_migrate_paths_in_options(self) -> bool:
-        return self.boot_device is None
+    def should_include_sub_menus_during_generation(self) -> bool:
+        package_config = self.package_config
+        boot_stanza_generation = package_config.boot_stanza_generation
+
+        return boot_stanza_generation.include_sub_menus
+
+    def should_include_paths_during_generation(self) -> bool:
+        package_config = self.package_config
+        boot_stanza_generation = package_config.boot_stanza_generation
+
+        if boot_stanza_generation.include_paths:
+            return self.boot_device is None
+
+        return False
 
     @property
     def conditions(self) -> List[str]:

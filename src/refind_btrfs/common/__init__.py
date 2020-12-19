@@ -22,4 +22,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from .checkable_observer import CheckableObserver
-from .package_config import PackageConfig, SnapshotSearch, SnapshotManipulation
+from .package_config import (
+    BootStanzaGeneration,
+    PackageConfig,
+    SnapshotManipulation,
+    SnapshotSearch,
+)

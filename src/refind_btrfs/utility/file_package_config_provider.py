@@ -35,6 +35,7 @@ from tomlkit.toml_document import TOMLDocument
 from tomlkit.toml_file import TOMLFile
 
 from refind_btrfs.common import (
+    BootStanzaGeneration,
     PackageConfig,
     SnapshotManipulation,
     SnapshotSearch,
@@ -46,6 +47,7 @@ from refind_btrfs.common.abc import (
     BasePersistenceProvider,
 )
 from refind_btrfs.common.enums import (
+    BootStanzaGenerationConfigKey,
     PathRelation,
     SnapshotManipulationConfigKey,
     SnapshotSearchConfigKey,
@@ -104,6 +106,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     def _read_config_from(toml_document: TOMLDocument):
         snapshot_searches_key = TopLevelConfigKey.SNAPSHOT_SEARCH.value
         snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
+        boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
 
         if snapshot_searches_key not in toml_document:
             raise PackageConfigError(
@@ -126,7 +129,6 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         snapshot_manipulation = FilePackageConfigProvider._map_to_snapshot_manipulation(
             cast(Table, toml_document[snapshot_manipulation_key])
         )
-
         output_directory = snapshot_manipulation.destination_directory
 
         for snapshot_search in snapshot_searches:
@@ -152,7 +154,20 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                     f"the output directory '{output_directory}'!"
                 )
 
-        return PackageConfig(snapshot_searches, snapshot_manipulation)
+        if boot_stanza_generation_key not in toml_document:
+            raise PackageConfigError(
+                f"The '{boot_stanza_generation_key}' object is required!"
+            )
+
+        boot_stanza_generation = (
+            FilePackageConfigProvider._map_to_boot_stanza_generation(
+                cast(Table, toml_document[boot_stanza_generation_key])
+            )
+        )
+
+        return PackageConfig(
+            snapshot_searches, snapshot_manipulation, boot_stanza_generation
+        )
 
     @staticmethod
     def _map_to_snapshot_searches(
@@ -216,11 +231,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     def _map_to_snapshot_manipulation(
         snapshot_manipulation_value: Table,
     ) -> SnapshotManipulation:
-        refind_config_key: str = SnapshotManipulationConfigKey.REFIND_CONFIG.value
         count_key: str = SnapshotManipulationConfigKey.COUNT.value
-        include_sub_menus_key: str = (
-            SnapshotManipulationConfigKey.INCLUDE_SUB_MENUS.value
-        )
         modify_read_only_flag_key: str = (
             SnapshotManipulationConfigKey.MODIFY_READ_ONLY_FLAG.value
         )
@@ -232,7 +243,6 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         )
         all_keys = [
             count_key,
-            include_sub_menus_key,
             modify_read_only_flag_key,
             destination_directory_key,
             cleanup_exclusion_key,
@@ -241,15 +251,6 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         for key in all_keys:
             if key not in snapshot_manipulation_value:
                 raise PackageConfigError(f"Missing option '{key}'!")
-
-        refind_config_value = snapshot_manipulation_value[refind_config_key]
-
-        if not isinstance(refind_config_value, str):
-            raise PackageConfigError(
-                f"The '{refind_config_key}' option must be a string!"
-            )
-        else:
-            refind_config = str(refind_config_value)
 
         count_value = snapshot_manipulation_value[count_key]
 
@@ -275,15 +276,6 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             raise PackageConfigError(
                 f"The '{count_key}' option must be either an integer or a string!"
             )
-
-        include_sub_menus_value = snapshot_manipulation_value[include_sub_menus_key]
-
-        if not isinstance(include_sub_menus_value, bool):
-            raise PackageConfigError(
-                f"The '{include_sub_menus_key}' option must be a bool!"
-            )
-        else:
-            include_sub_menus = bool(include_sub_menus_value)
 
         modify_read_only_flag_value = snapshot_manipulation_value[
             modify_read_only_flag_key
@@ -332,9 +324,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                 uuids.append(uuid)
 
         return SnapshotManipulation(
-            refind_config,
             count,
-            include_sub_menus,
             modify_read_only_flag,
             destination_directory,
             {
@@ -351,3 +341,47 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                 ]
             },
         )
+
+    @staticmethod
+    def _map_to_boot_stanza_generation(
+        boot_stanza_generation_value: Table,
+    ) -> BootStanzaGeneration:
+        refind_config_key: str = BootStanzaGenerationConfigKey.REFIND_CONFIG.value
+        include_paths_key: str = BootStanzaGenerationConfigKey.INCLUDE_PATHS.value
+        include_sub_menus_key: str = (
+            BootStanzaGenerationConfigKey.INCLUDE_SUB_MENUS.value
+        )
+        all_keys = [refind_config_key, include_paths_key, include_sub_menus_key]
+
+        for key in all_keys:
+            if key not in boot_stanza_generation_value:
+                raise PackageConfigError(f"Missing option '{key}'!")
+
+        refind_config_value = boot_stanza_generation_value[refind_config_key]
+
+        if not isinstance(refind_config_value, str):
+            raise PackageConfigError(
+                f"The '{refind_config_key}' option must be a string!"
+            )
+        else:
+            refind_config = str(refind_config_value)
+
+        include_paths_value = boot_stanza_generation_value[include_paths_key]
+
+        if not isinstance(include_paths_value, bool):
+            raise PackageConfigError(
+                f"The '{include_paths_key}' option must be a bool!"
+            )
+        else:
+            include_paths = bool(include_paths_value)
+
+        include_sub_menus_value = boot_stanza_generation_value[include_sub_menus_key]
+
+        if not isinstance(include_sub_menus_value, bool):
+            raise PackageConfigError(
+                f"The '{include_sub_menus_key}' option must be a bool!"
+            )
+        else:
+            include_sub_menus = bool(include_sub_menus_value)
+
+        return BootStanzaGeneration(refind_config, include_paths, include_sub_menus)

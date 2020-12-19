@@ -37,22 +37,9 @@ max_depth = 2
 ## to enable booting into snapshots as well as deleting those that aren't
 ## needed anymore.
 #
-# refind_config = <string>
-## Name of rEFInd's main configuration file which must reside somewhere on
-## the ESP.
 # count = <int> or <string>
 ## Number of snapshots (sorted descending by creation time) to include or
 ## "inf" to always include every currently present snapshot.
-#
-# include_sub_menus = <bool>
-## Whether to include sub-menus ("submenuentry") defined as part of the source
-## boot stanza in the generated boot stanza. If set to "true", only those
-## sub-menus which do not override the main stanza's "options" field and which
-## do not delete (i.e., set it to nothing) its "initrd" field are taken into
-## consideration.
-## WARNING: Enabling this option in combination with setting a large "count"
-## value (greater than 10, for example) or, worse yet, by setting it to "inf"
-## can potentially result in an overcrowded "Boot Options" menu.
 #
 # modify_read_only_flag = <bool>
 ## Whether to change the read-only flag of a snapshot instead of creating
@@ -77,9 +64,35 @@ max_depth = 2
 ## with regards to the "modify_read_only_flag" option.
 
 [snapshot-manipulation]
-refind_config = "refind.conf"
 count = 5
-include_sub_menus = false
 modify_read_only_flag = false
 destination_dir = "/root/.refind-btrfs"
 cleanup_exclusion = []
+
+# [boot-stanza-generation]
+## Object used to configure the process of combining the source boot stanza
+## with previously prepared snapshots into a generated boot stanza.
+#
+# refind_config = <string>
+## Name of rEFInd's main configuration file which must reside somewhere on
+## the ESP.
+#
+# include_paths = <bool>
+## Whether to adjust the "loader" and "initrd" paths found in the source boot
+## stanza. Setting this option to "true" while having a separate /boot
+## partition has no meaning and is ignored.
+#
+# include_sub_menus = <bool>
+## Whether to include sub-menus ("submenuentry") defined as part of the source
+## boot stanza in the generated boot stanza. If set to "true", only those
+## sub-menus which do not override the main stanza's "loader" and "options"
+## fields and which do not delete (i.e., set it to nothing) its "initrd" field
+## are taken into consideration.
+## WARNING: Enabling this option in combination with setting a large "count"
+## value (greater than 10, for example) or, worse yet, by setting it to "inf"
+## can potentially result in an overcrowded "Boot Options" menu.
+
+[boot-stanza-generation]
+refind_config = "refind.conf"
+include_paths = true
+include_sub_menus = false

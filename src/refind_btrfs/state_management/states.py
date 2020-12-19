@@ -193,15 +193,14 @@ class ProcessChangesState(State):
 
         root = model.root_partition
         sorted_bootable_snapshots = sorted(bootable_snapshots, reverse=True)
-        include_paths = model.should_migrate_paths_in_options()
-        package_config = model.package_config
-        snapshot_manipulation = package_config.snapshot_manipulation
+        include_paths = model.should_include_paths_during_generation()
+        include_sub_menus = model.should_include_sub_menus_during_generation()
         refind_config = model.refind_config
         generated_refind_configs = refind_config.generate_new_from(
             root,
             sorted_bootable_snapshots,
             include_paths,
-            snapshot_manipulation.include_sub_menus,
+            include_sub_menus,
         )
         refind_config_provider = self._refind_config_provider
 
@@ -209,6 +208,10 @@ class ProcessChangesState(State):
             refind_config_provider.save_config(generated_refind_config)
 
         refind_config_provider.append_to_config(refind_config)
+
+        package_config = model.package_config
+        current_boot_stanza_generation = package_config.boot_stanza_generation
+
         persistence_provider.save_current_run_result(
-            ProcessingResult(sorted_bootable_snapshots, snapshot_manipulation)
+            ProcessingResult(sorted_bootable_snapshots, current_boot_stanza_generation)
         )

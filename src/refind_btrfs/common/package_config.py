@@ -49,20 +49,24 @@ class SnapshotSearch(NamedTuple):
 
 
 class SnapshotManipulation(NamedTuple):
-    refind_config: str
     count: int
-    include_sub_menus: bool
     modify_read_only_flag: bool
     destination_directory: Path
     cleanup_exclusion: Set[Subvolume]
+
+
+class BootStanzaGeneration(NamedTuple):
+    refind_config: str
+    include_paths: bool
+    include_sub_menus: bool
 
     def __eq__(self, other: object) -> bool:
         if self is other:
             return True
 
-        if isinstance(other, SnapshotManipulation):
+        if isinstance(other, BootStanzaGeneration):
             return (
-                self.count == other.count
+                self.include_paths == other.include_paths
                 and self.include_sub_menus == other.include_sub_menus
             )
 
@@ -74,11 +78,13 @@ class PackageConfig(BaseConfig):
         self,
         snapshot_searches: List[SnapshotSearch],
         snapshot_manipulation: SnapshotManipulation,
+        boot_stanza_generation: BootStanzaGeneration,
     ) -> None:
         super().__init__(constants.PACKAGE_CONFIG_FILE)
 
         self._snapshot_searches = snapshot_searches
         self._snapshot_manipulation = snapshot_manipulation
+        self._boot_stanza_generation = boot_stanza_generation
 
     def _get_directories_for_watch(self) -> Generator[Path, None, None]:
         snapshot_searches = self.snapshot_searches
@@ -97,6 +103,10 @@ class PackageConfig(BaseConfig):
     @property
     def snapshot_manipulation(self) -> SnapshotManipulation:
         return self._snapshot_manipulation
+
+    @property
+    def boot_stanza_generation(self) -> BootStanzaGeneration:
+        return self._boot_stanza_generation
 
     @property
     def directories_for_watch(self) -> Set[Path]:

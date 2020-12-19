@@ -100,7 +100,8 @@ class SnapshotEventHandler(FileSystemEventHandler):
                 machine.run()
 
     def _is_snapshot_created(self, created_directory: Path) -> bool:
-        package_config = self._package_config_provider.get_config()
+        package_config_provider = self._package_config_provider
+        package_config = package_config_provider.get_config()
         snapshot_searches = package_config.snapshot_searches
         parents = created_directory.parents
 
