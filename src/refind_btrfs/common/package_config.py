@@ -79,7 +79,6 @@ class PackageConfig(BaseConfig):
 
         self._snapshot_searches = snapshot_searches
         self._snapshot_manipulation = snapshot_manipulation
-        self._directories_for_watch = set(self._get_directories_for_watch())
 
     def _get_directories_for_watch(self) -> Generator[Path, None, None]:
         snapshot_searches = self.snapshot_searches
@@ -101,4 +100,4 @@ class PackageConfig(BaseConfig):
 
     @property
     def directories_for_watch(self) -> Set[Path]:
-        return self._directories_for_watch
+        return set(self._get_directories_for_watch())

@@ -84,7 +84,6 @@ class WatchdogRunner(BaseRunner):
                 )
 
                 for directory in watched_directories:
-
                     observer.schedule(
                         event_handler,
                         str(directory),
