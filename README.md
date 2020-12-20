@@ -55,7 +55,7 @@ journalctl -u refind-btrfs -b
 ```
 
 Alternatively, there exists a PyPI [package](https://pypi.org/project/refind-btrfs/) but bear in mind that since [libbtrfsutil](https://github.com/kdave/btrfs-progs/tree/master/libbtrfsutil) isn't available on PyPI it needs to be already present in the system site packages (its Python bindings, to be precise) because it cannot be automatically pulled in as a dependency. Chances are that it is available for your distribution of choice (search for a package named "btrfs-progs") but you most probably already have it installed as I suppose you are using Btrfs, after all.  
-Also, all files found [here](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data) should be copied to the following locations:
+Also, every file contained in [this](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data) directory should be copied to the following locations:
 * refind-btrfs script to /usr/bin (or wherever it is you keep your system-wide executables)
 * refind-btrfs.conf-sample as refind-btrfs.conf (without the "-sample" suffix) to /etc
 * refind-btrfs.service to /usr/lib/systemd/system (if you are using systemd and wish to utilize the snapshot directory watching feature)
@@ -64,7 +64,7 @@ You should also create an empty directory named refind-btrfs in /var/lib as the 
 
 ## Configuration
 Every option is thoroughly explained in the sample config [file](https://github.com/Venom1991/refind-btrfs/blob/master/src/refind_btrfs/data/refind-btrfs.conf-sample).  
-In case you've opted to use the provided systemd service and wish to change the search directories (in this context, these are actually watched directories) in the config file while it is running you must restart it manually after doing so because the directory observer is started only once and no automatic restart is performed.
+In case you've opted to use the provided systemd service and wish to change the search directories (in this context, these are actually watched directories) in the config file while it is running you must restart it manually after doing so because the directory observer is started only once and an automatic restart is not performed.
 
 The default configuration is meant to enable seamless integration with Snapper simply because I'm using it but the tool itself doesn't depend on it and ought to function with different setups. Also, by default the tool is configured for creating new writable snapshots intended for booting instead of in-place modification of the found snapshots' read-only flags as I believe this is the safer (or perhaps even saner) choice.
 
@@ -77,7 +77,7 @@ Given a setup such as this one:
   * / is on /dev/nvme0n1p8
   * /boot is included in /dev/nvme0n1p8 (**not** a separate partition)
 * the subvolume mounted as / is named @
-* fstab file's / mount point:
+* fstab file's root mount point:
 ```
 UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=256,subvol=/@ 0 0
 ```
@@ -116,7 +116,7 @@ The resultant snapshots should appear like this where the names are correct but 
 <br/>
 This naming scheme makes sense to me because when choosing a snapshot to boot from you most probably want to know when the original snapshot was created and not the one created from it because the time delay depends on when this tool was run and, if sufficiently large, can completely mislead you. If you've chosen to use the systemd service this delay shouldn't be significant (measuring a mere few seconds at worst, ideally).  
 
-The snapshot's fstab file should (after being modified) contain a / mount point which looks like this:  
+The snapshot's fstab file should (after being modified) contain a root mount point which looks like this:  
 
 ```
 UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=502,subvol=/@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00 0 0
@@ -124,7 +124,7 @@ UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd
 With this setup the newly created snapshot ended up being nested under the root subvolume but you can of course make your own adjustments as you see fit. This tool will only create the destination directory in case it doesn't exist. It wont do anything other than that.  
 I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it at /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00.
 
-A generated manual boot stanza's file name is formatted like "{volume}_{loader}.conf" and turned to all lowercase letter which would result in, for this example, a file named "arch_vmlinuz-linux.conf". This file is then saved in a subdirectory (relative to rEFInd's root directory) named "btrfs-snapshot-stanzas" and finally included in the main config file by appending an "include" option which would, again for this example, look like this: "include btrfs-snapshot-stanzas/arch_vmlinuz-linux.conf". This last step is performed only once, during an initial run. Afterwards, it is detected as already being included in the main config file.
+A generated manual boot stanza's file name is formatted like "{volume}_{loader}.conf" and converted to all lowercase letters which would result in, for this example, a file named "arch_vmlinuz-linux.conf". This file is then saved in a subdirectory (relative to rEFInd's root directory) named "btrfs-snapshot-stanzas" and finally included in the main config file by appending an "include" option which would, again for this example, look like this: "include btrfs-snapshot-stanzas/arch_vmlinuz-linux.conf". This last step is performed only once, during an initial run. Afterwards, it is detected as already being included in the main config file.
 
 The generated file's contents (representing the generated stanza) should look like this:
 ```
@@ -147,7 +147,7 @@ menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00)" {
 }
 ```
 As you've probably noticed, this tool leverages rEFInd's overriding features, that is to say "submenuentry" sections are used to incorporate successive snapshots into the stanza itself by overriding the "loader" and "initrd" fields of the main boot stanza which itself represents the latest snapshot.  
-If you've configured this tool to also take into account the original boot stanza's sub-menus the resulting generated boot stanza should look like this:
+If you've configured this tool to also take into account the original boot stanza's sub-menus the resultant generated boot stanza should look like this:
 ```
 menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00)" {
     icon /EFI/refind/icons/os_arch.png
@@ -194,7 +194,7 @@ menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00)" {
 }
 ```
 
-A couple of notable details are the fact that the "add_options" field (if it exists) of any given sub-menu belonging to a successive snapshot is merged with the "options" field of the corresponding snapshot's sub-menu and also the fact that the latest snapshot's sub-menus implicitly inherit those main stanza's fields which they themselves do not override in the original boot stanza which means that these sub-menus intentionally look fairly similar to their counterparts found in the original boot stanza.
+A couple of notable details are the fact that the "add_options" field (if it exists) of any given sub-menu belonging to a successive snapshot is merged with the "options" field of the corresponding snapshot's sub-menu and also the fact that the latest snapshot's sub-menus implicitly inherit those main stanza's fields which they themselves do not override in the original boot stanza. Consequently, these sub-menus' definitions are intentionally similar to their counterparts found in the original boot stanza.
 
 ## Implementation
 Most relevant dependencies:
