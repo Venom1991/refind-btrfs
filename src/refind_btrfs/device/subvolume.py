@@ -92,11 +92,17 @@ class Subvolume:
         return self
 
     def named(self) -> Subvolume:
-        formatted_time_created = self.time_created.strftime("%Y-%m-%d_%H-%M-%S")
         type_prefix = "ro" if self.is_read_only else "rw"
         type_prefix += "snap" if self.is_snapshot() else "subvol"
+        formatted_time_created = self.time_created.strftime("%Y-%m-%d_%H-%M-%S")
 
-        self._name = f"{type_prefix}_{formatted_time_created}"
+        if self.is_newly_created:
+            source_num_id = self._created_from.num_id
+            num_id = source_num_id
+        else:
+            num_id = self.num_id
+
+        self._name = f"{type_prefix}_{formatted_time_created}_{num_id}"
 
         return self
 
@@ -116,9 +122,9 @@ class Subvolume:
         return self
 
     def as_newly_created_from(self, created_from: Subvolume) -> Subvolume:
-        original_time_created = created_from.time_created
+        source_time_created = created_from.time_created
 
-        self._time_created = original_time_created
+        self._time_created = source_time_created
         self._created_from = created_from
 
         return self
@@ -127,11 +133,11 @@ class Subvolume:
         return Subvolume(
             constants.DEFAULT_PATH,
             constants.EMPTY_STR,
-            self.time_created,
+            datetime.min,
             UuidRelation(constants.EMPTY_UUID, self.uuid),
             NumIdRelation(0, self.num_id),
             False,
-        )
+        ).as_newly_created_from(self)
 
     def is_snapshot(self) -> bool:
         return self.parent_uuid != constants.EMPTY_UUID

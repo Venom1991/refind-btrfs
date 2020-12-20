@@ -7,8 +7,8 @@
             "request": "launch",
             "console": "integratedTerminal",
             "module": "refind_btrfs",
-            "cwd": "${workspaceRoot}/src",
-            "envFile": "${workspaceFolder}/env_files/.env",
+            "cwd": "${workspaceFolder}/src",
+            "envFile": "${workspaceFolder}/.env",
             "args": [
                 "--run-mode",
                 "one-time"
