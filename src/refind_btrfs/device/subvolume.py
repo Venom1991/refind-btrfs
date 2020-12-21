@@ -102,7 +102,7 @@ class Subvolume:
         else:
             num_id = self.num_id
 
-        self._name = f"{type_prefix}_{formatted_time_created}_{num_id}"
+        self._name = f"{type_prefix}_{formatted_time_created}_ID{num_id}"
 
         return self
 

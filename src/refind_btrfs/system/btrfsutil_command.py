@@ -116,8 +116,6 @@ class BtrfsUtilCommand(SubvolumeCommand):
         yield from chain.from_iterable(search_results)
 
     def get_bootable_snapshot_from(self, source: Subvolume) -> Subvolume:
-        destination: Optional[Subvolume] = None
-
         if source.is_read_only:
             snapshot_manipulation = self.package_config.snapshot_manipulation
             modify_read_only_flag = snapshot_manipulation.modify_read_only_flag

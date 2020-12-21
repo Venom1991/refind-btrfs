@@ -97,99 +97,101 @@ menuentry "Arch Linux - Stable" {
     }
 }
 ```
-* five read-only snapshots located in the /.snapshots directory where this directory is itself mounted as a subvolume named @snapper-root (this last bit isn't really all that relevant):  
-  * 1/snapshot created at 10-12-2020 01:00:00,
-  * 2/snapshot created at 11-12-2020 02:00:00,
-  * 3/snapshot created at 12-12-2020 03:00:00,
-  * 4/snapshot created at 13-12-2020 04:00:00 and
-  * 5/snapshot created at 14-12-2020 05:00:00
+* five read-only snapshots located in the /.snapshots directory where this directory is itself mounted as a subvolume named @snapper-root (this last bit isn't really all that relevant):
+
+    | Absolute Path          | Time of Creation    | Subvolume ID |
+    | ---------------------- | ------------------- | ------------ |
+    | /.snapshots/1/snapshot | 10-12-2020 01:00:00 | 498          |
+    | /.snapshots/2/snapshot | 11-12-2020 02:00:00 | 499          |
+    | /.snapshots/3/snapshot | 12-12-2020 03:00:00 | 500          |
+    | /.snapshots/4/snapshot | 13-12-2020 04:00:00 | 501          |
+    | /.snapshots/5/snapshot | 14-12-2020 05:00:00 | 502          |
+
 * refind-btrfs.conf file changed such that the "count" option is set to 3 instead of the default 5
 
-When run, this tool should select the latest three snapshots (3, 4 and 5 from the list) and create new, writable ones from these in the directory configured by the "destination_dir" option where each snapshot is named by formatting the time of creation ("YYYY-mm-dd_HH-MM-SS") of the snapshot it was created from, adding a "rwsnap" prefix to it and also adding its ID as a suffix (in case different snapshots have identical timestamps their monotonic IDs are there to ensure uniqueness) which means that, for example, snapshot number 5 is going to result in the creation of a snapshot named "rwsnap_2020-12-14_05-00-00_502".  
-<br/>
-The resultant snapshots should appear like this where the names are correct but the ID's are completely made up:
-| Name                           | ID  |
-| ------------------------------ | --- |
-| rwsnap_2020-12-12_03-00-00_500 | 500 |
-| rwsnap_2020-12-13_04-00-00_501 | 501 |
-| rwsnap_2020-12-14_05-00-00_502 | 502 |
-<br/>
+When run, this tool should select the latest three snapshots (3, 4 and 5 from the list) and create new, writable ones from these in the directory configured by the "destination_dir" option where each snapshot is named by formatting the time of creation ("YYYY-mm-dd_HH-MM-SS") of the snapshot it was created from, adding a "rwsnap" prefix to it and also adding the original snapshot's subvolume ID as a suffix. In the rare case when different snapshots have identical timestamps their monotonic numerical IDs are there to ensure uniqueness.
+
+Afterwards, the resultant snapshots' generated names should look like this:
+* rwsnap_2020-12-12_03-00-00_ID500,
+* rwsnap_2020-12-13_04-00-00_ID501 and
+* rwsnap_2020-12-14_05-00-00_ID502
+
 This naming scheme makes sense to me because when choosing a snapshot to boot from you most probably want to know when the original snapshot was created and not the one created from it because the time delay depends on when this tool was run and, if sufficiently large, can completely mislead you. If you've chosen to use the systemd service this delay shouldn't be significant (measuring a mere few seconds at worst, ideally).
 
 The snapshot's fstab file should (after being modified) contain a root mount point which looks like this:  
 
 ```
-UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=502,subvol=/@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502 0 0
+UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=502,subvol=/@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502 0 0
 ```
 With this setup the newly created snapshot ended up being nested under the root subvolume but you can of course make your own adjustments as you see fit. This tool will only create the destination directory in case it doesn't exist. It wont do anything other than that.  
-I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it at /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00_502 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00_502.
+I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it at /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00_ID502 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00_ID502.
 
 A generated manual boot stanza's file name is formatted like "{volume}_{loader}.conf" and converted to all lowercase letters which would result in, for this example, a file named "arch_vmlinuz-linux.conf". This file is then saved in a subdirectory (relative to rEFInd's root directory) named "btrfs-snapshot-stanzas" and finally included in the main config file by appending an "include" option which would, again for this example, look like this: "include btrfs-snapshot-stanzas/arch_vmlinuz-linux.conf". This last step is performed only once, during an initial run. Afterwards, it is detected as already being included in the main config file.
 
 The generated file's contents (representing the generated stanza) should look like this:
 ```
-menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_502)" {
+menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
     icon /EFI/refind/icons/os_arch.png
     volume ARCH
-    loader /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502/boot/vmlinuz-linux
-    initrd /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502/boot/initramfs-linux.img
-    options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502 initrd=@\root\.refind-btrfs\rwsnap_2020-12-14_05-00-00_502\boot\intel-ucode.img"
-    submenuentry "Arch Linux - Stable (rwsnap_2020-12-13_04-00-00_501)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/initramfs-linux.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_501\boot\intel-ucode.img"
+    loader /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502/boot/vmlinuz-linux
+    initrd /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502/boot/initramfs-linux.img
+    options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502 initrd=@\root\.refind-btrfs\rwsnap_2020-12-14_05-00-00_ID502\boot\intel-ucode.img"
+    submenuentry "Arch Linux - Stable (rwsnap_2020-12-13_04-00-00_ID501)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/initramfs-linux.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_ID501\boot\intel-ucode.img"
     }
-    submenuentry "Arch Linux - Stable (rwsnap_2020-12-12_03-00-00_500)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/initramfs-linux.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_500\boot\intel-ucode.img"
+    submenuentry "Arch Linux - Stable (rwsnap_2020-12-12_03-00-00_ID500)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/initramfs-linux.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_ID500\boot\intel-ucode.img"
     }
 }
 ```
 As you've probably noticed, this tool leverages rEFInd's overriding features, that is to say "submenuentry" sections are used to incorporate successive snapshots into the stanza itself by overriding the "loader" and "initrd" fields of the main boot stanza which itself represents the latest snapshot.  
 If you've configured this tool to also take into account the original boot stanza's sub-menus the resultant generated boot stanza should look like this:
 ```
-menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_502)" {
+menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
     icon /EFI/refind/icons/os_arch.png
     volume ARCH
-    loader /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502/boot/vmlinuz-linux
-    initrd /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502/boot/initramfs-linux.img
-    options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502 initrd=@\root\.refind-btrfs\rwsnap_2020-12-14_05-00-00_502\boot\intel-ucode.img"
-    submenuentry "Boot - fallback (rwsnap_2020-12-14_05-00-00_502)" {
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_502/boot/initramfs-linux-fallback.img
+    loader /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502/boot/vmlinuz-linux
+    initrd /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502/boot/initramfs-linux.img
+    options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502 initrd=@\root\.refind-btrfs\rwsnap_2020-12-14_05-00-00_ID502\boot\intel-ucode.img"
+    submenuentry "Boot - fallback (rwsnap_2020-12-14_05-00-00_ID502)" {
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502/boot/initramfs-linux-fallback.img
     }
-    submenuentry "Boot - terminal (rwsnap_2020-12-14_05-00-00_502)" {
+    submenuentry "Boot - terminal (rwsnap_2020-12-14_05-00-00_ID502)" {
         add_options "systemd.unit=multi-user.target"
     }
-    submenuentry "Arch Linux - Stable (rwsnap_2020-12-13_04-00-00_501)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/initramfs-linux.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_501\boot\intel-ucode.img"
+    submenuentry "Arch Linux - Stable (rwsnap_2020-12-13_04-00-00_ID501)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/initramfs-linux.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_ID501\boot\intel-ucode.img"
     }
-    submenuentry "Boot - fallback (rwsnap_2020-12-13_04-00-00_501)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/initramfs-linux-fallback.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_501\boot\intel-ucode.img"
+    submenuentry "Boot - fallback (rwsnap_2020-12-13_04-00-00_ID501)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/initramfs-linux-fallback.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_ID01\boot\intel-ucode.img"
     }
-    submenuentry "Boot - terminal (rwsnap_2020-12-13_04-00-00_501)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501/boot/initramfs-linux.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_501\boot\intel-ucode.img systemd.unit=multi-user.target"
+    submenuentry "Boot - terminal (rwsnap_2020-12-13_04-00-00_ID501)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501/boot/initramfs-linux.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-13_04-00-00_ID501 initrd=@\root\.refind-btrfs\rwsnap_2020-12-13_04-00-00_ID501\boot\intel-ucode.img systemd.unit=multi-user.target"
     }
-    submenuentry "Arch Linux - Stable (rwsnap_2020-12-12_03-00-00_500)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/initramfs-linux.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_500\boot\intel-ucode.img"
+    submenuentry "Arch Linux - Stable (rwsnap_2020-12-12_03-00-00_ID500)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/initramfs-linux.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_ID500\boot\intel-ucode.img"
     }
-    submenuentry "Boot - fallback (rwsnap_2020-12-12_03-00-00_500)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/initramfs-linux-fallback.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_500\boot\intel-ucode.img"
+    submenuentry "Boot - fallback (rwsnap_2020-12-12_03-00-00_ID500)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/initramfs-linux-fallback.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_ID500\boot\intel-ucode.img"
     }
-    submenuentry "Boot - terminal (rwsnap_2020-12-12_03-00-00_500)" {
-        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/vmlinuz-linux
-        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500/boot/initramfs-linux.img
-        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_500\boot\intel-ucode.img systemd.unit=multi-user.target"
+    submenuentry "Boot - terminal (rwsnap_2020-12-12_03-00-00_ID500)" {
+        loader /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/vmlinuz-linux
+        initrd /@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500/boot/initramfs-linux.img
+        options "root=PARTUUID=048d6fcd-c88c-504d-bd51-dfc0a5bf762d rw add_efi_memmap rootflags=subvol=@/root/.refind-btrfs/rwsnap_2020-12-12_03-00-00_ID500 initrd=@\root\.refind-btrfs\rwsnap_2020-12-12_03-00-00_ID500\boot\intel-ucode.img systemd.unit=multi-user.target"
     }
 }
 ```
