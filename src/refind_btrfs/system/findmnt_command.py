@@ -104,7 +104,7 @@ class FindmntCommand(DeviceCommand):
         return PartitionTable(
             constants.EMPTY_HEX_UUID, constants.MTAB_PT_TYPE
         ).with_partitions(
-            FindmntCommand._map_to_partitions(findmnt_partitions, block_device.name)
+            FindmntCommand._map_to_partitions(findmnt_partitions, device_name)
         )
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:

@@ -190,15 +190,15 @@ class BtrfsUtilCommand(SubvolumeCommand):
 
         if resolved_path not in searched_directories:
             subvolume = self.get_subvolume_from(resolved_path)
+            is_snapshot_of = subvolume is not None and subvolume.is_snapshot_of(parent)
 
             searched_directories.append(resolved_path)
 
-            if subvolume is not None:
-                if subvolume.is_snapshot_of(parent):
-                    yield subvolume
+            if is_snapshot_of:
+                yield subvolume
 
-                    if not is_nested:
-                        return
+                if not is_nested:
+                    return
 
             subdirectories = (child for child in directory.iterdir() if child.is_dir())
 

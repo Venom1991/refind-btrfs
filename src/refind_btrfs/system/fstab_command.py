@@ -88,11 +88,9 @@ class FstabCommand(DeviceCommand):
                         match = pattern.search(line)
 
                         if not match:
-                            mount_point = filesystem.mount_point
-
                             raise PartitionError(
-                                f"Could not find the expected mount options "
-                                f"in '{fstab_path}' for '{mount_point}'!"
+                                f"Could not find the root partition's expected "
+                                f"mount options in the '{fstab_path}' file!"
                             )
 
                         modified_mount_options = str(filesystem.mount_options)
@@ -129,15 +127,12 @@ class FstabCommand(DeviceCommand):
                 partition_table = PartitionTable(
                     uuid, constants.FSTAB_PT_TYPE
                 ).with_partitions(FstabCommand._map_to_partitions(fstab_file))
-
                 root = partition_table.root
 
                 if root is None:
-                    mount_point = str(constants.ROOT_DIR)
-
                     raise PartitionError(
-                        f"Could not find a line matched with "
-                        f"'{mount_point}' in '{fstab_path}'!"
+                        f"Could not find a mount point matched with "
+                        f"the root partition in the '{fstab_path}' file!"
                     )
 
                 FstabCommand.all_fstab_paths[partition_table] = fstab_path
@@ -170,6 +165,8 @@ class FstabCommand(DeviceCommand):
                 continue
 
             split_line = line.split()
+            fs_dump = helpers.try_parse_int(split_line[FstabColumn.FS_DUMP.value])
+            fs_fsck = helpers.try_parse_int(split_line[FstabColumn.FS_FSCK.value])
             filesystem = (
                 Filesystem(
                     constants.EMPTY_STR,
@@ -178,8 +175,8 @@ class FstabCommand(DeviceCommand):
                     split_line[FstabColumn.FS_MOUNT_POINT.value],
                 )
                 .with_dump_and_fsck(
-                    helpers.try_parse_int(split_line[FstabColumn.FS_DUMP.value]),
-                    helpers.try_parse_int(split_line[FstabColumn.FS_FSCK.value]),
+                    helpers.default_if_none(fs_dump, 0),
+                    helpers.default_if_none(fs_fsck, 0),
                 )
                 .with_mount_options(split_line[FstabColumn.FS_MOUNT_OPTIONS.value])
             )
