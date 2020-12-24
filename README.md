@@ -196,7 +196,7 @@ menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
 }
 ```
 
-A couple of notable details are the fact that the "add_options" field (if it exists) of any given sub-menu belonging to a successive snapshot is merged with the "options" field of the corresponding snapshot's sub-menu and also the fact that the latest snapshot's sub-menus implicitly inherit those main stanza's fields which they themselves do not override in the original boot stanza. Consequently, these sub-menus' definitions are intentionally similar to their counterparts found in the original boot stanza.
+A couple of notable details are the fact that the "add_options" field (if it exists) of any given sub-menu belonging to a successive snapshot is merged with the "options" field of the corresponding snapshot's sub-menu and also the fact that the latest snapshot's sub-menus implicitly inherit those main stanza's fields which they themselves do not override in the original boot stanza. Consequently, these sub-menus' definitions are intentionally similar to those of their counterparts found in the original boot stanza.
 
 ## Implementation
 Most relevant dependencies:

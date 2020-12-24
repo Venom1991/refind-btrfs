@@ -21,7 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-import sys
 from argparse import ArgumentParser
 from typing import Optional, cast
 
@@ -33,7 +32,7 @@ from refind_btrfs.utility import helpers
 from refind_btrfs.utility.injector_modules import CLIModule, WatchdogModule
 
 
-def main() -> None:
+def main() -> int:
     one_time_mode = RunMode.ONE_TIME.value
     background_mode = RunMode.BACKGROUND.value
     parser = ArgumentParser(
@@ -64,4 +63,4 @@ def main() -> None:
 
     runner = injector.get(BaseRunner)
 
-    sys.exit(runner.run())
+    return runner.run()

@@ -21,7 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+import sys
+
 from . import main
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
