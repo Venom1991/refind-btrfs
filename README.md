@@ -148,7 +148,8 @@ menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
     }
 }
 ```
-As you've probably noticed, this tool leverages rEFInd's overriding features, that is to say "submenuentry" sections are used to incorporate successive snapshots into the stanza itself by overriding the "loader" and "initrd" fields of the main boot stanza which itself represents the latest snapshot.  
+As you've probably noticed, this tool leverages rEFInd's overriding features, that is to say "submenuentry" sections are used to incorporate successive snapshots into the stanza itself by overriding the "loader" and "initrd" fields of the main boot stanza which itself represents the latest snapshot.
+
 If you've configured this tool to also take into account the original boot stanza's sub-menus the resultant generated boot stanza should look like this:
 ```
 menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
