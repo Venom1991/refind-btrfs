@@ -217,11 +217,11 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         logger.info(f"Analyzing the '{config_file_path.name}' file.")
 
         try:
-            input_stream = FileStream(str(config_file_path))
+            input_stream = FileStream(str(config_file_path), encoding="utf-8")
             lexer = RefindConfigLexer(input_stream)
-            stream = CommonTokenStream(lexer)
+            token_stream = CommonTokenStream(lexer)
+            parser = RefindConfigParser(token_stream)
             error_listener = RefindErrorListener()
-            parser = RefindConfigParser(stream)
 
             parser.removeErrorListeners()
             parser.addErrorListener(error_listener)

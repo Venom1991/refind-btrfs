@@ -183,7 +183,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
         if is_initial_call:
             logger.info(
                 f"Searching for snapshots of the '{logical_path}' "
-                f"subvolume  in the '{directory}' directory."
+                f"subvolume in the '{directory}' directory."
             )
 
         searched_directories = self._searched_directories

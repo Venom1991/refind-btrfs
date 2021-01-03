@@ -155,7 +155,7 @@ class Model:
             )
 
         if not subvolume.has_snapshots():
-            logger.error(f"Could not find snapshots of subvolume '{logical_path}'!")
+            logger.error(f"No snapshots of the '{logical_path}' subvolume were found!")
 
             return False
 
@@ -163,7 +163,7 @@ class Model:
         suffix = helpers.item_count_suffix(snapshots)
 
         logger.info(
-            f"Found {len(snapshots)} snapshot{suffix} of subvolume '{logical_path}'."
+            f"Found {len(snapshots)} snapshot{suffix} of the '{logical_path}' subvolume."
         )
 
         return True
