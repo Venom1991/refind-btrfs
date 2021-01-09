@@ -25,7 +25,7 @@ import errno
 import os
 import re
 from pathlib import Path
-from typing import Generator, Iterable, List, Optional, Tuple, TypeVar, Union
+from typing import Generator, Iterable, Optional, Tuple, TypeVar
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -58,15 +58,6 @@ def try_convert_bytes_to_uuid(value: bytes) -> Optional[UUID]:
         return UUID(bytes=value)
     except ValueError:
         return None
-
-
-def try_parse_major_minor(value: str) -> Union[List[int], List[None]]:
-    match = re.fullmatch(r"\d+:\d+", value)
-
-    if match:
-        return [int(split_number) for split_number in match.group().split(":")]
-
-    return [None, None]
 
 
 def is_empty(value: Optional[str]) -> bool:

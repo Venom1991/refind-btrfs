@@ -27,9 +27,8 @@ from injector import inject
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
-from refind_btrfs.common.exceptions import PackageConfigError, UnsupportedConfiguration
+from refind_btrfs.common.exceptions import UnsupportedConfiguration
 from refind_btrfs.state_management import RefindBtrfsMachine
-from refind_btrfs.utility import helpers
 
 
 class CLIRunner(BaseRunner):
@@ -46,8 +45,6 @@ class CLIRunner(BaseRunner):
         exit_code = os.EX_OK
 
         try:
-            helpers.check_access_rights()
-
             if not machine.run():
                 exit_code = constants.EX_NOT_OK
         except UnsupportedConfiguration as e:
@@ -55,14 +52,5 @@ class CLIRunner(BaseRunner):
         except KeyboardInterrupt:
             exit_code = constants.EX_CTRL_C_INTERRUPT
             logger.warning(constants.MESSAGE_CTRL_C_INTERRUPT)
-        except PackageConfigError as e:
-            exit_code = constants.EX_NOT_OK
-            logger.error(e.formatted_message)
-        except PermissionError as e:
-            exit_code = e.errno
-            logger.error(e.strerror)
-        except Exception:
-            exit_code = constants.EX_NOT_OK
-            logger.exception(constants.MESSAGE_UNEXPECTED_ERROR)
 
         return exit_code

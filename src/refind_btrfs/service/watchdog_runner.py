@@ -38,8 +38,7 @@ from refind_btrfs.common.abc import (
     BasePackageConfigProvider,
     BaseRunner,
 )
-from refind_btrfs.common.exceptions import PackageConfigError, UnsupportedConfiguration
-from refind_btrfs.utility import helpers
+from refind_btrfs.common.exceptions import UnsupportedConfiguration
 
 
 class WatchdogRunner(BaseRunner):
@@ -68,22 +67,20 @@ class WatchdogRunner(BaseRunner):
         exit_code = os.EX_OK
 
         try:
-            helpers.check_access_rights()
-
             with PidFile(lock_pidfile=False) as pid_file:
                 current_pid = pid_file.pid
                 package_config = package_config_provider.get_config()
-                watched_directories = sorted(package_config.directories_for_watch)
+                directories_for_watch = sorted(package_config.directories_for_watch)
                 separator = constants.COLUMN_SEPARATOR + constants.SPACE
                 watched_directories_str = separator.join(
-                    [str(directory) for directory in watched_directories]
+                    [str(directory) for directory in directories_for_watch]
                 )
 
                 logger.info(
                     f"Scheduling watch for directories {watched_directories_str}."
                 )
 
-                for directory in watched_directories:
+                for directory in directories_for_watch:
                     observer.schedule(
                         event_handler,
                         str(directory),
@@ -91,10 +88,14 @@ class WatchdogRunner(BaseRunner):
                     )
 
                 logger.info(f"Starting the observer with PID {current_pid}.")
+
                 observer.start()
-        except PermissionError as e:
-            exit_code = e.errno
-            logger.error(e.strerror)
+                systemd_daemon.notify(constants.NOTIFICATION_READY, pid=current_pid)
+
+                while observer.is_alive():
+                    observer.join(constants.WATCH_TIMEOUT)
+
+                observer.join()
         except PidFileAlreadyRunningError as e:
             exit_code = constants.EX_NOT_OK
             running_pid = cast(int, e.pid)
@@ -106,20 +107,7 @@ class WatchdogRunner(BaseRunner):
                 ),
                 pid=running_pid,
             )
-        except PackageConfigError as e:
-            exit_code = constants.EX_NOT_OK
-            logger.error(e.formatted_message)
-        except Exception:
-            exit_code = constants.EX_NOT_OK
-            logger.exception(constants.MESSAGE_UNEXPECTED_ERROR)
         else:
-            systemd_daemon.notify(constants.NOTIFICATION_READY, pid=current_pid)
-
-            while observer.is_alive():
-                observer.join(constants.WATCH_TIMEOUT)
-
-            observer.join()
-
             try:
                 observer.check()
             except UnsupportedConfiguration:
@@ -134,8 +122,8 @@ class WatchdogRunner(BaseRunner):
 
         return exit_code
 
+    # pylint: disable=unused-argument
     def _terminate(self, signal_number: int, frame: Optional[FrameType]) -> None:
-        # pylint: disable=unused-argument
         logger = self._logger
         observer = self._observer
         current_pid = self._current_pid

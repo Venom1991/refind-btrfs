@@ -21,18 +21,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+import os
 from argparse import ArgumentParser
-from typing import Optional, cast
+from typing import cast
 
 from injector import Injector
 
-from refind_btrfs.common.abc import BaseRunner
+from refind_btrfs.common import constants
+from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
 from refind_btrfs.common.enums import RunMode
+from refind_btrfs.common.exceptions import PackageConfigError
 from refind_btrfs.utility import helpers
 from refind_btrfs.utility.injector_modules import CLIModule, WatchdogModule
 
-
-def main() -> int:
+# pylint: disable=inconsistent-return-statements
+def initialize_injector() -> Injector:
     one_time_mode = RunMode.ONE_TIME.value
     background_mode = RunMode.BACKGROUND.value
     parser = ArgumentParser(
@@ -54,13 +57,32 @@ def main() -> int:
 
     arguments = parser.parse_args()
     run_mode = cast(str, helpers.none_throws(arguments.run_mode))
-    injector: Optional[Injector] = None
 
     if run_mode == one_time_mode:
-        injector = Injector(CLIModule)
+        return Injector(CLIModule)
     elif run_mode == background_mode:
-        injector = Injector(WatchdogModule)
+        return Injector(WatchdogModule)
 
-    runner = injector.get(BaseRunner)
 
-    return runner.run()
+def main() -> int:
+    exit_code = os.EX_OK
+    injector = initialize_injector()
+    logger_factory = injector.get(BaseLoggerFactory)
+    logger = logger_factory.logger(__name__)
+
+    try:
+        helpers.check_access_rights()
+
+        runner = injector.get(BaseRunner)
+        exit_code = runner.run()
+    except PackageConfigError as e:
+        exit_code = constants.EX_NOT_OK
+        logger.error(e.formatted_message)
+    except PermissionError as e:
+        exit_code = e.errno
+        logger.error(e.strerror)
+    except Exception:
+        exit_code = constants.EX_NOT_OK
+        logger.exception(constants.MESSAGE_UNEXPECTED_ERROR)
+
+    return exit_code

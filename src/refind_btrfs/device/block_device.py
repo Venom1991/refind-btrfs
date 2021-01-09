@@ -23,9 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from typing import Optional
-
-from refind_btrfs.utility import helpers
+import re
+from typing import List, Optional, Union
 
 from .partition import Partition
 from .partition_table import PartitionTable
@@ -36,7 +35,7 @@ class BlockDevice:
         self._name = name
         self._d_type = d_type
 
-        major_minor_parsed = helpers.try_parse_major_minor(major_minor)
+        major_minor_parsed = BlockDevice._try_parse_major_minor(major_minor)
 
         self._major_number = major_minor_parsed[0]
         self._minor_number = major_minor_parsed[1]
@@ -61,6 +60,15 @@ class BlockDevice:
 
     def has_boot(self) -> bool:
         return self.boot is not None
+
+    @staticmethod
+    def _try_parse_major_minor(value: str) -> Union[List[int], List[None]]:
+        match = re.fullmatch(r"\d+:\d+", value)
+
+        if match:
+            return [int(split_number) for split_number in match.group().split(":")]
+
+        return [None, None]
 
     @property
     def name(self) -> str:

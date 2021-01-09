@@ -33,8 +33,9 @@ class CheckableObserver(Observer):
 
         self._exception: Optional[Type[Exception]] = None
 
+    # pylint: disable=raising-bad-type
     def check(self) -> None:
         exception = self._exception
 
         if exception is not None:
-            raise exception  # pylint: disable=raising-bad-type
+            raise exception

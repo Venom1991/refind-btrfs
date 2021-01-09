@@ -36,6 +36,7 @@ from .sub_menu_migration_strategy import SubMenuMigrationStrategy
 
 
 class Factory:
+    # pylint: disable=unused-argument
     @singledispatchmethod
     @staticmethod
     def migration_strategy(
@@ -46,13 +47,13 @@ class Factory:
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
     ) -> Type[BaseMigrationStrategy]:
-        # pylint: disable=unused-argument
         type_name = type(argument).__name__
 
         raise NotImplementedError(
             f"Cannot instantiate migration strategy for type '{type_name}'!"
         )
 
+    # pylint: disable=unused-argument
     @migration_strategy.register(BootStanza)
     @staticmethod
     def _(
@@ -63,11 +64,11 @@ class Factory:
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
     ) -> Type[BaseMigrationStrategy]:
-        # pylint: disable=unused-argument
         return BootStanzaMigrationStrategy(
             argument, current_subvolume, replacement_subvolume, include_paths, is_latest
         )
 
+    # pylint: disable=unused-argument
     @migration_strategy.register(SubMenu)
     @staticmethod
     def _(
@@ -78,7 +79,6 @@ class Factory:
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
     ) -> Type[BaseMigrationStrategy]:
-        # pylint: disable=unused-argument
         return SubMenuMigrationStrategy(
             argument,
             current_subvolume,
