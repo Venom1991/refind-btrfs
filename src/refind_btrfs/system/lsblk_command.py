@@ -26,7 +26,7 @@ import subprocess
 from subprocess import CalledProcessError
 from typing import Any, Generator, cast
 
-from more_itertools import always_iterable, one
+from more_itertools import always_iterable
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseLoggerFactory, DeviceCommand
@@ -93,9 +93,11 @@ class LsblkCommand(DeviceCommand):
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
-            "Class 'LsblkCommand' does not implement method 'save_partition_table'!"
+            "Class 'LsblkCommand' does not implement the "
+            f"'{DeviceCommand.save_partition_table.__name__}' method!"
         )
 
+    # TODO: Try to avoid calling lsblk multiple times when there are multiple block devices present
     def _block_device_partition_table(
         self, block_device: BlockDevice
     ) -> PartitionTable:
@@ -145,22 +147,33 @@ class LsblkCommand(DeviceCommand):
             ) from e
 
         lsblk_parsed_output = json.loads(lsblk_process.stdout)
-        lsblk_blockdevice = one(lsblk_parsed_output[LsblkJsonKey.BLOCKDEVICES.value])
-        lsblk_partition_table_columns = [
-            lsblk_blockdevice[lsblk_column_key.value]
-            for lsblk_column_key in [LsblkColumn.PTABLE_UUID, LsblkColumn.PTABLE_TYPE]
-        ]
-        lsblk_partitions = always_iterable(
-            lsblk_blockdevice.get(LsblkJsonKey.PARTITIONS.value)
+        lsblk_blockdevices = always_iterable(
+            lsblk_parsed_output[LsblkJsonKey.BLOCKDEVICES.value]
         )
 
-        return PartitionTable(*lsblk_partition_table_columns).with_partitions(
-            LsblkCommand._map_to_partitions(lsblk_partitions)
-        )
+        for lsblk_blockdevice in lsblk_blockdevices:
+            lsblk_blockdevice_name = lsblk_blockdevice[LsblkColumn.DEVICE_NAME.value]
+
+            if block_device.is_matched_with(lsblk_blockdevice_name):
+                lsblk_partition_table_columns = [
+                    lsblk_blockdevice[lsblk_column_key.value]
+                    for lsblk_column_key in [
+                        LsblkColumn.PTABLE_UUID,
+                        LsblkColumn.PTABLE_TYPE,
+                    ]
+                ]
+                lsblk_partitions = always_iterable(
+                    lsblk_blockdevice.get(LsblkJsonKey.PARTITIONS.value)
+                )
+
+                return PartitionTable(*lsblk_partition_table_columns).with_partitions(
+                    LsblkCommand._map_to_partitions(lsblk_partitions)
+                )
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         raise NotImplementedError(
-            "Class 'LsblkCommand' does not implement method '_subvolume_partition_table'!"
+            "Class 'LsblkCommand' does not implement the "
+            f"'{DeviceCommand._subvolume_partition_table.__name__}' method!"
         )
 
     @staticmethod

@@ -26,6 +26,8 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Union
 
+from refind_btrfs.utility import helpers
+
 from .partition import Partition
 from .partition_table import PartitionTable
 
@@ -51,6 +53,12 @@ class BlockDevice:
         self._live_partition_table = live_partition_table
 
         return self
+
+    def is_matched_with(self, name: str) -> bool:
+        if not helpers.is_none_or_whitespace(name):
+            return self.name == name
+
+        return False
 
     def has_esp(self) -> bool:
         return self.esp is not None

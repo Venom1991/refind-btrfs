@@ -46,14 +46,17 @@ class FindmntCommand(DeviceCommand):
 
     def get_block_devices(self) -> Generator[BlockDevice, None, None]:
         raise NotImplementedError(
-            "Class 'FindmntCommand' does not implement method 'get_block_devices'!"
+            "Class 'FindmntCommand' does not implement the "
+            f"'{DeviceCommand.get_block_devices.__name__}' method!"
         )
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
-            "Class 'FindmntCommand' does not implement method 'save_partition_table'!"
+            "Class 'FindmntCommand' does not implement the "
+            f"'{DeviceCommand.save_partition_table.__name__}' method!"
         )
 
+    # TODO: Try to avoid calling findmnt multiple times when there are multiple block devices present
     def _block_device_partition_table(
         self, block_device: BlockDevice
     ) -> PartitionTable:
@@ -109,7 +112,8 @@ class FindmntCommand(DeviceCommand):
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         raise NotImplementedError(
-            "Class 'FindmntCommand' does not implement method '_subvolume_partition_table'!"
+            "Class 'FindmntCommand' does not implement the "
+            f"'{DeviceCommand._subvolume_partition_table.__name__}' method!"
         )
 
     @staticmethod
