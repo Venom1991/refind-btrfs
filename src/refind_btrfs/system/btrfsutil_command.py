@@ -249,7 +249,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
                     f"Could not create the '{destination_directory}' destination directory!"
                 ) from e
 
-        destination = source.to_destination().named().located_in(destination_directory)
+        destination = source.to_destination(destination_directory)
 
         source_logical_path = source.logical_path
         snapshot_directory = destination.filesystem_path

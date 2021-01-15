@@ -24,9 +24,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import subprocess
 from subprocess import CalledProcessError
-from typing import Any, Generator, cast
+from typing import Any, Generator, Iterable, cast
 
-from more_itertools import always_iterable
+from more_itertools import always_iterable, one
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseLoggerFactory, DeviceCommand
@@ -81,7 +81,7 @@ class LsblkCommand(DeviceCommand):
 
         for lsblk_blockdevice in lsblk_blockdevices:
             lsblk_blockdevice_columns = [
-                lsblk_blockdevice[lsblk_column_key.value]
+                lsblk_blockdevice.get(lsblk_column_key.value)
                 for lsblk_column_key in [
                     LsblkColumn.DEVICE_NAME,
                     LsblkColumn.DEVICE_TYPE,
@@ -97,7 +97,6 @@ class LsblkCommand(DeviceCommand):
             f"'{DeviceCommand.save_partition_table.__name__}' method!"
         )
 
-    # TODO: Try to avoid calling lsblk multiple times when there are multiple block devices present
     def _block_device_partition_table(
         self, block_device: BlockDevice
     ) -> PartitionTable:
@@ -115,14 +114,10 @@ class LsblkCommand(DeviceCommand):
             LsblkColumn.FS_MOUNT_POINT,
         ]
         device_name = block_device.name
-        device_major_number = helpers.none_throws(block_device.major_number)
         output = constants.COLUMN_SEPARATOR.join(
             [lsblk_column_key.value.upper() for lsblk_column_key in lsblk_columns]
         )
-        lsblk_command = (
-            "lsblk --json --paths --tree "
-            f"--include {device_major_number} --output {output}"
-        )
+        lsblk_command = f"lsblk {device_name} --json --paths --tree --output {output}"
 
         try:
             logger.info(
@@ -147,28 +142,23 @@ class LsblkCommand(DeviceCommand):
             ) from e
 
         lsblk_parsed_output = json.loads(lsblk_process.stdout)
-        lsblk_blockdevices = always_iterable(
-            lsblk_parsed_output[LsblkJsonKey.BLOCKDEVICES.value]
+        lsblk_blockdevice = one(
+            lsblk_parsed_output.get(LsblkJsonKey.BLOCKDEVICES.value)
+        )
+        lsblk_partition_table_columns = [
+            lsblk_blockdevice.get(lsblk_column_key.value)
+            for lsblk_column_key in [
+                LsblkColumn.PTABLE_UUID,
+                LsblkColumn.PTABLE_TYPE,
+            ]
+        ]
+        lsblk_partitions = always_iterable(
+            lsblk_blockdevice.get(LsblkJsonKey.PARTITIONS.value)
         )
 
-        for lsblk_blockdevice in lsblk_blockdevices:
-            lsblk_blockdevice_name = lsblk_blockdevice[LsblkColumn.DEVICE_NAME.value]
-
-            if block_device.is_matched_with(lsblk_blockdevice_name):
-                lsblk_partition_table_columns = [
-                    lsblk_blockdevice[lsblk_column_key.value]
-                    for lsblk_column_key in [
-                        LsblkColumn.PTABLE_UUID,
-                        LsblkColumn.PTABLE_TYPE,
-                    ]
-                ]
-                lsblk_partitions = always_iterable(
-                    lsblk_blockdevice.get(LsblkJsonKey.PARTITIONS.value)
-                )
-
-                return PartitionTable(*lsblk_partition_table_columns).with_partitions(
-                    LsblkCommand._map_to_partitions(lsblk_partitions)
-                )
+        return PartitionTable(*lsblk_partition_table_columns).with_partitions(
+            LsblkCommand._map_to_partitions(lsblk_partitions)
+        )
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         raise NotImplementedError(
@@ -177,10 +167,12 @@ class LsblkCommand(DeviceCommand):
         )
 
     @staticmethod
-    def _map_to_partitions(lsblk_partitions: Any) -> Generator[Partition, None, None]:
+    def _map_to_partitions(
+        lsblk_partitions: Iterable[Any],
+    ) -> Generator[Partition, None, None]:
         for lsblk_partition in lsblk_partitions:
             lsblk_part_columns = [
-                lsblk_partition[lsblk_column_key.value]
+                lsblk_partition.get(lsblk_column_key.value)
                 for lsblk_column_key in [
                     LsblkColumn.PART_UUID,
                     LsblkColumn.DEVICE_NAME,
@@ -188,7 +180,7 @@ class LsblkCommand(DeviceCommand):
                 ]
             ]
             lsblk_fs_columns = [
-                lsblk_partition[lsblk_column_key.value]
+                lsblk_partition.get(lsblk_column_key.value)
                 for lsblk_column_key in [
                     LsblkColumn.FS_UUID,
                     LsblkColumn.FS_LABEL,
@@ -197,10 +189,8 @@ class LsblkCommand(DeviceCommand):
                 ]
             ]
 
-            partition = (
+            yield (
                 Partition(*lsblk_part_columns)
-                .with_part_type(lsblk_partition[LsblkColumn.PART_TYPE.value])
+                .with_part_type(lsblk_partition.get(LsblkColumn.PART_TYPE.value))
                 .with_filesystem(Filesystem(*lsblk_fs_columns))
             )
-
-            yield partition

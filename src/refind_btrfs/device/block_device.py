@@ -54,9 +54,9 @@ class BlockDevice:
 
         return self
 
-    def is_matched_with(self, name: str) -> bool:
-        if not helpers.is_none_or_whitespace(name):
-            return self.name == name
+    def is_matched_with(self, partition_name: str) -> bool:
+        if not helpers.is_none_or_whitespace(partition_name):
+            return partition_name.startswith(self.name)
 
         return False
 

@@ -129,15 +129,20 @@ class Subvolume:
 
         return self
 
-    def to_destination(self) -> Subvolume:
-        return Subvolume(
-            constants.DEFAULT_PATH,
-            constants.EMPTY_STR,
-            datetime.min,
-            UuidRelation(constants.EMPTY_UUID, self.uuid),
-            NumIdRelation(0, self.num_id),
-            False,
-        ).as_newly_created_from(self)
+    def to_destination(self, directory: Path) -> Subvolume:
+        return (
+            Subvolume(
+                constants.DEFAULT_PATH,
+                constants.EMPTY_STR,
+                datetime.min,
+                UuidRelation(constants.EMPTY_UUID, self.uuid),
+                NumIdRelation(0, self.num_id),
+                False,
+            )
+            .as_newly_created_from(self)
+            .named()
+            .located_in(directory)
+        )
 
     def is_snapshot(self) -> bool:
         return self.parent_uuid != constants.EMPTY_UUID

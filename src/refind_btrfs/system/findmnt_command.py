@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import subprocess
 from subprocess import CalledProcessError
-from typing import Any, Generator, cast
+from typing import Any, Generator, Iterable, cast
 
 from more_itertools import always_iterable
 
@@ -56,7 +56,6 @@ class FindmntCommand(DeviceCommand):
             f"'{DeviceCommand.save_partition_table.__name__}' method!"
         )
 
-    # TODO: Try to avoid calling findmnt multiple times when there are multiple block devices present
     def _block_device_partition_table(
         self, block_device: BlockDevice
     ) -> PartitionTable:
@@ -100,15 +99,19 @@ class FindmntCommand(DeviceCommand):
             ) from e
 
         findmnt_parsed_output = json.loads(findmnt_process.stdout)
-        findmnt_partitions = always_iterable(
-            findmnt_parsed_output.get(FindmntJsonKey.PARTITIONS.value)
+        findmnt_partitions = (
+            findmnt_partition
+            for findmnt_partition in always_iterable(
+                findmnt_parsed_output.get(FindmntJsonKey.PARTITIONS.value)
+            )
+            if block_device.is_matched_with(
+                findmnt_partition.get(FindmntColumn.DEVICE_NAME.value)
+            )
         )
 
         return PartitionTable(
             constants.EMPTY_HEX_UUID, constants.MTAB_PT_TYPE
-        ).with_partitions(
-            FindmntCommand._map_to_partitions(findmnt_partitions, device_name)
-        )
+        ).with_partitions(FindmntCommand._map_to_partitions(findmnt_partitions))
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         raise NotImplementedError(
@@ -118,11 +121,11 @@ class FindmntCommand(DeviceCommand):
 
     @staticmethod
     def _map_to_partitions(
-        findmnt_partitions: Any, device_name: str
+        findmnt_partitions: Iterable[Any],
     ) -> Generator[Partition, None, None]:
         for findmnt_partition in findmnt_partitions:
             findmnt_part_columns = [
-                findmnt_partition[findmnt_column_key.value]
+                findmnt_partition.get(findmnt_column_key.value)
                 for findmnt_column_key in [
                     FindmntColumn.PART_UUID,
                     FindmntColumn.DEVICE_NAME,
@@ -130,7 +133,7 @@ class FindmntCommand(DeviceCommand):
                 ]
             ]
             findmnt_fs_columns = [
-                findmnt_partition[findmnt_column_key.value]
+                findmnt_partition.get(findmnt_column_key.value)
                 for findmnt_column_key in [
                     FindmntColumn.FS_UUID,
                     FindmntColumn.FS_LABEL,
@@ -139,11 +142,10 @@ class FindmntCommand(DeviceCommand):
                 ]
             ]
 
-            partition = Partition(*findmnt_part_columns).with_filesystem(
-                Filesystem(*findmnt_fs_columns).with_mount_options(
-                    findmnt_partition[FindmntColumn.FS_MOUNT_OPTIONS.value]
+            yield (
+                Partition(*findmnt_part_columns).with_filesystem(
+                    Filesystem(*findmnt_fs_columns).with_mount_options(
+                        findmnt_partition.get(FindmntColumn.FS_MOUNT_OPTIONS.value)
+                    )
                 )
             )
-
-            if partition.is_matched_with(device_name):
-                yield partition
