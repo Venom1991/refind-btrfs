@@ -40,6 +40,7 @@ MESSAGE_CTRL_C_INTERRUPT = "Ctrl+C interrupt detected, exiting..."
 MESSAGE_UNEXPECTED_ERROR = "An unexpected error happened, exiting..."
 
 WATCH_TIMEOUT = 1
+BACKGROUND_MODE_PID_NAME = "refind-btrfs-watchdog"
 
 MTAB_PT_TYPE = "mtab"
 FSTAB_PT_TYPE = "fstab"

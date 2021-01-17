@@ -67,7 +67,9 @@ class WatchdogRunner(BaseRunner):
         exit_code = os.EX_OK
 
         try:
-            with PidFile(lock_pidfile=False) as pid_file:
+            with PidFile(
+                pidname=constants.BACKGROUND_MODE_PID_NAME, lock_pidfile=False
+            ) as pid_file:
                 current_pid = pid_file.pid
                 package_config = package_config_provider.get_config()
                 directories_for_watch = sorted(package_config.directories_for_watch)

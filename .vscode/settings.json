@@ -39,6 +39,7 @@
         "otime",
         "partuuid",
         "pidfile",
+        "pidname",
         "pttype",
         "ptuuid",
         "pycache",
