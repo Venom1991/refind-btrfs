@@ -1,4 +1,4 @@
-# Generated from /home/luka/Projects/Python/refind-btrfs/src/refind_btrfs/boot/antlr4/RefindConfigParser.g4 by ANTLR 4.8
+# Generated from /home/luka/Projects/Python/refind-btrfs/src/refind_btrfs/boot/antlr4/RefindConfigParser.g4 by ANTLR 4.9.1
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -127,7 +127,7 @@ class RefindConfigParser ( Parser ):
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
-        self.checkVersion("4.8")
+        self.checkVersion("4.9.1")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -135,6 +135,7 @@ class RefindConfigParser ( Parser ):
 
 
     class RefindContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -191,6 +192,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Config_optionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -247,6 +249,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Boot_stanzaContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -316,6 +319,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Menu_entryContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -359,6 +363,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Main_optionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -478,6 +483,7 @@ class RefindConfigParser ( Parser ):
 
 
     class VolumeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -521,6 +527,7 @@ class RefindConfigParser ( Parser ):
 
 
     class LoaderContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -564,6 +571,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Main_initrdContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -607,6 +615,7 @@ class RefindConfigParser ( Parser ):
 
 
     class IconContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -650,6 +659,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Os_typeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -693,6 +703,7 @@ class RefindConfigParser ( Parser ):
 
 
     class GraphicsContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -736,6 +747,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Main_boot_optionsContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -779,6 +791,7 @@ class RefindConfigParser ( Parser ):
 
 
     class DisabledContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -817,6 +830,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Sub_menuContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -886,6 +900,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Sub_optionContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -978,6 +993,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Sub_initrdContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1028,6 +1044,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Sub_boot_optionsContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1078,6 +1095,7 @@ class RefindConfigParser ( Parser ):
 
 
     class Add_boot_optionsContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)
@@ -1121,6 +1139,7 @@ class RefindConfigParser ( Parser ):
 
 
     class IncludeContext(ParserRuleContext):
+        __slots__ = 'parser'
 
         def __init__(self, parser, parent:ParserRuleContext=None, invokingState:int=-1):
             super().__init__(parent, invokingState)

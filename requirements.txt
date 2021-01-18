@@ -1,4 +1,4 @@
-antlr4-python3-runtime==4.8
+antlr4-python3-runtime==4.9.1
 appdirs==1.4.4
 astroid==2.4.2
 black==20.8b1
