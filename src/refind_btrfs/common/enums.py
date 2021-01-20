@@ -33,7 +33,7 @@ class RunMode(Enum):
 @unique
 class LsblkJsonKey(Enum):
     BLOCKDEVICES = "blockdevices"
-    PARTITIONS = "children"
+    CHILDREN = "children"
 
 
 @unique
@@ -54,7 +54,7 @@ class LsblkColumn(Enum):
 
 @unique
 class FindmntJsonKey(Enum):
-    PARTITIONS = "filesystems"
+    FILESYSTEMS = "filesystems"
 
 
 @unique

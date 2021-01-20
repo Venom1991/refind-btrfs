@@ -18,8 +18,8 @@ six==1.15.0
 systemd-python==234
 toml==0.10.2
 tomlkit==0.7.0
-transitions==0.8.5
+transitions==0.8.6
 typed-ast==1.4.1
 typing-extensions==3.7.4.3
-watchdog==0.10.4
+watchdog==1.0.2
 wrapt==1.12.1

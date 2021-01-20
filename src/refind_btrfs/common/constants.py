@@ -46,7 +46,7 @@ MTAB_PT_TYPE = "mtab"
 FSTAB_PT_TYPE = "fstab"
 
 ESP_PART_CODE = 0xEF
-ESP_PART_UUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
+ESP_PART_UUID = UUID(hex="c12a7328-f81f-11d2-ba4b-00a0c93ec93b")
 
 ESP_FS_TYPE = "vfat"
 BTRFS_TYPE = "btrfs"

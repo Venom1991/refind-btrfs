@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Union
+from typing import Iterable, List, Optional, Union
 
 from refind_btrfs.utility import helpers
 
@@ -43,6 +43,7 @@ class BlockDevice:
         self._minor_number = major_minor_parsed[1]
         self._physical_partition_table: Optional[PartitionTable] = None
         self._live_partition_table: Optional[PartitionTable] = None
+        self._dependencies: Optional[List[BlockDevice]] = None
 
     def with_partition_tables(
         self,
@@ -54,9 +55,23 @@ class BlockDevice:
 
         return self
 
-    def is_matched_with(self, partition_name: str) -> bool:
+    def with_dependencies(self, dependencies: Iterable[BlockDevice]) -> BlockDevice:
+        self._dependencies = list(dependencies)
+
+        return self
+
+    def is_matched_with(self, partition_name: Optional[str]) -> bool:
         if not helpers.is_none_or_whitespace(partition_name):
-            return partition_name.startswith(self.name)
+            if self.name == partition_name:
+                return True
+            else:
+                dependencies = self._dependencies
+
+                if helpers.has_items(dependencies):
+                    return any(
+                        dependency.is_matched_with(partition_name)
+                        for dependency in dependencies
+                    )
 
         return False
 
@@ -105,3 +120,7 @@ class BlockDevice:
     @property
     def boot(self) -> Optional[Partition]:
         return self._live_partition_table.boot
+
+    @property
+    def dependencies(self) -> Optional[List[BlockDevice]]:
+        return self._dependencies

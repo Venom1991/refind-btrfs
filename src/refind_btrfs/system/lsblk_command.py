@@ -54,7 +54,7 @@ class LsblkCommand(DeviceCommand):
         output = constants.COLUMN_SEPARATOR.join(
             [lsblk_column_key.value.upper() for lsblk_column_key in lsblk_columns]
         )
-        lsblk_command = f"lsblk --json --nodeps --merge --paths --output {output}"
+        lsblk_command = f"lsblk --json --merge --paths --output {output}"
 
         try:
             logger.info("Initializing the block devices using lsblk.")
@@ -79,17 +79,7 @@ class LsblkCommand(DeviceCommand):
             lsblk_parsed_output.get(LsblkJsonKey.BLOCKDEVICES.value)
         )
 
-        for lsblk_blockdevice in lsblk_blockdevices:
-            lsblk_blockdevice_columns = [
-                lsblk_blockdevice.get(lsblk_column_key.value)
-                for lsblk_column_key in [
-                    LsblkColumn.DEVICE_NAME,
-                    LsblkColumn.DEVICE_TYPE,
-                    LsblkColumn.MAJOR_MINOR,
-                ]
-            ]
-
-            yield BlockDevice(*lsblk_blockdevice_columns)
+        yield from LsblkCommand._map_to_block_devices(lsblk_blockdevices)
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
@@ -153,7 +143,7 @@ class LsblkCommand(DeviceCommand):
             ]
         ]
         lsblk_partitions = always_iterable(
-            lsblk_blockdevice.get(LsblkJsonKey.PARTITIONS.value)
+            lsblk_blockdevice.get(LsblkJsonKey.CHILDREN.value)
         )
 
         return PartitionTable(*lsblk_partition_table_columns).with_partitions(
@@ -165,6 +155,29 @@ class LsblkCommand(DeviceCommand):
             "Class 'LsblkCommand' does not implement the "
             f"'{DeviceCommand._subvolume_partition_table.__name__}' method!"
         )
+
+    @staticmethod
+    def _map_to_block_devices(
+        lsblk_blockdevices: Iterable[Any],
+    ) -> Generator[BlockDevice, None, None]:
+        for lsblk_blockdevice in lsblk_blockdevices:
+            lsblk_blockdevice_columns = [
+                lsblk_blockdevice.get(lsblk_column_key.value)
+                for lsblk_column_key in [
+                    LsblkColumn.DEVICE_NAME,
+                    LsblkColumn.DEVICE_TYPE,
+                    LsblkColumn.MAJOR_MINOR,
+                ]
+            ]
+            lsblk_dependencies = always_iterable(
+                lsblk_blockdevice.get(LsblkJsonKey.CHILDREN.value)
+            )
+
+            yield (
+                BlockDevice(*lsblk_blockdevice_columns).with_dependencies(
+                    LsblkCommand._map_to_block_devices(lsblk_dependencies)
+                )
+            )
 
     @staticmethod
     def _map_to_partitions(
@@ -194,3 +207,9 @@ class LsblkCommand(DeviceCommand):
                 .with_part_type(lsblk_partition.get(LsblkColumn.PART_TYPE.value))
                 .with_filesystem(Filesystem(*lsblk_fs_columns))
             )
+
+            lsblk_nested_partitions = always_iterable(
+                lsblk_partition.get(LsblkJsonKey.CHILDREN.value)
+            )
+
+            yield from LsblkCommand._map_to_partitions(lsblk_nested_partitions)

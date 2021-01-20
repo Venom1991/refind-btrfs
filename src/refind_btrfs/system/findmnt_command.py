@@ -102,7 +102,7 @@ class FindmntCommand(DeviceCommand):
         findmnt_partitions = (
             findmnt_partition
             for findmnt_partition in always_iterable(
-                findmnt_parsed_output.get(FindmntJsonKey.PARTITIONS.value)
+                findmnt_parsed_output.get(FindmntJsonKey.FILESYSTEMS.value)
             )
             if block_device.is_matched_with(
                 findmnt_partition.get(FindmntColumn.DEVICE_NAME.value)

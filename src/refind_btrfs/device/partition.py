@@ -54,9 +54,10 @@ class Partition:
     def __hash__(self) -> int:
         return hash(self.uuid)
 
-    def with_part_type(self, part_type: str) -> Partition:
-        self._part_type_code = helpers.try_parse_int(part_type, base=16)
-        self._part_type_uuid = helpers.try_parse_uuid(part_type)
+    def with_part_type(self, part_type: Optional[str]) -> Partition:
+        if not helpers.is_none_or_whitespace(part_type):
+            self._part_type_code = helpers.try_parse_int(part_type, base=16)
+            self._part_type_uuid = helpers.try_parse_uuid(part_type)
 
         return self
 
@@ -75,7 +76,7 @@ class Partition:
         return (
             (
                 self.part_type_code == constants.ESP_PART_CODE
-                or self.part_type_uuid == UUID(constants.ESP_PART_UUID)
+                or self.part_type_uuid == constants.ESP_PART_UUID
             )
             and self.filesystem.is_mounted()
             and self.filesystem.is_of_type(constants.ESP_FS_TYPE)
