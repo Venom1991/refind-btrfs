@@ -75,7 +75,8 @@ cleanup_exclusion = []
 #
 # refind_config = <string>
 ## Name of rEFInd's main configuration file which must reside somewhere on
-## the ESP.
+## the ESP. This option must not be defined as a path (neither absolute nor
+## relative).
 #
 # include_paths = <bool>
 ## Whether to adjust the "loader" and "initrd" paths found in the source boot
