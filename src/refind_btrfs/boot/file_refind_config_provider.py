@@ -182,9 +182,9 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
                             lines_for_appending.append(
                                 f"{RefindOption.INCLUDE.value} {included_config_relative_file_path}"
+                                f"{constants.NEWLINE}"
                             )
 
-                        lines_for_appending.append(constants.NEWLINE)
                         config_file.writelines(lines_for_appending)
                 except OSError as e:
                     logger.exception("Path.open('a') call failed!")

@@ -53,6 +53,13 @@ class MountOptions:
                     )
                     option_name = cast(str, first(split_parameterized_option))
                     option_value = cast(str, last(split_parameterized_option))
+
+                    if option_name in parameterized_options:
+                        raise PartitionError(
+                            f"The '{option_name}' mount option "
+                            f"cannot be defined multiple times!"
+                        )
+
                     parameterized_options[option_name] = (position, option_value)
                 else:
                     simple_options.append((position, option))
