@@ -89,6 +89,7 @@ class PathRelation(Enum):
 
 @unique
 class TopLevelConfigKey(Enum):
+    EXIT_IF_ROOT_IS_SNAPSHOT = "exit_if_root_is_snapshot"
     SNAPSHOT_SEARCH = "snapshot-search"
     SNAPSHOT_MANIPULATION = "snapshot-manipulation"
     BOOT_STANZA_GENERATION = "boot-stanza-generation"

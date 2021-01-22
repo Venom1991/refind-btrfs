@@ -30,7 +30,7 @@ What it does is the following:
 In case a separate /boot partition is detected only the fields relevant to / are modified ("subvol" and/or "subvolid") while the "loader" and "initrd" fields (the former may also be nested within the "options" field) remain unaffected.  
 It goes without saying that the consequence of having this kind of a setup is being unable to mitigate a problematic kernel upgrade by simply booting into a snapshot.
 
-This tool will also detect a situation where / is mounted as a snapshot (which means that you've already booted into one), issue a warning and simply exit whereas, for instance, [Snapper](http://snapper.io/) will happily continue creating its snapshots. I could perhaps make this behavior configurable but currently it isn't.
+This tool will also detect a situation where / is mounted as a snapshot (which means that you've already booted into one), issue a warning and simply exit whereas, for instance, [Snapper](http://snapper.io/) will happily continue creating its snapshots, regardless. This behavior is configurable and enabled by default.
 
 ## Prerequisites
 The following conditions (some are probably superfluous at this point) must be satisfied in order for this tool to function correctly:

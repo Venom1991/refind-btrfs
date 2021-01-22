@@ -4,6 +4,12 @@
 
 # TOML syntax
 
+# exit_if_root_is_snapshot = <bool>
+## Whether to issue a warning and prematurely exit in case the root partition
+## is already mounted as a snapshot.
+
+exit_if_root_is_snapshot = true
+
 # [[snapshot-search]]
 ## Array of objects used to configure the behavior of searching for snapshots.
 ## The directory (or directories) listed in this array (including nested

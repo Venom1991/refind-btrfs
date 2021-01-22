@@ -76,12 +76,14 @@ class BootStanzaGeneration(NamedTuple):
 class PackageConfig(BaseConfig):
     def __init__(
         self,
+        exit_if_root_is_snapshot: bool,
         snapshot_searches: List[SnapshotSearch],
         snapshot_manipulation: SnapshotManipulation,
         boot_stanza_generation: BootStanzaGeneration,
     ) -> None:
         super().__init__(constants.PACKAGE_CONFIG_FILE)
 
+        self._exit_if_root_is_snapshot = exit_if_root_is_snapshot
         self._snapshot_searches = snapshot_searches
         self._snapshot_manipulation = snapshot_manipulation
         self._boot_stanza_generation = boot_stanza_generation
@@ -95,6 +97,10 @@ class PackageConfig(BaseConfig):
                 max_depth = snapshot_search.max_depth - 1
 
                 yield from helpers.find_all_directories_in(directory, max_depth)
+
+    @property
+    def exit_if_root_is_snapshot(self) -> bool:
+        return self._exit_if_root_is_snapshot
 
     @property
     def snapshot_searches(self) -> List[SnapshotSearch]:

@@ -147,12 +147,15 @@ class Model:
         logger.info(f"Found subvolume '{logical_path}' mounted as the root partition.")
 
         if subvolume.is_snapshot():
-            parent_uuid = subvolume.parent_uuid
+            package_config = self.package_config
 
-            raise UnsupportedConfiguration(
-                f"Subvolume '{logical_path}' is itself a snapshot "
-                f"(parent UUID - '{parent_uuid}'), exiting..."
-            )
+            if package_config.exit_if_root_is_snapshot:
+                parent_uuid = subvolume.parent_uuid
+
+                raise UnsupportedConfiguration(
+                    f"Subvolume '{logical_path}' is itself a snapshot "
+                    f"(parent UUID - '{parent_uuid}'), exiting..."
+                )
 
         if not subvolume.has_snapshots():
             logger.error(f"No snapshots of the '{logical_path}' subvolume were found!")

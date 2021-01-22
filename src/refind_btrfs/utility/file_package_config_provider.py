@@ -104,6 +104,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
     @staticmethod
     def _read_config_from(toml_document: TOMLDocument):
+        exit_if_root_is_snapshot_key = TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
         snapshot_searches_key = TopLevelConfigKey.SNAPSHOT_SEARCH.value
         snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
         boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
@@ -112,6 +113,15 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             raise PackageConfigError(
                 f"At least one '{snapshot_searches_key}' object is required!"
             )
+
+        exit_if_root_is_snapshot_value = toml_document[exit_if_root_is_snapshot_key]
+
+        if not isinstance(exit_if_root_is_snapshot_value, bool):
+            raise PackageConfigError(
+                f"The '{exit_if_root_is_snapshot_key}' option must be a bool!"
+            )
+        else:
+            exit_if_root_is_snapshot = bool(exit_if_root_is_snapshot_value)
 
         snapshot_searches = list(
             unique_everseen(
@@ -166,7 +176,10 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         )
 
         return PackageConfig(
-            snapshot_searches, snapshot_manipulation, boot_stanza_generation
+            exit_if_root_is_snapshot,
+            snapshot_searches,
+            snapshot_manipulation,
+            boot_stanza_generation,
         )
 
     @staticmethod
