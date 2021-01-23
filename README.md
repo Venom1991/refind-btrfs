@@ -38,7 +38,7 @@ The following conditions (some are probably superfluous at this point) must be s
 * Btrfs formatted filesystem with a subvolume mounted as /
 * at least one snapshot of the root subvolume
 * rEFInd installation present on the ESP
-* at least one manual boot stanza (found in the refind.conf file or in any of the additional configuration files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example):
+* at least one manual boot stanza (found in rEFInd's main configuration file or in any of the additional configuration files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example):
   * the "volume" field is matched with the root partition (either by filesystem label, partition label or partition GUID)
   * the "options" field contains a "rootflags" option which in turn defines a "subvol" suboption which is matched with the root subvolume's logical path and/or a "subvolid" suboption which is matched with the root subvolume's ID
 

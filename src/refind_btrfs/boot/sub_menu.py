@@ -27,6 +27,7 @@ from typing import List, Optional
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility import helpers
 
 from .boot_options import BootOptions
@@ -96,6 +97,15 @@ class SubMenu:
         result.append(f"{main_indent}}}")
 
         return constants.NEWLINE.join(result)
+
+    def is_matched_with(self, subvolume: Subvolume) -> bool:
+        boot_options = self.boot_options
+
+        return (
+            boot_options.is_matched_with(subvolume)
+            if boot_options is not None
+            else False
+        )
 
     def can_be_used_for_bootable_snapshot(self) -> bool:
         loader_path = self.loader_path

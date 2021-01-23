@@ -135,7 +135,6 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         logger = self._logger
         persistence_provider = self._persistence_provider
         config_file_path = config.file_path
-        parent_directory = config_file_path.parent
         actual_config = persistence_provider.get_refind_config(config_file_path)
         actual_included_configs = actual_config.included_configs
         current_included_configs = config.included_configs
@@ -174,6 +173,8 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
                         if should_prepend_newline:
                             lines_for_appending.append(constants.NEWLINE)
+
+                        parent_directory = config_file_path.parent
 
                         for included_config in new_included_configs:
                             included_config_relative_file_path = (
@@ -256,12 +257,12 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
             return refind_config
 
     def _read_included_configs_from(
-        self, root_dir: Path, includes: Iterable[str]
+        self, root_directory: Path, includes: Iterable[str]
     ) -> Generator[RefindConfig, None, None]:
         logger = self._logger
 
         for include in includes:
-            included_config_file_path = root_dir / include
+            included_config_file_path = root_directory / include
 
             if included_config_file_path.exists():
                 yield self._read_config_from(included_config_file_path.resolve())

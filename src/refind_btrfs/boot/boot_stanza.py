@@ -139,7 +139,17 @@ class BootStanza:
         boot_options = self.boot_options
         subvolume = helpers.none_throws(filesystem.subvolume)
 
-        return boot_options.is_matched_with(subvolume)
+        if boot_options.is_matched_with(subvolume):
+            return True
+        else:
+            sub_menus = self.sub_menus
+
+            if helpers.has_items(sub_menus):
+                return any(
+                    sub_menu.is_matched_with(subvolume) for sub_menu in sub_menus
+                )
+
+        return False
 
     @property
     def name(self) -> str:
