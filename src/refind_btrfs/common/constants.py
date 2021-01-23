@@ -58,6 +58,9 @@ COMMENT_PATTERN = r"^\s*#.*"
 INCLUDE_OPTION_PATTERN = r"^include .+$"
 PARAMETERIZED_OPTION_PREFIX_PATTERN = r"^\S+="
 DIR_SEPARATOR_PATTERN = r"\\|/"
+SUBVOLUME_NAME_PATTERN = (
+    r"((ro|rw)(snap|subvol))_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_ID\d+"
+)
 
 ROOTFLAGS_PREFIX = "rootflags="
 INITRD_PREFIX = "initrd="

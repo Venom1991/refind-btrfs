@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+import re
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import Optional
@@ -54,13 +55,19 @@ class BaseMigrationStrategy(ABC):
 
     @property
     def replacement_name(self) -> str:
+        subvolume_name_pattern = re.compile(rf"\({constants.SUBVOLUME_NAME_PATTERN}\)")
         current_name = self._current_state.name.strip(constants.DOUBLE_QUOTE)
+        replacement_subvolume_name = self._replacement_subvolume.name
+        match = subvolume_name_pattern.search(current_name)
 
-        return (
-            constants.DOUBLE_QUOTE
-            + f"{current_name} ({self._replacement_subvolume.name})"
-            + constants.DOUBLE_QUOTE
-        )
+        if match:
+            replacement_name = subvolume_name_pattern.sub(
+                f"({replacement_subvolume_name})", current_name
+            )
+        else:
+            replacement_name = f"{current_name} ({replacement_subvolume_name})"
+
+        return f"{constants.DOUBLE_QUOTE}{replacement_name}{constants.DOUBLE_QUOTE}"
 
     @property
     def replacement_loader_path(self) -> Optional[str]:
