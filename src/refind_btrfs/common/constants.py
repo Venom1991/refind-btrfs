@@ -80,7 +80,7 @@ EMPTY_UUID = UUID(hex=EMPTY_HEX_UUID)
 
 CONFIG_FILE_EXTENSION = ".conf"
 
-DEFAULT_PATH = Path()
+EMPTY_PATH = Path()
 ROOT_DIR = Path("/")
 BOOT_DIR = Path("boot")
 ETC_DIR = Path("etc")

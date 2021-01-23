@@ -40,7 +40,7 @@ The following conditions (some are probably superfluous at this point) must be s
 * rEFInd installation present on the ESP
 * at least one manual boot stanza (found in rEFInd's main configuration file or in any of the additional configuration files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example):
   * the "volume" field is matched with the root partition (either by filesystem label, partition label or partition GUID)
-  * the "options" field contains a "rootflags" option which in turn defines a "subvol" suboption which is matched with the root subvolume's logical path and/or a "subvolid" suboption which is matched with the root subvolume's ID
+  * the "options" field (defined as a part of the boot stanza's main section or as a part of any of its sub-menus) contains a "rootflags" option which in turn defines a "subvol" suboption which is matched with the root subvolume's logical path and/or a "subvolid" suboption which is matched with the root subvolume's ID
 
 ## Installation
 This tool is currently available only in the [AUR](https://aur.archlinux.org/packages/refind-btrfs/) which means that [Arch Linux](https://www.archlinux.org/) users (as well as users of derivative distributions, I imagine) can easily install it.

@@ -25,6 +25,9 @@ class BaseConfig(ABC):
 
         return False
 
+    def __hash__(self) -> int:
+        return hash(self.file_path.resolve())
+
     def refresh_file_stat(self):
         file_path = self.file_path
 

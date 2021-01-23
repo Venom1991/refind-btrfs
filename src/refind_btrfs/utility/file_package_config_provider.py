@@ -87,6 +87,8 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                     f"The '{config_file_path}' does not represent a file!"
                 )
 
+            logger.info(f"Analyzing the '{config_file_path.name}' file.")
+
             try:
                 toml_file = TOMLFile(str(config_file_path))
                 toml_document = toml_file.read()
@@ -340,19 +342,17 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             count,
             modify_read_only_flag,
             destination_directory,
-            {
-                *[
-                    Subvolume(
-                        constants.DEFAULT_PATH,
-                        constants.EMPTY_STR,
-                        datetime.min,
-                        UuidRelation(uuid, constants.EMPTY_UUID),
-                        NumIdRelation(0, 0),
-                        False,
-                    )
-                    for uuid in uuids
-                ]
-            },
+            set(
+                Subvolume(
+                    constants.EMPTY_PATH,
+                    constants.EMPTY_STR,
+                    datetime.min,
+                    UuidRelation(uuid, constants.EMPTY_UUID),
+                    NumIdRelation(0, 0),
+                    False,
+                )
+                for uuid in uuids
+            ),
         )
 
     @staticmethod

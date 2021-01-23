@@ -91,22 +91,25 @@ class RefindConfig(BaseConfig):
             migration = Migration(boot_stanza, partition, bootable_snapshots)
             migrated_boot_stanza = migration.migrate(include_paths, include_sub_menus)
             boot_stanza_file_name = migrated_boot_stanza.file_name
-            destination_directory = (
-                parent_directory / constants.SNAPSHOT_STANZAS_CONFIG_DIR
-            )
-            boot_stanza_config_file_path = destination_directory / boot_stanza_file_name
 
-            boot_stanza_config = RefindConfig(
-                boot_stanza_config_file_path.resolve()
-            ).with_boot_stanzas(always_iterable(migrated_boot_stanza))
+            if not helpers.is_none_or_whitespace(boot_stanza_file_name):
+                destination_directory = (
+                    parent_directory / constants.SNAPSHOT_STANZAS_CONFIG_DIR
+                )
+                boot_stanza_config_file_path = (
+                    destination_directory / boot_stanza_file_name
+                )
+                boot_stanza_config = RefindConfig(
+                    boot_stanza_config_file_path.resolve()
+                ).with_boot_stanzas(always_iterable(migrated_boot_stanza))
 
-            if boot_stanza_config not in included_configs:
-                included_configs.append(boot_stanza_config)
-            else:
-                index = included_configs.index(boot_stanza_config)
-                included_configs[index] = boot_stanza_config
+                if boot_stanza_config not in included_configs:
+                    included_configs.append(boot_stanza_config)
+                else:
+                    index = included_configs.index(boot_stanza_config)
+                    included_configs[index] = boot_stanza_config
 
-            yield boot_stanza_config
+                yield boot_stanza_config
 
     @property
     def boot_stanzas(self) -> Optional[List[BootStanza]]:

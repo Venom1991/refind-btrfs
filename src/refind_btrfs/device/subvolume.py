@@ -132,7 +132,7 @@ class Subvolume:
     def to_destination(self, directory: Path) -> Subvolume:
         return (
             Subvolume(
-                constants.DEFAULT_PATH,
+                constants.EMPTY_PATH,
                 constants.EMPTY_STR,
                 datetime.min,
                 UuidRelation(constants.EMPTY_UUID, self.uuid),
