@@ -22,9 +22,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from datetime import datetime
-from itertools import chain
 from pathlib import Path
-from typing import Generator, List, Optional, cast
+from typing import Generator, List, Optional, Set, cast
 
 import btrfsutil
 
@@ -47,7 +46,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
     ) -> None:
         self._logger = logger_factory.logger(__name__)
         self._package_config_provider = package_config_provider
-        self._searched_directories: List[Path] = []
+        self._searched_directories: Set[Path] = set()
 
     def get_subvolume_from(self, filesystem_path: Path) -> Optional[Subvolume]:
         logger = self._logger
@@ -103,17 +102,36 @@ class BtrfsUtilCommand(SubvolumeCommand):
         self._searched_directories.clear()
 
         snapshot_searches = self.package_config.snapshot_searches
-        search_results = (
-            self._search_for_snapshots_in(
-                parent,
-                snapshot_search.directory,
-                snapshot_search.is_nested,
-                snapshot_search.max_depth,
-            )
-            for snapshot_search in snapshot_searches
-        )
 
-        yield from chain.from_iterable(search_results)
+        for snapshot_search in snapshot_searches:
+            directory = snapshot_search.directory
+            is_nested = snapshot_search.is_nested
+            max_depth = snapshot_search.max_depth
+            search_result = self._search_for_snapshots_in(
+                parent,
+                directory,
+                max_depth,
+            )
+
+            if is_nested:
+                root_directory = directory.root
+
+                for snapshot in search_result:
+                    filesystem_path = snapshot.filesystem_path
+                    nested_directory = filesystem_path / directory.relative_to(
+                        root_directory
+                    )
+
+                    if nested_directory.exists():
+                        yield from self._search_for_snapshots_in(
+                            parent,
+                            nested_directory,
+                            max_depth,
+                        )
+
+                    yield snapshot
+            else:
+                yield from search_result
 
     def get_bootable_snapshot_from(self, source: Subvolume) -> Subvolume:
         if source.is_read_only:
@@ -168,7 +186,6 @@ class BtrfsUtilCommand(SubvolumeCommand):
         self,
         parent: Subvolume,
         directory: Path,
-        is_nested: bool,
         max_depth: int,
         current_depth: int = 0,
     ) -> Generator[Subvolume, None, None]:
@@ -192,20 +209,19 @@ class BtrfsUtilCommand(SubvolumeCommand):
             subvolume = self.get_subvolume_from(resolved_path)
             is_snapshot_of = subvolume is not None and subvolume.is_snapshot_of(parent)
 
-            searched_directories.append(resolved_path)
+            searched_directories.add(resolved_path)
 
             if is_snapshot_of:
                 yield subvolume
-
-                if not is_nested:
-                    return
-
-            subdirectories = (child for child in directory.iterdir() if child.is_dir())
-
-            for subdirectory in subdirectories:
-                yield from self._search_for_snapshots_in(
-                    parent, subdirectory, is_nested, max_depth, current_depth + 1
+            else:
+                subdirectories = (
+                    child for child in directory.iterdir() if child.is_dir()
                 )
+
+                for subdirectory in subdirectories:
+                    yield from self._search_for_snapshots_in(
+                        parent, subdirectory, max_depth, current_depth + 1
+                    )
 
     def _modify_read_only_flag_for(self, source: Subvolume) -> Subvolume:
         logger = self._logger

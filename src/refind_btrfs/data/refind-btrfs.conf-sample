@@ -22,16 +22,21 @@ exit_if_root_is_snapshot = true
 ## defined by the "destination_dir" option (shown further below).
 #
 # is_nested = <bool>
-## Whether to search for snapshots nested within another snapshot. Setting
-## this option to "false" potentially also means stopping the search
-## prematurely (i.e., before the maximum depth was reached) in those branches
-## in which a snapshot was found.
+## Whether to search for snapshots nested within another snapshot. Only one
+## level of nesting is supported and the search is performed in the same
+## directory (if it exists) that is, in this context, relative to the found
+## snapshot's root directory instead of the system's root directory. The same
+## maximum search depth is used, as well.
+## Setting this option to "false" potentially also means stopping the search
+## prematurely (i.e., before the maximum search depth was ever reached) in
+## those branches in which a snapshot was found.
 #
 # max_depth = <int>
-## Maximum depth relative to the search directory.
+## Maximum search depth relative to the search directory.
 ## WARNING: Defining a large value can seriously impact performance (of both
 ## searching for snapshots and watching for directory changes) in case the tree
-## (whose root is the search directory) is sufficiently large (deep and/or wide).
+## (whose root is the search directory) is sufficiently large (deep and/or
+## wide).
 
 [[snapshot-search]]
 dir = "/.snapshots"
