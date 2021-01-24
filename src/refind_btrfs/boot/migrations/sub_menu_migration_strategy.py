@@ -64,7 +64,6 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
         is_latest = self._is_latest
         current_state = self._current_state
         inherit_from_state = self._inherit_from_state
-
         replacement_loader_path = current_state.loader_path
         replacement_initrd_path = current_state.initrd_path
         replacement_boot_options: Optional[BootOptions] = None

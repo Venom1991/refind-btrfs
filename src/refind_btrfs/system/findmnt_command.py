@@ -46,13 +46,13 @@ class FindmntCommand(DeviceCommand):
 
     def get_block_devices(self) -> Generator[BlockDevice, None, None]:
         raise NotImplementedError(
-            "Class 'FindmntCommand' does not implement the "
+            f"Class '{FindmntCommand.__name__}' does not implement the "
             f"'{DeviceCommand.get_block_devices.__name__}' method!"
         )
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
-            "Class 'FindmntCommand' does not implement the "
+            f"Class '{FindmntCommand.__name__}' does not implement the "
             f"'{DeviceCommand.save_partition_table.__name__}' method!"
         )
 
@@ -115,7 +115,7 @@ class FindmntCommand(DeviceCommand):
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         raise NotImplementedError(
-            "Class 'FindmntCommand' does not implement the "
+            f"Class '{FindmntCommand.__name__}' does not implement the "
             f"'{DeviceCommand._subvolume_partition_table.__name__}' method!"
         )
 

@@ -103,13 +103,13 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
         if not destination_directory.exists():
             logger.info(
-                f"Creating the '{destination_directory}' destination directory."
+                f"Creating the '{destination_directory.name}' destination directory."
             )
 
             destination_directory.mkdir()
 
         try:
-            logger.info(f"Writing to the '{config_file_path}' file.")
+            logger.info(f"Writing to the '{config_file_path.name}' file.")
 
             with config_file_path.open("w") as config_file:
                 lines_for_writing: List[str] = []
@@ -125,7 +125,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         except OSError as e:
             logger.exception("Path.open('w') call failed!")
             raise RefindConfigError(
-                f"Could not write to the '{config_file_path}' file!"
+                f"Could not write to the '{config_file_path.name}' file!"
             ) from e
 
         config.refresh_file_stat()
@@ -152,11 +152,11 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
             except OSError as e:
                 logger.exception("Path.open('r') call failed!")
                 raise RefindConfigError(
-                    f"Could not read from the '{config_file_path}' file!"
+                    f"Could not read from the '{config_file_path.name}' file!"
                 ) from e
             else:
                 try:
-                    logger.info(f"Appending to the '{config_file_path}' file.")
+                    logger.info(f"Appending to the '{config_file_path.name}' file.")
 
                     with config_file_path.open("a") as config_file:
                         lines_for_appending: List[str] = []
@@ -190,7 +190,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 except OSError as e:
                     logger.exception("Path.open('a') call failed!")
                     raise RefindConfigError(
-                        f"Could not append to the '{config_file_path}' file!"
+                        f"Could not append to the '{config_file_path.name}' file!"
                     ) from e
 
             config.refresh_file_stat()
@@ -229,7 +229,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
             refind_context = parser.refind()
         except RefindSyntaxError as e:
-            logger.exception(f"Error while parsing the '{config_file_path}' file!")
+            logger.exception(f"Error while parsing the '{config_file_path.name}' file!")
             raise RefindConfigError(
                 "Could not load rEFInd configuration from file!"
             ) from e
@@ -268,7 +268,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 yield self._read_config_from(included_config_file_path.resolve())
             else:
                 logger.warning(
-                    f"The included config file '{included_config_file_path}' does not exist."
+                    f"The included config file '{included_config_file_path.name}' does not exist."
                 )
 
     @staticmethod

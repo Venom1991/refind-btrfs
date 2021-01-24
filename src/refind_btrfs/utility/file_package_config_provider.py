@@ -93,7 +93,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                 toml_file = TOMLFile(str(config_file_path))
                 toml_document = toml_file.read()
             except TOMLKitError as e:
-                logger.exception(f"Error while parsing the '{config_file_path}' file")
+                logger.exception(
+                    f"Error while parsing the '{config_file_path.name}' file"
+                )
                 raise PackageConfigError(
                     "Could not load the package configuration from file'!"
                 ) from e
@@ -111,9 +113,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
         boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
 
-        if snapshot_searches_key not in toml_document:
+        if exit_if_root_is_snapshot_key not in toml_document:
             raise PackageConfigError(
-                f"At least one '{snapshot_searches_key}' object is required!"
+                f"Missing option '{exit_if_root_is_snapshot_key}'!"
             )
 
         exit_if_root_is_snapshot_value = toml_document[exit_if_root_is_snapshot_key]
@@ -124,6 +126,11 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             )
         else:
             exit_if_root_is_snapshot = bool(exit_if_root_is_snapshot_value)
+
+        if snapshot_searches_key not in toml_document:
+            raise PackageConfigError(
+                f"At least one '{snapshot_searches_key}' object is required!"
+            )
 
         snapshot_searches = list(
             unique_everseen(

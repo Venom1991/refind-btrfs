@@ -266,7 +266,6 @@ class BtrfsUtilCommand(SubvolumeCommand):
                 ) from e
 
         destination = source.to_destination(destination_directory)
-
         source_logical_path = source.logical_path
         snapshot_directory = destination.filesystem_path
 

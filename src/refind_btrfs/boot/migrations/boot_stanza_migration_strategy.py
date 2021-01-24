@@ -56,7 +56,6 @@ class BootStanzaMigrationStrategy(BaseMigrationStrategy):
     def migrate(self) -> State:
         include_paths = self._include_paths
         is_latest = self._is_latest
-
         replacement_loader_path = constants.EMPTY_STR
         replacement_initrd_path = constants.EMPTY_STR
 

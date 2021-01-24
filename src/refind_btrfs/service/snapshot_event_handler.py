@@ -123,7 +123,6 @@ class SnapshotEventHandler(FileSystemEventHandler):
         persistence_provider = self._persistence_provider
         previous_run_result = persistence_provider.get_previous_run_result()
         bootable_snapshots = previous_run_result.bootable_snapshots
-        deleted_snapshots = self._deleted_snapshots
 
         if helpers.has_items(bootable_snapshots):
             deleted_snapshot = only(
@@ -133,6 +132,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
             )
 
             if deleted_snapshot is not None:
+                deleted_snapshots = self._deleted_snapshots
                 deletion_lock = self._deletion_lock
 
                 with deletion_lock:

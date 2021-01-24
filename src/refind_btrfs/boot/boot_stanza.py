@@ -29,7 +29,7 @@ from typing import Iterable, List, Optional
 from more_itertools import last
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.common.enums import GraphicsParameter, RefindOption
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.utility import helpers
 
@@ -95,7 +95,9 @@ class BootStanza:
         graphics = self.graphics
 
         if graphics is not None:
-            value = "on" if graphics else "off"
+            value = (
+                GraphicsParameter.ON.value if graphics else GraphicsParameter.OFF.value
+            )
             result.append(f"{option_indent}{RefindOption.GRAPHICS.value} {value}")
 
         boot_options_str = str(self.boot_options)

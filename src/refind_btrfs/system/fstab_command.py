@@ -48,7 +48,7 @@ class FstabCommand(DeviceCommand):
 
     def get_block_devices(self) -> Generator[BlockDevice, None, None]:
         raise NotImplementedError(
-            "Class 'FstabCommand' does not implement the "
+            f"Class '{FstabCommand.__name__}' does not implement the "
             f"'{DeviceCommand.get_block_devices.__name__}' method!"
         )
 
@@ -56,7 +56,7 @@ class FstabCommand(DeviceCommand):
         self, block_device: BlockDevice
     ) -> PartitionTable:
         raise NotImplementedError(
-            "Class 'FstabCommand' does not implement the "
+            f"Class '{FstabCommand.__name__}' does not implement the "
             f"'{DeviceCommand._block_device_partition_table.__name__}' method!"
         )
 

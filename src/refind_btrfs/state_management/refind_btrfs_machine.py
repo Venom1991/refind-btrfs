@@ -23,16 +23,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import List, Type, cast
 
-from more_itertools import first
+from more_itertools import first, last
 from transitions import Machine, State
 
 from refind_btrfs.common.abc import BaseLoggerFactory
+from refind_btrfs.common.enums import States
 from refind_btrfs.common.exceptions import (
     PartitionError,
     RefindConfigError,
     SubvolumeError,
     UnchangedConfiguration,
 )
+from refind_btrfs.utility import helpers
 
 from .model import Model
 
@@ -46,7 +48,27 @@ class RefindBtrfsMachine(Machine):
     ):
         self._logger = logger_factory.logger(__name__)
 
+        if not helpers.has_items(states) or helpers.is_singleton(states):
+            raise ValueError(
+                "The 'states' list must be initialized and contain at least two items!"
+            )
+
         initial = cast(State, first(states))
+        expected_initial_name = States.INITIAL.value
+
+        if initial.name != expected_initial_name:
+            raise ValueError(
+                f"The first state of the 'states' list must be named '{expected_initial_name}'!"
+            )
+
+        final = cast(State, last(states))
+        expected_final_name = States.FINAL.value
+
+        if final.name != expected_final_name:
+            raise ValueError(
+                f"The last state of the 'states' list must be named '{expected_final_name}'!"
+            )
+
         conditions = model.conditions
 
         super().__init__(

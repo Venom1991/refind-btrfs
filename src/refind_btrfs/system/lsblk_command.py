@@ -83,7 +83,7 @@ class LsblkCommand(DeviceCommand):
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
-            "Class 'LsblkCommand' does not implement the "
+            f"Class '{LsblkCommand.__name__}' does not implement the "
             f"'{DeviceCommand.save_partition_table.__name__}' method!"
         )
 
@@ -152,7 +152,7 @@ class LsblkCommand(DeviceCommand):
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         raise NotImplementedError(
-            "Class 'LsblkCommand' does not implement the "
+            f"Class '{LsblkCommand.__name__}' does not implement the "
             f"'{DeviceCommand._subvolume_partition_table.__name__}' method!"
         )
 

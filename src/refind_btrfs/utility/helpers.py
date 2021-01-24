@@ -83,7 +83,9 @@ def is_singleton(value: Optional[Iterable]) -> bool:
 
 
 def item_count_suffix(value: Iterable) -> str:
-    assert has_items(value), "Parameter 'value' must contain least one item!"
+    assert has_items(
+        value
+    ), "Parameter 'value' must be initialized and contain least one item!"
 
     return constants.EMPTY_STR if is_singleton(value) else "s"
 

@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.common.enums import GraphicsParameter, RefindOption
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility import helpers
 
@@ -74,7 +74,9 @@ class SubMenu:
         graphics = self.graphics
 
         if graphics is not None:
-            value = "on" if graphics else "off"
+            value = (
+                GraphicsParameter.ON.value if graphics else GraphicsParameter.OFF.value
+            )
             result.append(f"{option_indent}{RefindOption.GRAPHICS.value} {value}")
 
         boot_options = self.boot_options

@@ -55,9 +55,13 @@ class BlockDevices(NamedTuple):
 
 
 class PreparationResult(NamedTuple):
-    has_changes: bool
     snapshots_for_addition: List[Subvolume]
     snapshots_for_removal: List[Subvolume]
+
+    def has_changes(self) -> bool:
+        return helpers.has_items(self.snapshots_for_addition) or helpers.has_items(
+            self.snapshots_for_removal
+        )
 
 
 class ProcessingResult(NamedTuple):
@@ -203,7 +207,7 @@ class Model:
         previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
         current_boot_stanza_generation = package_config.boot_stanza_generation
         changes_detected = (
-            snapshot_preparation_result.has_changes
+            snapshot_preparation_result.has_changes()
             or current_boot_stanza_generation != previous_boot_stanza_generation
         )
 
@@ -261,12 +265,8 @@ class Model:
         snapshots_for_addition: List[Subvolume],
         snapshots_for_removal: List[Subvolume],
     ) -> None:
-        has_changes = helpers.has_items(snapshots_for_addition) or helpers.has_items(
-            snapshots_for_removal
-        )
-
         self._preparation_result = PreparationResult(
-            has_changes, snapshots_for_addition, snapshots_for_removal
+            snapshots_for_addition, snapshots_for_removal
         )
 
     def should_include_sub_menus_during_generation(self) -> bool:
