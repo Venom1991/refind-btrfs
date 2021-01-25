@@ -73,7 +73,7 @@ class FstabCommand(DeviceCommand):
         filesystem = helpers.none_throws(root.filesystem)
 
         try:
-            logger.info(f"Writing to the '{fstab_path}' file.")
+            logger.info(f"Modifying the '{fstab_path}' file.")
 
             with fileinput.input(str(fstab_path), inplace=True) as fstab_file:
                 for line in fstab_file:
@@ -106,7 +106,7 @@ class FstabCommand(DeviceCommand):
                     print(line, end=constants.EMPTY_STR)
         except OSError as e:
             logger.exception("fileinput.input() call failed!")
-            raise PartitionError(f"Could not write to the '{fstab_path}' file!") from e
+            raise PartitionError(f"Could not modify the '{fstab_path}' file!") from e
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         filesystem_path = subvolume.filesystem_path
@@ -121,7 +121,7 @@ class FstabCommand(DeviceCommand):
         try:
             logger.info(
                 "Initializing the static partition table for "
-                f"subvolume '{logical_path}' from the '{fstab_path}' file."
+                f"subvolume '{logical_path}' from its fstab file."
             )
 
             with fstab_path.open("r") as fstab_file:

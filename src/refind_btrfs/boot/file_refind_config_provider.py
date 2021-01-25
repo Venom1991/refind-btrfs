@@ -108,8 +108,12 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
             destination_directory.mkdir()
 
+        refind_directory = destination_directory.parent
+
         try:
-            logger.info(f"Writing to the '{config_file_path.name}' file.")
+            logger.info(
+                f"Writing to the '{config_file_path.relative_to(refind_directory)}' file."
+            )
 
             with config_file_path.open("w") as config_file:
                 lines_for_writing: List[str] = []
@@ -155,8 +159,14 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                     f"Could not read from the '{config_file_path.name}' file!"
                 ) from e
             else:
+                include_option = RefindOption.INCLUDE.value
+                suffix = helpers.item_count_suffix(new_included_configs)
+
                 try:
-                    logger.info(f"Appending to the '{config_file_path.name}' file.")
+                    logger.info(
+                        f"Appending {len(new_included_configs)} '{include_option}' "
+                        f"directive{suffix} to the '{config_file_path.name}' file."
+                    )
 
                     with config_file_path.open("a") as config_file:
                         lines_for_appending: List[str] = []
@@ -174,11 +184,13 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                         if should_prepend_newline:
                             lines_for_appending.append(constants.NEWLINE)
 
-                        parent_directory = config_file_path.parent
+                        destination_directory = config_file_path.parent
 
                         for included_config in new_included_configs:
                             included_config_relative_file_path = (
-                                included_config.file_path.relative_to(parent_directory)
+                                included_config.file_path.relative_to(
+                                    destination_directory
+                                )
                             )
 
                             lines_for_appending.append(
