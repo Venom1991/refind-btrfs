@@ -65,7 +65,7 @@ class BlockDevice:
             if self.name == partition_name:
                 return True
             else:
-                dependencies = self._dependencies
+                dependencies = self.dependencies
 
                 if helpers.has_items(dependencies):
                     return any(

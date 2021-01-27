@@ -18,7 +18,7 @@ What it does is the following:
 * Gathers information about mounted filesystems (from [mtab](https://en.wikipedia.org/wiki/Mtab)) which are present on all of the found block devices
 * Identifies the root mount point and gathers information about the subvolume which is mounted at said mount point
 * Searches for snapshots of the identified subvolume in the configured directory (or directories)
-* Searches for rEFInd's main configuration file on the ESP and parses it to extract [manual boot stanzas](https://www.rodsbooks.com/refind/configfile.html#stanzas) from it (nested configs are also analyzed, if present)
+* Searches for rEFInd's main config file on the ESP and parses it to extract [manual boot stanzas](https://www.rodsbooks.com/refind/configfile.html#stanzas) from it (included configs are also analyzed, if present)
 * Selects the configured number of latest snapshots and uses them as such if they are writable and if any aren't, it either (depending on the configuration):
   * sets their read-only flag to false, thus making them writable
   * creates new writable snapshots from them in the configured location
@@ -38,7 +38,7 @@ The following conditions (some are probably superfluous at this point) must be s
 * Btrfs formatted filesystem with a subvolume mounted as /
 * at least one snapshot of the root subvolume
 * rEFInd installation present on the ESP
-* at least one manual boot stanza (found in rEFInd's main configuration file or in any of the additional configuration files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example):
+* at least one manual boot stanza (found in rEFInd's main config file or in any of the additional config files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example):
   * the "volume" field is matched with the root partition (either by filesystem label, partition label or partition GUID)
   * the "options" field (defined as a part of the boot stanza's main section or as a part of any of its sub-menus) contains a "rootflags" option which in turn defines a "subvol" suboption which is matched with the root subvolume's logical path and/or a "subvolid" suboption which is matched with the root subvolume's ID
 
@@ -81,7 +81,7 @@ Given a setup such as this one:
 ```
 UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=256,subvol=/@ 0 0
 ```
-* manual boot stanza defined in the refind.conf file (rEFInd's main configuration file, in this case):  
+* manual boot stanza defined in the refind.conf file (rEFInd's main config file, in this case):  
 ```
 menuentry "Arch Linux - Stable" {
     icon /EFI/refind/icons/os_arch.png
@@ -123,11 +123,14 @@ The most recent snapshot's fstab file should (after being modified) contain a ro
 ```
 UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=503,subvol=/@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502 0 0
 ```
-I'm assuming here that the next available subvolume ID was 503 (an increment of one) which implies that the writable snapshot was created immediately after the original snapshot was taken but that doesn't necessarily has to be the case and its specific value doesn't ultimately matter that much as long as it directly corresponds to the newly created snapshot which it absolutely should (otherwise, mounting it as / would fail due to the mismatch).  
+I'm assuming here that the next available subvolume ID was 503 (an increment of one) which implies that the writable snapshot was created immediately after the original snapshot was taken but that doesn't necessarily has to be the case and its specific value doesn't ultimately matter that much as long as it directly corresponds to the newly created snapshot which it absolutely should (otherwise, mounting it as / would fail due to the mismatch).
+
 With this setup the newly created snapshot ended up being nested under the root subvolume but you can of course make your own adjustments as you see fit. This tool will only create the destination directory in case it doesn't exist. It wont do anything other than that.  
 I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it at /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00_ID502 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00_ID502.
 
-A generated manual boot stanza's file name is formatted like "{volume}_{loader}.conf" and converted to all lowercase letters which would result in, for this example, a file named "arch_vmlinuz-linux.conf". This file is then saved in a subdirectory (relative to rEFInd's root directory) named "btrfs-snapshot-stanzas" and finally included in the main config file by appending an "include" option which would, again for this example, look like this: "include btrfs-snapshot-stanzas/arch_vmlinuz-linux.conf". This last step is performed only once, during an initial run. Afterwards, it is detected as already being included in the main config file.
+A generated manual boot stanza's file name is formatted like "{volume}_{loader}.conf" and converted to all lowercase letters which would result in, for this example, a file named "arch_vmlinuz-linux.conf". This file is then saved in a subdirectory (relative to rEFInd's root directory) named "btrfs-snapshot-stanzas" and finally included in the main config file by appending an "include" directive which would, again for this example, look like this: "include btrfs-snapshot-stanzas/arch_vmlinuz-linux.conf". This last step is performed only once, during an initial run. Afterwards, it is detected as already being included in the main config file.
+
+You are free to rearrange the appended include directives however you want, this tool does not care about where exactly they appear in the main config file. This is particularly useful in case you've defined multiple boot stanzas (each one pointing to a different kernel image, for example) and wish to alter the order of the boot menu entries.
 
 The generated file's contents (representing the generated stanza) should look like this:
 ```
@@ -216,7 +219,7 @@ The directory watching mechanism is a bit unfortunate in a sense that it is way 
 ## Further Efforts
 Currently, this tool won't clean up after itself in case, for instance, creating writable snapshots succeeds but generating a manual boot stanza from them fails (for whatever reason). The correct thing to do would be to delete these snapshots altogether (thus undoing the changes made by the previous step or roll-backing as it is often called) meaning that the whole run is considered to be successful if and only if all of the steps it performed were successful.  
 This behavior would then be comparable with the [atomicity](https://en.wikipedia.org/wiki/Atomicity_(database_systems)) principle to which most database systems adhere. The previously mentioned scenario is covered in a different way by issuing a relevant warning on the next attempt to run the tool (because the writable snapshots already exist at this point in time and they aren't expected to) but also continuing to perform successive steps. This isn't a general solution, of course, but more of a workaround for this one possible scenario.  
-With that said, being somehow able to preview changes proposed by this tool would also be beneficial, especially after changing the configuration.
+With that said, being somehow able to preview changes proposed by this tool would also be beneficial, especially after altering its configuration.
 
 A more elaborate snapshot selection mechanism would be appreciated, comparable to what Snapper does, that is selecting a configurable number of daily, weekly, etc. snapshots to be included in the generated manual boot stanza.
 

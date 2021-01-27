@@ -58,7 +58,8 @@ class RefindBtrfsMachine(Machine):
 
         if initial.name != expected_initial_name:
             raise ValueError(
-                f"The first state of the 'states' list must be named '{expected_initial_name}'!"
+                "The first item of the 'states' list must "
+                f"be a state named '{expected_initial_name}'!"
             )
 
         final = cast(State, last(states))
@@ -66,7 +67,8 @@ class RefindBtrfsMachine(Machine):
 
         if final.name != expected_final_name:
             raise ValueError(
-                f"The last state of the 'states' list must be named '{expected_final_name}'!"
+                "The last item of the 'states' list must "
+                f"be a state named '{expected_final_name}'!"
             )
 
         conditions = model.conditions
