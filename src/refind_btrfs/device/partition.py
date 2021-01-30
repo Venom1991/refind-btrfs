@@ -66,12 +66,6 @@ class Partition:
 
         return self
 
-    def is_matched_with(self, device_name: str) -> bool:
-        if not helpers.is_none_or_whitespace(device_name):
-            return self.name.startswith(device_name)
-
-        return False
-
     def is_esp(self) -> bool:
         return (
             (
