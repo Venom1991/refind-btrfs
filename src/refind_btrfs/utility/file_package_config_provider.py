@@ -108,10 +108,12 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
     @staticmethod
     def _read_config_from(toml_document: TOMLDocument):
-        exit_if_root_is_snapshot_key = TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
-        snapshot_searches_key = TopLevelConfigKey.SNAPSHOT_SEARCH.value
-        snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
-        boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
+        exit_if_root_is_snapshot_key: str = (
+            TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
+        )
+        snapshot_searches_key: str = TopLevelConfigKey.SNAPSHOT_SEARCH.value
+        snapshot_manipulation_key: str = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
+        boot_stanza_generation_key: str = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
 
         if exit_if_root_is_snapshot_key not in toml_document:
             raise PackageConfigError(

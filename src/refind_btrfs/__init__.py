@@ -36,8 +36,8 @@ from refind_btrfs.utility.injector_modules import CLIModule, WatchdogModule
 
 # pylint: disable=inconsistent-return-statements
 def initialize_injector() -> Injector:
-    one_time_mode = RunMode.ONE_TIME.value
-    background_mode = RunMode.BACKGROUND.value
+    one_time_mode: str = RunMode.ONE_TIME.value
+    background_mode: str = RunMode.BACKGROUND.value
     parser = ArgumentParser(
         prog="refind-btrfs",
         usage="%(prog)s [options]",

@@ -28,7 +28,6 @@ from uuid import UUID
 ROOT_UID = 0
 
 EX_NOT_OK = 1
-EX_ARGPARSE_ERROR = 2
 EX_CTRL_C_INTERRUPT = 130
 
 NOTIFICATION_READY = "READY=1"
@@ -59,7 +58,7 @@ INCLUDE_OPTION_PATTERN = r"^include .+$"
 PARAMETERIZED_OPTION_PREFIX_PATTERN = r"^\S+="
 DIR_SEPARATOR_PATTERN = r"\\|/"
 SUBVOLUME_NAME_PATTERN = (
-    r"((ro|rw)(snap|subvol))_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_ID\d+"
+    r"((rw|ro)(subvol|snap))_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_ID\d+"
 )
 
 ROOTFLAGS_PREFIX = "rootflags="
