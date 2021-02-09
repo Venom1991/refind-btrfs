@@ -60,18 +60,17 @@ class BlockDevice:
 
         return self
 
-    def is_matched_with(self, partition_name: Optional[str]) -> bool:
-        if not helpers.is_none_or_whitespace(partition_name):
-            if self.name == partition_name:
-                return True
-            else:
-                dependencies = self.dependencies
+    def is_matched_with(self, partition_name: str) -> bool:
+        if self.name == partition_name:
+            return True
+        else:
+            dependencies = self.dependencies
 
-                if helpers.has_items(dependencies):
-                    return any(
-                        dependency.is_matched_with(partition_name)
-                        for dependency in dependencies
-                    )
+            if helpers.has_items(dependencies):
+                return any(
+                    dependency.is_matched_with(partition_name)
+                    for dependency in dependencies
+                )
 
         return False
 

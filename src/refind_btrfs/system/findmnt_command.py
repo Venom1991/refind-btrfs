@@ -105,7 +105,9 @@ class FindmntCommand(DeviceCommand):
                 findmnt_parsed_output.get(FindmntJsonKey.FILESYSTEMS.value)
             )
             if block_device.is_matched_with(
-                findmnt_partition.get(FindmntColumn.DEVICE_NAME.value)
+                findmnt_partition.get(
+                    FindmntColumn.DEVICE_NAME.value, constants.EMPTY_STR
+                )
             )
         )
 
@@ -125,7 +127,7 @@ class FindmntCommand(DeviceCommand):
     ) -> Generator[Partition, None, None]:
         for findmnt_partition in findmnt_partitions:
             findmnt_part_columns = [
-                findmnt_partition.get(findmnt_column_key.value)
+                findmnt_partition.get(findmnt_column_key.value, constants.EMPTY_STR)
                 for findmnt_column_key in [
                     FindmntColumn.PART_UUID,
                     FindmntColumn.DEVICE_NAME,
@@ -133,7 +135,7 @@ class FindmntCommand(DeviceCommand):
                 ]
             ]
             findmnt_fs_columns = [
-                findmnt_partition.get(findmnt_column_key.value)
+                findmnt_partition.get(findmnt_column_key.value, constants.EMPTY_STR)
                 for findmnt_column_key in [
                     FindmntColumn.FS_UUID,
                     FindmntColumn.FS_LABEL,
@@ -145,7 +147,9 @@ class FindmntCommand(DeviceCommand):
             yield (
                 Partition(*findmnt_part_columns).with_filesystem(
                     Filesystem(*findmnt_fs_columns).with_mount_options(
-                        findmnt_partition.get(FindmntColumn.FS_MOUNT_OPTIONS.value)
+                        findmnt_partition.get(
+                            FindmntColumn.FS_MOUNT_OPTIONS.value, constants.EMPTY_STR
+                        )
                     )
                 )
             )

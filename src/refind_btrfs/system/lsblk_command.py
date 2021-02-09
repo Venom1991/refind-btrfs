@@ -136,7 +136,7 @@ class LsblkCommand(DeviceCommand):
             lsblk_parsed_output.get(LsblkJsonKey.BLOCKDEVICES.value)
         )
         lsblk_partition_table_columns = [
-            lsblk_blockdevice.get(lsblk_column_key.value)
+            lsblk_blockdevice.get(lsblk_column_key.value, constants.EMPTY_STR)
             for lsblk_column_key in [
                 LsblkColumn.PTABLE_UUID,
                 LsblkColumn.PTABLE_TYPE,
@@ -162,7 +162,7 @@ class LsblkCommand(DeviceCommand):
     ) -> Generator[BlockDevice, None, None]:
         for lsblk_blockdevice in lsblk_blockdevices:
             lsblk_blockdevice_columns = [
-                lsblk_blockdevice.get(lsblk_column_key.value)
+                lsblk_blockdevice.get(lsblk_column_key.value, constants.EMPTY_STR)
                 for lsblk_column_key in [
                     LsblkColumn.DEVICE_NAME,
                     LsblkColumn.DEVICE_TYPE,
@@ -185,7 +185,7 @@ class LsblkCommand(DeviceCommand):
     ) -> Generator[Partition, None, None]:
         for lsblk_partition in lsblk_partitions:
             lsblk_part_columns = [
-                lsblk_partition.get(lsblk_column_key.value)
+                lsblk_partition.get(lsblk_column_key.value, constants.EMPTY_STR)
                 for lsblk_column_key in [
                     LsblkColumn.PART_UUID,
                     LsblkColumn.DEVICE_NAME,
@@ -193,7 +193,7 @@ class LsblkCommand(DeviceCommand):
                 ]
             ]
             lsblk_fs_columns = [
-                lsblk_partition.get(lsblk_column_key.value)
+                lsblk_partition.get(lsblk_column_key.value, constants.EMPTY_STR)
                 for lsblk_column_key in [
                     LsblkColumn.FS_UUID,
                     LsblkColumn.FS_LABEL,
@@ -204,7 +204,11 @@ class LsblkCommand(DeviceCommand):
 
             yield (
                 Partition(*lsblk_part_columns)
-                .with_part_type(lsblk_partition.get(LsblkColumn.PART_TYPE.value))
+                .with_part_type(
+                    lsblk_partition.get(
+                        LsblkColumn.PART_TYPE.value, constants.EMPTY_STR
+                    )
+                )
                 .with_filesystem(Filesystem(*lsblk_fs_columns))
             )
 

@@ -26,6 +26,7 @@
         "fstype",
         "getpid",
         "getuid",
+        "groupby",
         "inplace",
         "itertools",
         "journalctl",
@@ -68,7 +69,7 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
+    "python.pythonPath": "/home/luka/Projects/Python/refind-btrfs/.venv/bin/python",
     "search.exclude": {
         "**/.venv": true
     },

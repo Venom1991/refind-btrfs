@@ -61,6 +61,18 @@ class BootStanza:
         self._is_disabled = is_disabled
         self._sub_menus: Optional[List[SubMenu]] = None
 
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+
+        if isinstance(other, BootStanza):
+            return self.volume == other.volume and self.loader_path == other.loader_path
+
+        return False
+
+    def __hash__(self):
+        return hash((self.volume, self.loader_path))
+
     def __str__(self) -> str:
         result: List[str] = []
         main_indent = constants.EMPTY_STR
@@ -95,10 +107,12 @@ class BootStanza:
         graphics = self.graphics
 
         if graphics is not None:
-            value = (
-                GraphicsParameter.ON.value if graphics else GraphicsParameter.OFF.value
+            graphics_parameter = (
+                GraphicsParameter.ON if graphics else GraphicsParameter.OFF
             )
-            result.append(f"{option_indent}{RefindOption.GRAPHICS.value} {value}")
+            result.append(
+                f"{option_indent}{RefindOption.GRAPHICS.value} {graphics_parameter.value}"
+            )
 
         boot_options_str = str(self.boot_options)
 

@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+from itertools import groupby
 from typing import Callable, List, NamedTuple, Optional
 
 from more_itertools import only
@@ -195,6 +196,22 @@ class Model:
             f"Found {len(matched_boot_stanzas)} boot "
             f"stanza{suffix} matched with the root partition."
         )
+
+        grouping_result = groupby(matched_boot_stanzas)
+
+        for key, grouper in grouping_result:
+            grouped_boot_stanzas = list(grouper)
+
+            if not helpers.is_singleton(grouped_boot_stanzas):
+                volume = key.volume
+                loader_path = key.loader_path
+
+                logger.error(
+                    f"Found {len(grouped_boot_stanzas)} boot stanzas defined with "
+                    f"the same volume ('{volume}') and loader ('{loader_path}') options!"
+                )
+
+                return False
 
         return True
 

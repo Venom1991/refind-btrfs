@@ -185,7 +185,7 @@ class FstabCommand(DeviceCommand):
             partition = Partition(
                 constants.EMPTY_STR,
                 split_line[FstabColumn.DEVICE_NAME.value],
-                None,
+                constants.EMPTY_STR,
             ).with_filesystem(filesystem)
 
             yield partition
