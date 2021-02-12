@@ -96,6 +96,11 @@ class SubMenu:
                 f"{option_indent}{RefindOption.ADD_BOOT_OPTIONS.value} {add_boot_options_str}"
             )
 
+        is_disabled = self.is_disabled
+
+        if is_disabled:
+            result.append(f"{option_indent}{RefindOption.DISABLED.value}")
+
         result.append(f"{main_indent}}}")
 
         return constants.NEWLINE.join(result)
@@ -111,21 +116,16 @@ class SubMenu:
 
     def can_be_used_for_bootable_snapshot(self) -> bool:
         loader_path = self.loader_path
-
-        if not helpers.is_none_or_whitespace(loader_path):
-            return False
-
-        boot_options = self.boot_options
-
-        if boot_options is not None:
-            return False
-
         initrd_path = self.initrd_path
+        boot_options = self.boot_options
+        is_disabled = self.is_disabled
 
-        if initrd_path is not None:
-            return initrd_path != constants.EMPTY_STR
-
-        return True
+        return (
+            helpers.is_none_or_whitespace(loader_path)
+            and (initrd_path is None or initrd_path != constants.EMPTY_STR)
+            and boot_options is None
+            and not is_disabled
+        )
 
     @property
     def name(self) -> str:

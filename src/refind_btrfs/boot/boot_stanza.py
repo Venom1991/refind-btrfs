@@ -126,6 +126,11 @@ class BootStanza:
         if helpers.has_items(sub_menus):
             result.extend([str(sub_menu) for sub_menu in sub_menus])
 
+        is_disabled = self.is_disabled
+
+        if is_disabled:
+            result.append(f"{option_indent}{RefindOption.DISABLED.value}")
+
         result.append(f"{main_indent}}}")
 
         return constants.NEWLINE.join(result)
@@ -136,34 +141,28 @@ class BootStanza:
         return self
 
     def is_matched_with(self, partition: Partition) -> bool:
-        is_disabled = self.is_disabled
-
-        if is_disabled:
-            return False
-
         volume = self.volume
-
-        if helpers.is_none_or_whitespace(volume):
-            return False
-
+        is_disabled = self.is_disabled
         filesystem = helpers.none_throws(partition.filesystem)
         volume_comparers = [partition.uuid, partition.label, filesystem.label]
 
-        if volume not in volume_comparers:
-            return False
+        if (
+            not helpers.is_none_or_whitespace(volume)
+            and volume in volume_comparers
+            and not is_disabled
+        ):
+            boot_options = self.boot_options
+            subvolume = helpers.none_throws(filesystem.subvolume)
 
-        boot_options = self.boot_options
-        subvolume = helpers.none_throws(filesystem.subvolume)
+            if boot_options.is_matched_with(subvolume):
+                return True
+            else:
+                sub_menus = self.sub_menus
 
-        if boot_options.is_matched_with(subvolume):
-            return True
-        else:
-            sub_menus = self.sub_menus
-
-            if helpers.has_items(sub_menus):
-                return any(
-                    sub_menu.is_matched_with(subvolume) for sub_menu in sub_menus
-                )
+                if helpers.has_items(sub_menus):
+                    return any(
+                        sub_menu.is_matched_with(subvolume) for sub_menu in sub_menus
+                    )
 
         return False
 
