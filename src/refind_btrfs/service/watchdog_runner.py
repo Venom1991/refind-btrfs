@@ -72,20 +72,20 @@ class WatchdogRunner(BaseRunner):
             ) as pid_file:
                 current_pid = pid_file.pid
                 package_config = package_config_provider.get_config()
-                directories_for_watch = sorted(package_config.directories_for_watch)
+                directories_for_watch = [
+                    str(directory)
+                    for directory in sorted(package_config.directories_for_watch)
+                ]
                 separator = constants.COLUMN_SEPARATOR + constants.SPACE
-                watched_directories_str = separator.join(
-                    [str(directory) for directory in directories_for_watch]
-                )
 
                 logger.info(
-                    f"Scheduling watch for directories {watched_directories_str}."
+                    f"Scheduling watch for directories: {separator.join(directories_for_watch)}."
                 )
 
                 for directory in directories_for_watch:
                     observer.schedule(
                         event_handler,
-                        str(directory),
+                        directory,
                         recursive=False,
                     )
 

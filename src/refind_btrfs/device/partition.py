@@ -104,20 +104,20 @@ class Partition:
         return self._uuid
 
     @property
-    def part_type_code(self) -> Optional[int]:
-        return self._part_type_code
-
-    @property
-    def part_type_uuid(self) -> Optional[UUID]:
-        return self._part_type_uuid
-
-    @property
     def name(self) -> str:
         return self._name
 
     @property
     def label(self) -> str:
         return self._label
+
+    @property
+    def part_type_code(self) -> Optional[int]:
+        return self._part_type_code
+
+    @property
+    def part_type_uuid(self) -> Optional[UUID]:
+        return self._part_type_uuid
 
     @property
     def filesystem(self) -> Optional[Filesystem]:

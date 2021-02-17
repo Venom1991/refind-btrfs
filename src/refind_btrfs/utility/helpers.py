@@ -24,8 +24,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import errno
 import os
 import re
+from inspect import ismethod
 from pathlib import Path
-from typing import Generator, Iterable, Optional, Tuple, TypeVar
+from typing import Any, Generator, Iterable, Optional, Tuple, TypeVar
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -74,18 +75,27 @@ def is_none_or_whitespace(value: Optional[str]) -> bool:
     return value == constants.EMPTY_STR or value.isspace()
 
 
-def has_items(value: Optional[Iterable]) -> bool:
+def has_method(obj: Any, method_name: str) -> bool:
+    if hasattr(obj, method_name):
+        attr = getattr(obj, method_name)
+
+        return ismethod(attr)
+
+    return False
+
+
+def has_items(value: Optional[Iterable[Any]]) -> bool:
     return value is not None and len(value) > 0
 
 
-def is_singleton(value: Optional[Iterable]) -> bool:
+def is_singleton(value: Optional[Iterable[Any]]) -> bool:
     return value is not None and len(value) == 1
 
 
-def item_count_suffix(value: Iterable) -> str:
+def item_count_suffix(value: Iterable[Any]) -> str:
     assert has_items(
         value
-    ), "Parameter 'value' must be initialized and contain least one item!"
+    ), "The 'value' iterable must be initialized and contain least one item!"
 
     return constants.EMPTY_STR if is_singleton(value) else "s"
 
@@ -183,7 +193,6 @@ def replace_root_in_path(
         f"{current_root_part}"
         rf"(?P<suffix>{constants.DIR_SEPARATOR_PATTERN})"
     )
-
     substituted_full_path = pattern.sub(
         rf"\g<prefix>{replacement_root_part}\g<suffix>", full_path
     )

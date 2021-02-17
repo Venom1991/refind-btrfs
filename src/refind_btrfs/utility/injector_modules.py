@@ -21,9 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import List, Type
+from typing import Generator, cast
 
-from injector import Binder, Module, SingletonScope, multiprovider, provider
+from injector import Binder, Module, SingletonScope, multiprovider
 from transitions.core import State
 from watchdog.events import FileSystemEventHandler
 
@@ -38,21 +38,15 @@ from refind_btrfs.common.abc import (
     BaseRunner,
     BaseSubvolumeCommandFactory,
 )
-from refind_btrfs.common.enums import States
+from refind_btrfs.common.enums import StateNames
 from refind_btrfs.console import CLIRunner
 from refind_btrfs.service import SnapshotEventHandler, SnapshotObserver, WatchdogRunner
-from refind_btrfs.state_management import Model, RefindBtrfsMachine
-from refind_btrfs.state_management.states import (
-    InitBlockDevicesState,
-    InitBtrfsMetadataState,
-    InitRefindConfigState,
-    PrepareSnapshotsState,
-    ProcessChangesState,
-)
+from refind_btrfs.state_management import Model, States
 from refind_btrfs.system import (
     BtrfsUtilSubvolumeCommandFactory,
     SystemDeviceCommandFactory,
 )
+from refind_btrfs.utility import helpers
 
 from .file_package_config_provider import FilePackageConfigProvider
 from .logger_factories import StreamLoggerFactory, SystemdLoggerFactory
@@ -77,46 +71,19 @@ class CommonModule(Module):
             BasePersistenceProvider, to=ShelvePersistenceProvider, scope=SingletonScope
         )
 
-    @provider
-    def provide_machine(
-        self,
-        logger_factory: BaseLoggerFactory,
-        model: Model,
-        states: List[Type[State]],
-    ) -> RefindBtrfsMachine:
-        return RefindBtrfsMachine(logger_factory, model, states)
-
-    @provider
-    def provide_model(
-        self,
-        logger_factory: BaseLoggerFactory,
-        package_config_provider: BasePackageConfigProvider,
-        persistence_provider: BasePersistenceProvider,
-    ) -> Model:
-        return Model(logger_factory, package_config_provider, persistence_provider)
-
     @multiprovider
-    def provide_states(
-        self,
-        device_command_factory: BaseDeviceCommandFactory,
-        subvolume_command_factory: BaseSubvolumeCommandFactory,
-        refind_config_provider: BaseRefindConfigProvider,
-        persistence_provider: BasePersistenceProvider,
-    ) -> List[Type[State]]:
-        return [
-            State(name=States.INITIAL.value),
-            InitBlockDevicesState(device_command_factory),
-            InitBtrfsMetadataState(subvolume_command_factory),
-            InitRefindConfigState(refind_config_provider),
-            PrepareSnapshotsState(persistence_provider),
-            ProcessChangesState(
-                device_command_factory,
-                subvolume_command_factory,
-                refind_config_provider,
-                persistence_provider,
-            ),
-            State(name=States.FINAL.value),
-        ]
+    def provide_states(self, model: Model) -> States:
+        return list(self._get_all_states_for(model))
+
+    def _get_all_states_for(self, model: Model) -> Generator[State, None, None]:
+        for state_name in StateNames:
+            value: str = state_name.value
+            arguments = [value]
+
+            if helpers.has_method(model, value):
+                arguments *= 2
+
+            yield State(*arguments)
 
 
 class WatchdogModule(CommonModule):

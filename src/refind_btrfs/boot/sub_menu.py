@@ -23,7 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from typing import List, Optional
+from functools import cached_property
+from typing import Generator, List, Optional, Set
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, RefindOption
@@ -127,6 +128,23 @@ class SubMenu:
             and not is_disabled
         )
 
+    def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
+        loader_path = self.loader_path
+        initrd_path = self.initrd_path
+        boot_options = self.boot_options
+        add_boot_options = self.add_boot_options
+
+        if not helpers.is_none_or_whitespace(loader_path):
+            yield loader_path
+
+        if not helpers.is_none_or_whitespace(initrd_path):
+            yield initrd_path
+
+        if not boot_options is None:
+            yield from boot_options.initrd_options
+
+        yield from add_boot_options.initrd_options
+
     @property
     def name(self) -> str:
         return self._name
@@ -154,3 +172,7 @@ class SubMenu:
     @property
     def is_disabled(self) -> bool:
         return self._is_disabled
+
+    @cached_property
+    def all_boot_file_paths(self) -> Set[str]:
+        return set(self._get_all_boot_file_paths())

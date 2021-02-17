@@ -248,7 +248,9 @@ class OsTypeVisitor(RefindConfigParserVisitor):
     def visitOs_type(self, ctx: RefindConfigParser.Os_typeContext) -> str:
         token = ctx.OS_TYPE_PARAMETER()
         text = token.getText()
-        os_type_options = [option.value for option in OSTypeParameter]
+        os_type_options = [
+            os_type_parameter.value for os_type_parameter in OSTypeParameter
+        ]
 
         if text not in os_type_options:
             raise RefindConfigError(f"Unexpected 'os_type' option - '{text}'!")

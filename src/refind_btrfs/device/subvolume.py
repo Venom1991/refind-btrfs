@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, NamedTuple, Optional, Set
+from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -153,20 +153,20 @@ class Subvolume:
     def has_snapshots(self) -> bool:
         return helpers.has_items(self.snapshots)
 
-    def can_be_added(self, comparison_list: List[Subvolume]) -> bool:
-        if self not in comparison_list:
+    def can_be_added(self, comparison_iterable: Iterable[Subvolume]) -> bool:
+        if self not in comparison_iterable:
             return not any(
                 subvolume.is_newly_created and subvolume.is_snapshot_of(self)
-                for subvolume in comparison_list
+                for subvolume in comparison_iterable
             )
 
         return False
 
-    def can_be_removed(self, comparison_set: Set[Subvolume]) -> bool:
-        if self not in comparison_set:
+    def can_be_removed(self, comparison_iterable: Iterable[Subvolume]) -> bool:
+        if self not in comparison_iterable:
             if self.is_newly_created:
                 return not any(
-                    self.is_snapshot_of(subvolume) for subvolume in comparison_set
+                    self.is_snapshot_of(subvolume) for subvolume in comparison_iterable
                 )
 
             return True
@@ -212,6 +212,10 @@ class Subvolume:
         return self._logical_path
 
     @property
+    def time_created(self) -> datetime:
+        return self._time_created
+
+    @property
     def uuid(self) -> UUID:
         return self._uuid
 
@@ -234,10 +238,6 @@ class Subvolume:
     @property
     def is_newly_created(self) -> bool:
         return self._created_from is not None
-
-    @property
-    def time_created(self) -> datetime:
-        return self._time_created
 
     @property
     def snapshots(self) -> Optional[Set[Subvolume]]:

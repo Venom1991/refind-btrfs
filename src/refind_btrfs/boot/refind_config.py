@@ -59,28 +59,56 @@ class RefindConfig(BaseConfig):
 
         return self
 
-    def find_boot_stanzas_matched_with(self, partition: Partition) -> List[BootStanza]:
-        all_boot_stanzas = self.all_boot_stanzas
+    def get_boot_stanzas_matched_with(
+        self, partition: Partition
+    ) -> Generator[BootStanza, None, None]:
+        boot_stanzas = self.boot_stanzas
+        included_configs = self.included_configs
 
-        return [
-            stanza for stanza in all_boot_stanzas if stanza.is_matched_with(partition)
-        ]
+        if helpers.has_items(boot_stanzas):
+            yield from (
+                boot_stanza
+                for boot_stanza in boot_stanzas
+                if boot_stanza.is_matched_with(partition)
+            )
+
+        if helpers.has_items(included_configs):
+            yield from chain.from_iterable(
+                config.get_boot_stanzas_matched_with(partition)
+                for config in included_configs
+            )
+
+    def get_included_configs_difference_from(
+        self, other: RefindConfig
+    ) -> Optional[Iterable[RefindConfig]]:
+        self_included_configs = self.included_configs
+
+        if helpers.has_items(self_included_configs):
+            other_included_configs = other.included_configs
+
+            if not helpers.has_items(other_included_configs):
+                return self_included_configs
+
+            return set(
+                included_config
+                for included_config in self_included_configs
+                if included_config not in other_included_configs
+            )
+
+        return None
 
     def generate_new_from(
         self,
         partition: Partition,
-        bootable_snapshots: List[Subvolume],
+        bootable_snapshots: Iterable[Subvolume],
         include_paths: bool,
         include_sub_menus: bool,
     ) -> Generator[RefindConfig, None, None]:
-        matched_boot_stanzas = self.find_boot_stanzas_matched_with(partition)
+        matched_boot_stanzas = list(self.get_boot_stanzas_matched_with(partition))
 
         if not helpers.has_items(matched_boot_stanzas):
-            filesystem = helpers.none_throws(partition.filesystem)
-            mount_point = filesystem.mount_point
-
             raise RefindConfigError(
-                f"rEFInd config does not contain any boot stanzas matched with '{mount_point}'!"
+                "rEFInd config does not contain any boot stanzas matched with the root partition!"
             )
 
         file_path = self.file_path
@@ -118,21 +146,3 @@ class RefindConfig(BaseConfig):
     @property
     def included_configs(self) -> Optional[List[RefindConfig]]:
         return self._included_configs
-
-    @property
-    def all_boot_stanzas(self) -> List[BootStanza]:
-        all_boot_stanzas: List[BootStanza] = []
-        self_boot_stanzas = self.boot_stanzas
-        included_configs = self.included_configs
-
-        if helpers.has_items(self_boot_stanzas):
-            all_boot_stanzas.extend(self_boot_stanzas)
-
-        if helpers.has_items(included_configs):
-            include_configs_stanzas = chain.from_iterable(
-                config.boot_stanzas for config in included_configs
-            )
-
-            all_boot_stanzas.extend(list(include_configs_stanzas))
-
-        return all_boot_stanzas

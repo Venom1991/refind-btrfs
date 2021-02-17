@@ -22,4 +22,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from .model import Model
-from .refind_btrfs_machine import RefindBtrfsMachine
+from .refind_btrfs_machine import RefindBtrfsMachine, States

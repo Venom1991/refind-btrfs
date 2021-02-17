@@ -7,6 +7,8 @@
 # exit_if_root_is_snapshot = <bool>
 ## Whether to issue a warning and prematurely exit in case the root partition
 ## is already mounted as a snapshot.
+## WARNING: Disabling this option is considered experimental and may result in
+## unstable and/or erroneous behavior.
 
 exit_if_root_is_snapshot = true
 

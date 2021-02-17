@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from typing import Generator, List, Optional
+from typing import Generator, Iterable, List, Optional
 
 from more_itertools import first
 
@@ -45,7 +45,7 @@ class Migration:
         self,
         boot_stanza: BootStanza,
         partition: Partition,
-        bootable_snapshots: List[Subvolume],
+        bootable_snapshots: Iterable[Subvolume],
     ) -> None:
         assert helpers.has_items(
             bootable_snapshots
@@ -59,7 +59,7 @@ class Migration:
 
         self._boot_stanza = boot_stanza
         self._current_subvolume = current_subvolume
-        self._bootable_snapshots = bootable_snapshots
+        self._bootable_snapshots = list(bootable_snapshots)
 
     def migrate(self, include_paths: bool, include_sub_menus: bool) -> BootStanza:
         boot_stanza = self._boot_stanza

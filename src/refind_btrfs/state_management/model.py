@@ -24,16 +24,24 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import groupby
-from typing import Callable, List, NamedTuple, Optional
+from typing import Callable, Generator, Iterable, List, NamedTuple, Optional
 
-from more_itertools import only
+from injector import inject
+from more_itertools import only, take
 
-from refind_btrfs.boot import RefindConfig
-from refind_btrfs.common import BootStanzaGeneration, PackageConfig, constants
+from refind_btrfs.boot import BootStanza, RefindConfig
+from refind_btrfs.common import (
+    PackageConfig,
+    BootStanzaGeneration,
+    constants,
+)
 from refind_btrfs.common.abc import (
+    BaseDeviceCommandFactory,
     BaseLoggerFactory,
     BasePackageConfigProvider,
     BasePersistenceProvider,
+    BaseRefindConfigProvider,
+    BaseSubvolumeCommandFactory,
 )
 from refind_btrfs.common.exceptions import (
     UnchangedConfiguration,
@@ -58,16 +66,21 @@ class BlockDevices(NamedTuple):
 class PreparationResult(NamedTuple):
     snapshots_for_addition: List[Subvolume]
     snapshots_for_removal: List[Subvolume]
+    current_boot_stanza_generation: BootStanzaGeneration
+    previous_boot_stanza_generation: Optional[BootStanzaGeneration]
 
     def has_changes(self) -> bool:
-        return helpers.has_items(self.snapshots_for_addition) or helpers.has_items(
-            self.snapshots_for_removal
+        return (
+            helpers.has_items(self.snapshots_for_addition)
+            or helpers.has_items(self.snapshots_for_removal)
+        ) or (
+            self.current_boot_stanza_generation != self.previous_boot_stanza_generation
         )
 
 
 class ProcessingResult(NamedTuple):
     bootable_snapshots: List[Subvolume]
-    boot_stanza_generation: BootStanzaGeneration
+    boot_stanza_generation: Optional[BootStanzaGeneration]
 
     @classmethod
     def none(cls) -> ProcessingResult:
@@ -75,18 +88,113 @@ class ProcessingResult(NamedTuple):
 
 
 class Model:
+    @inject
     def __init__(
         self,
         logger_factory: BaseLoggerFactory,
+        device_command_factory: BaseDeviceCommandFactory,
+        subvolume_command_factory: BaseSubvolumeCommandFactory,
         package_config_provider: BasePackageConfigProvider,
+        refind_config_provider: BaseRefindConfigProvider,
         persistence_provider: BasePersistenceProvider,
     ) -> None:
         self._logger = logger_factory.logger(__name__)
+        self._device_command_factory = device_command_factory
+        self._subvolume_command_factory = subvolume_command_factory
         self._package_config_provider = package_config_provider
+        self._refind_config_provider = refind_config_provider
         self._persistence_provider = persistence_provider
-        self._refind_config: Optional[RefindConfig] = None
         self._block_devices: Optional[BlockDevices] = None
+        self._boot_stanzas: Optional[List[BootStanza]] = None
         self._preparation_result: Optional[PreparationResult] = None
+
+    def initialize_block_devices(self) -> None:
+        all_block_devices = list(self._get_all_block_devices())
+
+        if helpers.has_items(all_block_devices):
+
+            def block_device_filter(
+                filter_func: Callable[[BlockDevice], bool],
+            ) -> Optional[BlockDevice]:
+                return only(
+                    block_device
+                    for block_device in all_block_devices
+                    if filter_func(block_device)
+                )
+
+            block_devices = BlockDevices(
+                block_device_filter(BlockDevice.has_esp),
+                block_device_filter(BlockDevice.has_root),
+                block_device_filter(BlockDevice.has_boot),
+            )
+        else:
+            block_devices = BlockDevices.none()
+
+        self._block_devices = block_devices
+
+    def initialize_root_subvolume(self) -> None:
+        subvolume_command_factory = self._subvolume_command_factory
+        root = self.root_partition
+        filesystem = root.filesystem
+        subvolume_command = subvolume_command_factory.subvolume_command()
+
+        filesystem.initialize_subvolume_using(subvolume_command)
+
+    def initialize_boot_stanzas(self) -> None:
+        refind_config = self.refind_config
+        root = self.root_partition
+        matched_boot_stanzas = list(refind_config.get_boot_stanzas_matched_with(root))
+
+        self._boot_stanzas = matched_boot_stanzas
+
+    def initialize_preparation_result(self) -> None:
+        persistence_provider = self._persistence_provider
+        package_config = self.package_config
+        subvolume = self.root_subvolume
+        snapshot_manipulation = package_config.snapshot_manipulation
+        previous_run_result = persistence_provider.get_previous_run_result()
+        selected_snapshots = take(
+            snapshot_manipulation.count,
+            sorted(helpers.none_throws(subvolume.snapshots), reverse=True),
+        )
+        snapshots_union = snapshot_manipulation.cleanup_exclusion.union(
+            selected_snapshots
+        )
+        bootable_snapshots = previous_run_result.bootable_snapshots
+        snapshots_for_addition = [
+            snapshot
+            for snapshot in selected_snapshots
+            if snapshot.can_be_added(bootable_snapshots)
+        ]
+        snapshots_for_removal = [
+            snapshot
+            for snapshot in bootable_snapshots
+            if snapshot.can_be_removed(snapshots_union)
+        ]
+        current_boot_stanza_generation = package_config.boot_stanza_generation
+        previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
+
+        self._preparation_result = PreparationResult(
+            snapshots_for_addition,
+            snapshots_for_removal,
+            current_boot_stanza_generation,
+            previous_boot_stanza_generation,
+        )
+
+    def process_changes(self) -> None:
+        bootable_snapshots = self._process_snapshots()
+
+        self._process_boot_stanzas(bootable_snapshots)
+
+        persistence_provider = self._persistence_provider
+        package_config = self.package_config
+        current_boot_stanza_generation = package_config.boot_stanza_generation
+
+        persistence_provider.save_current_run_result(
+            ProcessingResult(bootable_snapshots, current_boot_stanza_generation)
+        )
+
+    # region Condition Methods
 
     def check_initial_state(self) -> bool:
         return True
@@ -135,18 +243,17 @@ class Model:
 
         return True
 
-    def check_btrfs_metadata(self) -> bool:
+    def check_root_subvolume(self) -> bool:
         logger = self._logger
-        root_device = self.root_device
-        root = root_device.root
-        root_filesystem = root.filesystem
+        root = self.root_partition
+        filesystem = root.filesystem
 
-        if not root_filesystem.has_subvolume():
+        if not filesystem.has_subvolume():
             logger.error("The root partition is not mounted as a subvolume!")
 
             return False
 
-        subvolume = root_filesystem.subvolume
+        subvolume = filesystem.subvolume
         logical_path = subvolume.logical_path
 
         logger.info(f"Found subvolume '{logical_path}' mounted as the root partition.")
@@ -176,28 +283,25 @@ class Model:
 
         return True
 
-    def check_refind_config(self) -> bool:
+    def check_boot_stanzas(self) -> bool:
         logger = self._logger
-        root_device = self.root_device
-        root = root_device.root
-        refind_config = self._refind_config
-        matched_boot_stanzas = refind_config.find_boot_stanzas_matched_with(root)
+        boot_stanzas = self.boot_stanzas
 
-        if not helpers.has_items(matched_boot_stanzas):
+        if not helpers.has_items(boot_stanzas):
             logger.error(
                 "Could not find a boot stanza matched with the root partition!"
             )
 
             return False
 
-        suffix = helpers.item_count_suffix(matched_boot_stanzas)
+        suffix = helpers.item_count_suffix(boot_stanzas)
 
         logger.info(
-            f"Found {len(matched_boot_stanzas)} boot "
+            f"Found {len(boot_stanzas)} boot "
             f"stanza{suffix} matched with the root partition."
         )
 
-        grouping_result = groupby(matched_boot_stanzas)
+        grouping_result = groupby(boot_stanzas)
 
         for key, grouper in grouping_result:
             grouped_boot_stanzas = list(grouper)
@@ -215,24 +319,15 @@ class Model:
 
         return True
 
-    def check_prepared_snapshots(self) -> bool:
+    def check_preparation_result(self) -> bool:
         logger = self._logger
-        persistence_provider = self._persistence_provider
-        package_config = self.package_config
-        snapshot_preparation_result = self.preparation_result
-        previous_run_result = persistence_provider.get_previous_run_result()
-        previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
-        current_boot_stanza_generation = package_config.boot_stanza_generation
-        changes_detected = (
-            snapshot_preparation_result.has_changes()
-            or current_boot_stanza_generation != previous_boot_stanza_generation
-        )
+        preparation_result = self.preparation_result
 
-        if not changes_detected:
+        if not preparation_result.has_changes():
             raise UnchangedConfiguration("No changes were detected, aborting...")
 
-        snapshots_for_addition = snapshot_preparation_result.snapshots_for_addition
-        snapshots_for_removal = snapshot_preparation_result.snapshots_for_removal
+        snapshots_for_addition = preparation_result.snapshots_for_addition
+        snapshots_for_removal = preparation_result.snapshots_for_removal
 
         if helpers.has_items(snapshots_for_addition):
             suffix = helpers.item_count_suffix(snapshots_for_addition)
@@ -253,46 +348,82 @@ class Model:
     def check_final_state(self) -> bool:
         return True
 
-    def initialize_block_devices_from(
-        self, all_block_devices: List[BlockDevice]
-    ) -> None:
-        if helpers.has_items(all_block_devices):
+    # endregion
 
-            def block_device_filter(
-                filter_func: Callable[[BlockDevice], bool],
-            ):
-                return only(
-                    block_device
-                    for block_device in all_block_devices
-                    if filter_func(block_device)
+    def _get_all_block_devices(self) -> Generator[BlockDevice, None, None]:
+        device_command_factory = self._device_command_factory
+        physical_device_command = device_command_factory.physical_device_command()
+        live_device_command = device_command_factory.live_device_command()
+        block_devices = physical_device_command.get_block_devices()
+
+        for block_device in block_devices:
+            physical_partition_table = physical_device_command.get_partition_table_for(
+                block_device
+            )
+            live_partition_table = live_device_command.get_partition_table_for(
+                block_device
+            )
+
+            yield block_device.with_partition_tables(
+                physical_partition_table, live_partition_table
+            )
+
+    def _process_snapshots(self) -> List[Subvolume]:
+        subvolume_command_factory = self._subvolume_command_factory
+        persistence_provider = self._persistence_provider
+        preparation_result = self.preparation_result
+        subvolume_command = subvolume_command_factory.subvolume_command()
+        previous_run_result = persistence_provider.get_previous_run_result()
+        bootable_snapshots = previous_run_result.bootable_snapshots
+        snapshots_for_addition = preparation_result.snapshots_for_addition
+
+        if helpers.has_items(snapshots_for_addition):
+            device_command_factory = self._device_command_factory
+            static_device_command = device_command_factory.static_device_command()
+            subvolume = self.root_subvolume
+
+            for addition in snapshots_for_addition:
+                bootable_snapshot = subvolume_command.get_bootable_snapshot_from(
+                    addition
                 )
 
-            block_devices = BlockDevices(
-                block_device_filter(BlockDevice.has_esp),
-                block_device_filter(BlockDevice.has_root),
-                block_device_filter(BlockDevice.has_boot),
-            )
-        else:
-            block_devices = BlockDevices.none()
+                bootable_snapshot.modify_partition_table_using(
+                    subvolume, static_device_command
+                )
 
-        self._block_devices = block_devices
+                if bootable_snapshot not in bootable_snapshots:
+                    bootable_snapshots.append(bootable_snapshot)
 
-    def initialize_preparation_result_from(
-        self,
-        snapshots_for_addition: List[Subvolume],
-        snapshots_for_removal: List[Subvolume],
-    ) -> None:
-        self._preparation_result = PreparationResult(
-            snapshots_for_addition, snapshots_for_removal
+        snapshots_for_removal = preparation_result.snapshots_for_removal
+
+        if helpers.has_items(snapshots_for_removal):
+            for removal in snapshots_for_removal:
+                if removal.is_newly_created:
+                    subvolume_command.delete_snapshot(removal)
+
+                if removal in bootable_snapshots:
+                    bootable_snapshots.remove(removal)
+
+        return sorted(bootable_snapshots, reverse=True)
+
+    def _process_boot_stanzas(self, bootable_snapshots: Iterable[Subvolume]) -> None:
+        refind_config = self.refind_config
+        root = self.root_partition
+        generated_refind_configs = refind_config.generate_new_from(
+            root,
+            bootable_snapshots,
+            self._should_include_paths_during_generation(),
+            self._should_include_sub_menus_during_generation(),
         )
 
-    def should_include_sub_menus_during_generation(self) -> bool:
-        package_config = self.package_config
-        boot_stanza_generation = package_config.boot_stanza_generation
+        refind_config_provider = self._refind_config_provider
 
-        return boot_stanza_generation.include_sub_menus
+        for generated_refind_config in generated_refind_configs:
+            refind_config_provider.save_config(generated_refind_config)
 
-    def should_include_paths_during_generation(self) -> bool:
+        refind_config_provider.append_to_config(refind_config)
+
+    def _should_include_paths_during_generation(self) -> bool:
         package_config = self.package_config
         boot_stanza_generation = package_config.boot_stanza_generation
 
@@ -301,16 +432,35 @@ class Model:
 
         return False
 
+    def _should_include_sub_menus_during_generation(self) -> bool:
+        package_config = self.package_config
+        boot_stanza_generation = package_config.boot_stanza_generation
+
+        return boot_stanza_generation.include_sub_menus
+
     @property
     def conditions(self) -> List[str]:
         return [
             self.check_initial_state.__name__,
             self.check_block_devices.__name__,
-            self.check_btrfs_metadata.__name__,
-            self.check_refind_config.__name__,
-            self.check_prepared_snapshots.__name__,
+            self.check_root_subvolume.__name__,
+            self.check_boot_stanzas.__name__,
+            self.check_preparation_result.__name__,
             self.check_final_state.__name__,
         ]
+
+    @property
+    def package_config(self) -> PackageConfig:
+        package_config_provider = self._package_config_provider
+
+        return package_config_provider.get_config()
+
+    @property
+    def refind_config(self) -> RefindConfig:
+        refind_config_provider = self._refind_config_provider
+        esp = self.esp
+
+        return refind_config_provider.get_config(esp)
 
     @property
     def esp_device(self) -> Optional[BlockDevice]:
@@ -344,18 +494,8 @@ class Model:
         return helpers.none_throws(self._block_devices).boot_device
 
     @property
-    def package_config(self) -> PackageConfig:
-        package_config_provider = self._package_config_provider
-
-        return package_config_provider.get_config()
-
-    @property
-    def refind_config(self) -> RefindConfig:
-        return helpers.none_throws(self._refind_config)
-
-    @refind_config.setter
-    def refind_config(self, value: RefindConfig) -> None:
-        self._refind_config = value
+    def boot_stanzas(self) -> RefindConfig:
+        return helpers.none_throws(self._boot_stanzas)
 
     @property
     def preparation_result(self) -> PreparationResult:

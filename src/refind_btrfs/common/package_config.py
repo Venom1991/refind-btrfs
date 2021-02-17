@@ -21,8 +21,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+from functools import cached_property
 from pathlib import Path
-from typing import Generator, List, NamedTuple, Set
+from typing import Generator, Iterable, List, NamedTuple, Set
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
@@ -77,14 +78,14 @@ class PackageConfig(BaseConfig):
     def __init__(
         self,
         exit_if_root_is_snapshot: bool,
-        snapshot_searches: List[SnapshotSearch],
+        snapshot_searches: Iterable[SnapshotSearch],
         snapshot_manipulation: SnapshotManipulation,
         boot_stanza_generation: BootStanzaGeneration,
     ) -> None:
         super().__init__(constants.PACKAGE_CONFIG_FILE)
 
         self._exit_if_root_is_snapshot = exit_if_root_is_snapshot
-        self._snapshot_searches = snapshot_searches
+        self._snapshot_searches = list(snapshot_searches)
         self._snapshot_manipulation = snapshot_manipulation
         self._boot_stanza_generation = boot_stanza_generation
 
@@ -114,6 +115,6 @@ class PackageConfig(BaseConfig):
     def boot_stanza_generation(self) -> BootStanzaGeneration:
         return self._boot_stanza_generation
 
-    @property
+    @cached_property
     def directories_for_watch(self) -> Set[Path]:
         return set(self._get_directories_for_watch())

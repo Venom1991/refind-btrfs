@@ -24,7 +24,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional
+from functools import cached_property
+from itertools import chain
+from typing import Generator, Iterable, List, Optional, Set
 
 from more_itertools import last
 
@@ -148,7 +150,7 @@ class BootStanza:
 
         if (
             not helpers.is_none_or_whitespace(volume)
-            and volume in volume_comparers
+            and volume.strip(constants.DOUBLE_QUOTE) in volume_comparers
             and not is_disabled
         ):
             boot_options = self.boot_options
@@ -165,6 +167,25 @@ class BootStanza:
                     )
 
         return False
+
+    def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
+        loader_path = self.loader_path
+        initrd_path = self.initrd_path
+        boot_options = self.boot_options
+
+        yield loader_path
+
+        if not helpers.is_none_or_whitespace(initrd_path):
+            yield initrd_path
+
+        yield from boot_options.initrd_options
+
+        sub_menus = self.sub_menus
+
+        if helpers.has_items(sub_menus):
+            yield from chain.from_iterable(
+                sub_menu.all_boot_file_paths for sub_menu in sub_menus
+            )
 
     @property
     def name(self) -> str:
@@ -206,7 +227,7 @@ class BootStanza:
     def sub_menus(self) -> Optional[List[SubMenu]]:
         return self._sub_menus
 
-    @property
+    @cached_property
     def file_name(self) -> str:
         volume = self.volume
 
@@ -217,6 +238,10 @@ class BootStanza:
             loader = last(split_loader_path)
             extension = constants.CONFIG_FILE_EXTENSION
 
-            return f"{volume}_{loader}{extension}".lower()
+            return f"{volume.strip(constants.DOUBLE_QUOTE)}_{loader}{extension}".lower()
 
         return constants.EMPTY_STR
+
+    @cached_property
+    def all_boot_file_paths(self) -> Set[str]:
+        return set(self._get_all_boot_file_paths())

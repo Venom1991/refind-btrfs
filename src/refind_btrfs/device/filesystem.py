@@ -95,16 +95,16 @@ class Filesystem:
         return self._fs_type
 
     @property
+    def mount_point(self) -> str:
+        return self._mount_point
+
+    @property
     def dump(self) -> Optional[int]:
         return self._dump
 
     @property
     def fsck(self) -> Optional[int]:
         return self._fsck
-
-    @property
-    def mount_point(self) -> str:
-        return self._mount_point
 
     @property
     def mount_options(self) -> Optional[MountOptions]:

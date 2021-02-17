@@ -21,13 +21,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import List, Type, cast
+from typing import List, NewType, cast
 
+from injector import inject
 from more_itertools import first, last
 from transitions import Machine, State
 
 from refind_btrfs.common.abc import BaseLoggerFactory
-from refind_btrfs.common.enums import States
+from refind_btrfs.common.enums import StateNames
 from refind_btrfs.common.exceptions import (
     PartitionError,
     RefindConfigError,
@@ -38,13 +39,16 @@ from refind_btrfs.utility import helpers
 
 from .model import Model
 
+States = NewType("States", List[State])
+
 
 class RefindBtrfsMachine(Machine):
+    @inject
     def __init__(
         self,
         logger_factory: BaseLoggerFactory,
         model: Model,
-        states: List[Type[State]],
+        states: States,
     ):
         self._logger = logger_factory.logger(__name__)
 
@@ -54,7 +58,7 @@ class RefindBtrfsMachine(Machine):
             )
 
         initial = cast(State, first(states))
-        expected_initial_name: str = States.INITIAL.value
+        expected_initial_name: str = StateNames.INITIAL.value
 
         if initial.name != expected_initial_name:
             raise ValueError(
@@ -63,7 +67,7 @@ class RefindBtrfsMachine(Machine):
             )
 
         final = cast(State, last(states))
-        expected_final_name: str = States.FINAL.value
+        expected_final_name: str = StateNames.FINAL.value
 
         if final.name != expected_final_name:
             raise ValueError(

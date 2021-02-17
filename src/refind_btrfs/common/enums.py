@@ -21,7 +21,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from enum import Enum, unique
+from enum import Enum, auto, unique
+from typing import Any, List
+
+
+class AutoNameToLower(Enum):
+    # pylint: disable=no-member, no-self-argument, unused-argument
+    def _generate_next_value_(
+        name: str, start: int, count: int, last_values: List[Any]
+    ) -> Any:
+        return name.lower()
 
 
 @unique
@@ -156,11 +165,11 @@ class GraphicsParameter(Enum):
 
 
 @unique
-class States(Enum):
-    INITIAL = "initial"
-    INIT_BLOCK_DEVICES = "init_block_devices"
-    INIT_BTRFS_METADATA = "init_btrfs_metadata"
-    INIT_REFIND_CONFIG = "init_refind_config"
-    PREPARE_SNAPSHOTS = "prepare_snapshots"
-    PROCESS_CHANGES = "process_changes"
-    FINAL = "final"
+class StateNames(AutoNameToLower):
+    INITIAL = auto()
+    INITIALIZE_BLOCK_DEVICES = auto()
+    INITIALIZE_ROOT_SUBVOLUME = auto()
+    INITIALIZE_BOOT_STANZAS = auto()
+    INITIALIZE_PREPARATION_RESULT = auto()
+    PROCESS_CHANGES = auto()
+    FINAL = auto()

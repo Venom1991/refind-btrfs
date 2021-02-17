@@ -140,13 +140,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         persistence_provider = self._persistence_provider
         config_file_path = config.file_path
         actual_config = persistence_provider.get_refind_config(config_file_path)
-        actual_included_configs = actual_config.included_configs
-        current_included_configs = config.included_configs
-        new_included_configs = set(
-            included_config
-            for included_config in current_included_configs
-            if included_config not in actual_included_configs
-        )
+        new_included_configs = config.get_included_configs_difference_from(actual_config)
 
         if helpers.has_items(new_included_configs):
             try:

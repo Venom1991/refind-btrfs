@@ -28,6 +28,7 @@
         "getuid",
         "groupby",
         "inplace",
+        "ismethod",
         "itertools",
         "journalctl",
         "levelno",
@@ -69,7 +70,7 @@
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-    "python.pythonPath": "/home/luka/Projects/Python/refind-btrfs/.venv/bin/python",
+    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
     "search.exclude": {
         "**/.venv": true
     },

@@ -21,4 +21,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from .refind_config import RefindConfig
+from .refind_config import BootStanza, RefindConfig

@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import cached_property
 from typing import Iterable, List, Optional
 
 from more_itertools import only
@@ -84,14 +85,14 @@ class PartitionTable:
     def pt_type(self) -> str:
         return self._pt_type
 
-    @property
+    @cached_property
     def esp(self) -> Optional[Partition]:
         return only(partition for partition in self._partitions if partition.is_esp())
 
-    @property
+    @cached_property
     def root(self) -> Optional[Partition]:
         return only(partition for partition in self._partitions if partition.is_root())
 
-    @property
+    @cached_property
     def boot(self) -> Optional[Partition]:
         return only(partition for partition in self._partitions if partition.is_boot())
