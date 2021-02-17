@@ -22,20 +22,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from abc import ABC, abstractmethod
-from typing import Type
 
 from ..commands import DeviceCommand
 
 
 class BaseDeviceCommandFactory(ABC):
     @abstractmethod
-    def physical_device_command(self) -> Type[DeviceCommand]:
+    def physical_device_command(self) -> DeviceCommand:
         pass
 
     @abstractmethod
-    def live_device_command(self) -> Type[DeviceCommand]:
+    def live_device_command(self) -> DeviceCommand:
         pass
 
     @abstractmethod
-    def static_device_command(self) -> Type[DeviceCommand]:
+    def static_device_command(self) -> DeviceCommand:
         pass

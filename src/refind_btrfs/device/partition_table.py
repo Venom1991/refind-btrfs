@@ -29,7 +29,7 @@ from typing import Iterable, List, Optional
 
 from more_itertools import only
 
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_items, none_throws
 
 from .partition import Partition
 from .subvolume import Subvolume
@@ -59,9 +59,9 @@ class PartitionTable:
         return self
 
     def has_been_migrated_to(self, replacement_subvolume: Subvolume) -> bool:
-        root = helpers.none_throws(self.root)
-        filesystem = helpers.none_throws(root.filesystem)
-        mount_options = helpers.none_throws(filesystem.mount_options)
+        root = none_throws(self.root)
+        filesystem = none_throws(root.filesystem)
+        mount_options = none_throws(filesystem.mount_options)
 
         return mount_options.is_matched_with(replacement_subvolume)
 
@@ -69,9 +69,9 @@ class PartitionTable:
         self, current_subvolume: Subvolume, replacement_subvolume: Subvolume
     ) -> PartitionTable:
         replacement = deepcopy(self)
-        root = helpers.none_throws(replacement.root)
-        filesystem = helpers.none_throws(root.filesystem)
-        mount_options = helpers.none_throws(filesystem.mount_options)
+        root = none_throws(replacement.root)
+        filesystem = none_throws(root.filesystem)
+        mount_options = none_throws(filesystem.mount_options)
 
         mount_options.migrate_from_to(current_subvolume, replacement_subvolume)
 
@@ -87,12 +87,37 @@ class PartitionTable:
 
     @cached_property
     def esp(self) -> Optional[Partition]:
-        return only(partition for partition in self._partitions if partition.is_esp())
+        partitions = self._partitions
+
+        if has_items(partitions):
+            return only(
+                partition for partition in none_throws(partitions) if partition.is_esp()
+            )
+
+        return None
 
     @cached_property
     def root(self) -> Optional[Partition]:
-        return only(partition for partition in self._partitions if partition.is_root())
+        partitions = self._partitions
+
+        if has_items(partitions):
+            return only(
+                partition
+                for partition in none_throws(partitions)
+                if partition.is_root()
+            )
+
+        return None
 
     @cached_property
     def boot(self) -> Optional[Partition]:
-        return only(partition for partition in self._partitions if partition.is_boot())
+        partitions = self._partitions
+
+        if has_items(partitions):
+            return only(
+                partition
+                for partition in none_throws(partitions)
+                if partition.is_boot()
+            )
+
+        return None

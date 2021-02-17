@@ -26,7 +26,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import is_none_or_whitespace
 
 from .mount_options import MountOptions
 from .subvolume import Subvolume
@@ -55,7 +55,7 @@ class Filesystem:
     def with_mount_options(self, raw_mount_options: str) -> Filesystem:
         self._mount_options = (
             MountOptions(raw_mount_options)
-            if not helpers.is_none_or_whitespace(raw_mount_options)
+            if not is_none_or_whitespace(raw_mount_options)
             else None
         )
 
@@ -74,7 +74,7 @@ class Filesystem:
         return self.fs_type == fs_type
 
     def is_mounted(self) -> bool:
-        return not helpers.is_none_or_whitespace(self.mount_point)
+        return not is_none_or_whitespace(self.mount_point)
 
     def is_mounted_at(self, path: Path) -> bool:
         return self.is_mounted() and Path(self.mount_point) == path

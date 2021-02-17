@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from typing import Generator, Iterable, List, Optional
+from typing import Collection, Generator, List, Optional
 
 from more_itertools import first
 
@@ -31,7 +31,7 @@ from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_items, none_throws
 
 from ..boot_options import BootOptions
 from ..boot_stanza import BootStanza
@@ -45,17 +45,17 @@ class Migration:
         self,
         boot_stanza: BootStanza,
         partition: Partition,
-        bootable_snapshots: Iterable[Subvolume],
+        bootable_snapshots: Collection[Subvolume],
     ) -> None:
-        assert helpers.has_items(
+        assert has_items(
             bootable_snapshots
         ), "Parameter 'bootable_snapshots' must contain at least one item!"
 
         if not boot_stanza.is_matched_with(partition):
             raise RefindConfigError("Boot stanza is not matched with the partition!")
 
-        filesystem = helpers.none_throws(partition.filesystem)
-        current_subvolume = helpers.none_throws(filesystem.subvolume)
+        filesystem = none_throws(partition.filesystem)
+        current_subvolume = none_throws(filesystem.subvolume)
 
         self._boot_stanza = boot_stanza
         self._current_subvolume = current_subvolume
@@ -104,15 +104,17 @@ class Migration:
 
                 result_sub_menus.extend(list(migrated_sub_menus))
 
+        boot_stanza_migration_result = none_throws(latest_migration_result)
+
         return BootStanza(
-            latest_migration_result.name,
+            boot_stanza_migration_result.name,
             boot_stanza.volume,
-            helpers.none_throws(latest_migration_result.loader_path),
-            latest_migration_result.initrd_path,
+            boot_stanza_migration_result.loader_path,
+            boot_stanza_migration_result.initrd_path,
             boot_stanza.icon_path,
             boot_stanza.os_type,
             boot_stanza.graphics,
-            helpers.none_throws(latest_migration_result.boot_options),
+            none_throws(boot_stanza_migration_result.boot_options),
             boot_stanza.is_disabled,
         ).with_sub_menus(result_sub_menus)
 
@@ -124,11 +126,11 @@ class Migration:
         include_paths: bool,
     ) -> Generator[SubMenu, None, None]:
         boot_stanza = self._boot_stanza
-        current_sub_menus = boot_stanza.sub_menus
 
-        if not helpers.has_items(current_sub_menus):
+        if not boot_stanza.has_sub_menus():
             return
 
+        current_sub_menus = none_throws(boot_stanza.sub_menus)
         is_latest = self._is_latest_snapshot(replacement_subvolume)
 
         for sub_menu in current_sub_menus:
@@ -149,7 +151,7 @@ class Migration:
                     migration_result.initrd_path,
                     sub_menu.graphics,
                     migration_result.boot_options,
-                    helpers.none_throws(migration_result.add_boot_options),
+                    none_throws(migration_result.add_boot_options),
                     sub_menu.is_disabled,
                 )
 

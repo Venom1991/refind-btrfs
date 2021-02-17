@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import groupby
-from typing import Callable, Generator, Iterable, List, NamedTuple, Optional
+from typing import Callable, Collection, Generator, List, NamedTuple, Optional
 
 from injector import inject
 from more_itertools import only, take
@@ -50,7 +50,12 @@ from refind_btrfs.common.exceptions import (
 from refind_btrfs.device.block_device import BlockDevice
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    has_items,
+    item_count_suffix,
+    is_singleton,
+    none_throws,
+)
 
 
 class BlockDevices(NamedTuple):
@@ -71,8 +76,8 @@ class PreparationResult(NamedTuple):
 
     def has_changes(self) -> bool:
         return (
-            helpers.has_items(self.snapshots_for_addition)
-            or helpers.has_items(self.snapshots_for_removal)
+            has_items(self.snapshots_for_addition)
+            or has_items(self.snapshots_for_removal)
         ) or (
             self.current_boot_stanza_generation != self.previous_boot_stanza_generation
         )
@@ -111,7 +116,7 @@ class Model:
     def initialize_block_devices(self) -> None:
         all_block_devices = list(self._get_all_block_devices())
 
-        if helpers.has_items(all_block_devices):
+        if has_items(all_block_devices):
 
             def block_device_filter(
                 filter_func: Callable[[BlockDevice], bool],
@@ -135,7 +140,7 @@ class Model:
     def initialize_root_subvolume(self) -> None:
         subvolume_command_factory = self._subvolume_command_factory
         root = self.root_partition
-        filesystem = root.filesystem
+        filesystem = none_throws(root.filesystem)
         subvolume_command = subvolume_command_factory.subvolume_command()
 
         filesystem.initialize_subvolume_using(subvolume_command)
@@ -154,8 +159,8 @@ class Model:
         snapshot_manipulation = package_config.snapshot_manipulation
         previous_run_result = persistence_provider.get_previous_run_result()
         selected_snapshots = take(
-            snapshot_manipulation.count,
-            sorted(helpers.none_throws(subvolume.snapshots), reverse=True),
+            snapshot_manipulation.selection_count,
+            sorted(none_throws(subvolume.snapshots), reverse=True),
         )
         snapshots_union = snapshot_manipulation.cleanup_exclusion.union(
             selected_snapshots
@@ -208,8 +213,8 @@ class Model:
 
             return False
 
-        esp = esp_device.esp
-        esp_filesystem = esp.filesystem
+        esp = self.esp
+        esp_filesystem = none_throws(esp.filesystem)
 
         logger.info(
             f"Found the ESP mounted at '{esp_filesystem.mount_point}' on '{esp.name}'."
@@ -222,8 +227,8 @@ class Model:
 
             return False
 
-        root = root_device.root
-        root_filesystem = root.filesystem
+        root = self.root_partition
+        root_filesystem = none_throws(root.filesystem)
 
         logger.info(f"Found the root partition on '{root.name}'.")
 
@@ -237,7 +242,7 @@ class Model:
         boot_device = self.boot_device
 
         if boot_device is not None:
-            boot = esp_device.boot
+            boot = none_throws(esp_device.boot)
 
             logger.info(f"Found a separate boot partition on '{boot.name}'.")
 
@@ -246,14 +251,14 @@ class Model:
     def check_root_subvolume(self) -> bool:
         logger = self._logger
         root = self.root_partition
-        filesystem = root.filesystem
+        filesystem = none_throws(root.filesystem)
 
         if not filesystem.has_subvolume():
             logger.error("The root partition is not mounted as a subvolume!")
 
             return False
 
-        subvolume = filesystem.subvolume
+        subvolume = none_throws(filesystem.subvolume)
         logical_path = subvolume.logical_path
 
         logger.info(f"Found subvolume '{logical_path}' mounted as the root partition.")
@@ -274,8 +279,8 @@ class Model:
 
             return False
 
-        snapshots = subvolume.snapshots
-        suffix = helpers.item_count_suffix(snapshots)
+        snapshots = none_throws(subvolume.snapshots)
+        suffix = item_count_suffix(snapshots)
 
         logger.info(
             f"Found {len(snapshots)} snapshot{suffix} of the '{logical_path}' subvolume."
@@ -287,14 +292,14 @@ class Model:
         logger = self._logger
         boot_stanzas = self.boot_stanzas
 
-        if not helpers.has_items(boot_stanzas):
+        if not has_items(boot_stanzas):
             logger.error(
                 "Could not find a boot stanza matched with the root partition!"
             )
 
             return False
 
-        suffix = helpers.item_count_suffix(boot_stanzas)
+        suffix = item_count_suffix(boot_stanzas)
 
         logger.info(
             f"Found {len(boot_stanzas)} boot "
@@ -306,7 +311,7 @@ class Model:
         for key, grouper in grouping_result:
             grouped_boot_stanzas = list(grouper)
 
-            if not helpers.is_singleton(grouped_boot_stanzas):
+            if not is_singleton(grouped_boot_stanzas):
                 volume = key.volume
                 loader_path = key.loader_path
 
@@ -329,15 +334,15 @@ class Model:
         snapshots_for_addition = preparation_result.snapshots_for_addition
         snapshots_for_removal = preparation_result.snapshots_for_removal
 
-        if helpers.has_items(snapshots_for_addition):
-            suffix = helpers.item_count_suffix(snapshots_for_addition)
+        if has_items(snapshots_for_addition):
+            suffix = item_count_suffix(snapshots_for_addition)
 
             logger.info(
                 f"Found {len(snapshots_for_addition)} snapshot{suffix} for addition."
             )
 
-        if helpers.has_items(snapshots_for_removal):
-            suffix = helpers.item_count_suffix(snapshots_for_removal)
+        if has_items(snapshots_for_removal):
+            suffix = item_count_suffix(snapshots_for_removal)
 
             logger.info(
                 f"Found {len(snapshots_for_removal)} snapshot{suffix} for removal."
@@ -377,7 +382,7 @@ class Model:
         bootable_snapshots = previous_run_result.bootable_snapshots
         snapshots_for_addition = preparation_result.snapshots_for_addition
 
-        if helpers.has_items(snapshots_for_addition):
+        if has_items(snapshots_for_addition):
             device_command_factory = self._device_command_factory
             static_device_command = device_command_factory.static_device_command()
             subvolume = self.root_subvolume
@@ -396,7 +401,7 @@ class Model:
 
         snapshots_for_removal = preparation_result.snapshots_for_removal
 
-        if helpers.has_items(snapshots_for_removal):
+        if has_items(snapshots_for_removal):
             for removal in snapshots_for_removal:
                 if removal.is_newly_created:
                     subvolume_command.delete_snapshot(removal)
@@ -406,7 +411,7 @@ class Model:
 
         return sorted(bootable_snapshots, reverse=True)
 
-    def _process_boot_stanzas(self, bootable_snapshots: Iterable[Subvolume]) -> None:
+    def _process_boot_stanzas(self, bootable_snapshots: Collection[Subvolume]) -> None:
         refind_config = self.refind_config
         root = self.root_partition
         generated_refind_configs = refind_config.generate_new_from(
@@ -464,39 +469,39 @@ class Model:
 
     @property
     def esp_device(self) -> Optional[BlockDevice]:
-        return helpers.none_throws(self._block_devices).esp_device
+        return none_throws(self._block_devices).esp_device
 
     @property
     def esp(self) -> Partition:
-        esp_device = helpers.none_throws(self.esp_device)
+        esp_device = none_throws(self.esp_device)
 
-        return helpers.none_throws(esp_device.esp)
+        return none_throws(esp_device.esp)
 
     @property
     def root_device(self) -> Optional[BlockDevice]:
-        return helpers.none_throws(self._block_devices).root_device
+        return none_throws(self._block_devices).root_device
 
     @property
     def root_partition(self) -> Partition:
-        root_device = helpers.none_throws(self.root_device)
+        root_device = none_throws(self.root_device)
 
-        return helpers.none_throws(root_device.root)
+        return none_throws(root_device.root)
 
     @property
     def root_subvolume(self) -> Subvolume:
         root = self.root_partition
-        filesystem = helpers.none_throws(root.filesystem)
+        filesystem = none_throws(root.filesystem)
 
-        return helpers.none_throws(filesystem.subvolume)
+        return none_throws(filesystem.subvolume)
 
     @property
     def boot_device(self) -> Optional[BlockDevice]:
-        return helpers.none_throws(self._block_devices).boot_device
+        return none_throws(self._block_devices).boot_device
 
     @property
-    def boot_stanzas(self) -> RefindConfig:
-        return helpers.none_throws(self._boot_stanzas)
+    def boot_stanzas(self) -> List[BootStanza]:
+        return none_throws(self._boot_stanzas)
 
     @property
     def preparation_result(self) -> PreparationResult:
-        return helpers.none_throws(self._preparation_result)
+        return none_throws(self._preparation_result)

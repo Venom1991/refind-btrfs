@@ -28,7 +28,11 @@ from typing import Optional
 
 from refind_btrfs.common import constants
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    is_none_or_whitespace,
+    none_throws,
+    replace_root_in_path,
+)
 
 from ..boot_options import BootOptions
 from .state import State
@@ -73,9 +77,9 @@ class BaseMigrationStrategy(ABC):
     def replacement_loader_path(self) -> Optional[str]:
         current_loader_path = self._current_state.loader_path
 
-        if not helpers.is_none_or_whitespace(current_loader_path):
-            return helpers.replace_root_in_path(
-                current_loader_path,
+        if not is_none_or_whitespace(current_loader_path):
+            return replace_root_in_path(
+                none_throws(current_loader_path),
                 self._current_subvolume.logical_path,
                 self._replacement_subvolume.logical_path,
             )
@@ -86,9 +90,9 @@ class BaseMigrationStrategy(ABC):
     def replacement_initrd_path(self) -> Optional[str]:
         current_initrd_path = self._current_state.initrd_path
 
-        if not helpers.is_none_or_whitespace(current_initrd_path):
-            return helpers.replace_root_in_path(
-                current_initrd_path,
+        if not is_none_or_whitespace(current_initrd_path):
+            return replace_root_in_path(
+                none_throws(current_initrd_path),
                 self._current_subvolume.logical_path,
                 self._replacement_subvolume.logical_path,
             )

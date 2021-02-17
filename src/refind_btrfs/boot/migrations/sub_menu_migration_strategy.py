@@ -25,7 +25,7 @@ from typing import Optional
 
 from refind_btrfs.common import constants
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import is_none_or_whitespace, none_throws
 
 from ..boot_options import BootOptions
 from ..sub_menu import SubMenu
@@ -76,8 +76,8 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
 
             replacement_boot_options = BootOptions.merge(
                 (
-                    inherit_from_state.boot_options,
-                    replacement_add_boot_options,
+                    none_throws(inherit_from_state.boot_options),
+                    none_throws(replacement_add_boot_options),
                 )
             )
             replacement_add_boot_options = BootOptions(constants.EMPTY_STR)
@@ -86,10 +86,10 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
             replacement_loader_path_candidate = self.replacement_loader_path
             replacement_initrd_path_candidate = self.replacement_initrd_path
 
-            if not helpers.is_none_or_whitespace(replacement_loader_path_candidate):
+            if not is_none_or_whitespace(replacement_loader_path_candidate):
                 replacement_loader_path = replacement_loader_path_candidate
 
-            if not helpers.is_none_or_whitespace(replacement_initrd_path_candidate):
+            if not is_none_or_whitespace(replacement_initrd_path_candidate):
                 replacement_initrd_path = replacement_initrd_path_candidate
 
         return State(

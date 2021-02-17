@@ -44,7 +44,7 @@ from refind_btrfs.common.abc import (
 )
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import discern_distance_between, has_items
 
 
 class SnapshotEventHandler(FileSystemEventHandler):
@@ -109,9 +109,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
             search_directory = snapshot_search.directory
 
             if snapshot_search.directory in parents:
-                distance = helpers.discern_distance_between(
-                    search_directory, created_directory
-                )
+                distance = discern_distance_between(search_directory, created_directory)
 
                 if distance is not None:
                     max_depth = snapshot_search.max_depth - distance
@@ -119,12 +117,14 @@ class SnapshotEventHandler(FileSystemEventHandler):
                     if self._is_or_contains_snapshot(created_directory, max_depth):
                         return True
 
+        return False
+
     def _is_snapshot_deleted(self, deleted_directory: Path) -> bool:
         persistence_provider = self._persistence_provider
         previous_run_result = persistence_provider.get_previous_run_result()
         bootable_snapshots = previous_run_result.bootable_snapshots
 
-        if helpers.has_items(bootable_snapshots):
+        if has_items(bootable_snapshots):
             deleted_snapshot = only(
                 snapshot
                 for snapshot in bootable_snapshots

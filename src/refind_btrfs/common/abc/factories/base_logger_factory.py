@@ -24,7 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 from abc import ABC, abstractmethod
 from logging import Handler, Logger
-from typing import Type
 
 from refind_btrfs.utility import LevelAwareFormatter
 
@@ -46,5 +45,5 @@ class BaseLoggerFactory(ABC):
         return logger
 
     @abstractmethod
-    def get_handler(self) -> Type[Handler]:
+    def get_handler(self) -> Handler:
         pass

@@ -28,7 +28,13 @@ from typing import List, Optional
 from uuid import UUID
 
 from refind_btrfs.common import constants
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    find_all_matched_files_in,
+    is_none_or_whitespace,
+    none_throws,
+    try_parse_int,
+    try_parse_uuid,
+)
 
 from .filesystem import Filesystem
 
@@ -55,8 +61,8 @@ class Partition:
         return hash(self.uuid)
 
     def with_part_type(self, part_type: str) -> Partition:
-        self._part_type_code = helpers.try_parse_int(part_type, base=16)
-        self._part_type_uuid = helpers.try_parse_uuid(part_type)
+        self._part_type_code = try_parse_int(part_type, base=16)
+        self._part_type_uuid = try_parse_uuid(part_type)
 
         return self
 
@@ -66,34 +72,49 @@ class Partition:
         return self
 
     def is_esp(self) -> bool:
-        return (
-            (
-                self.part_type_code == constants.ESP_PART_CODE
-                or self.part_type_uuid == constants.ESP_PART_UUID
+        filesystem = self.filesystem
+
+        if filesystem is not None:
+            return (
+                (
+                    self.part_type_code == constants.ESP_PART_CODE
+                    or self.part_type_uuid == constants.ESP_PART_UUID
+                )
+                and filesystem.is_mounted()
+                and filesystem.is_of_type(constants.ESP_FS_TYPE)
             )
-            and self.filesystem.is_mounted()
-            and self.filesystem.is_of_type(constants.ESP_FS_TYPE)
-        )
+
+        return False
 
     def is_root(self) -> bool:
-        directory = constants.ROOT_DIR
+        filesystem = self.filesystem
 
-        return self.filesystem.is_mounted_at(directory)
+        if filesystem is not None:
+            directory = constants.ROOT_DIR
+
+            return filesystem.is_mounted_at(directory)
+
+        return False
 
     def is_boot(self) -> bool:
-        directory = constants.ROOT_DIR / constants.BOOT_DIR
+        filesystem = self.filesystem
 
-        return self.filesystem.is_mounted_at(directory)
+        if filesystem is not None:
+            directory = constants.ROOT_DIR / constants.BOOT_DIR
+
+            return filesystem.is_mounted_at(directory)
+
+        return False
 
     def search_paths_for(self, file_name: str) -> Optional[List[Path]]:
-        if helpers.is_none_or_whitespace(file_name):
+        if is_none_or_whitespace(file_name):
             raise ValueError("The 'file_name' parameter must be initialized!")
 
-        filesystem = helpers.none_throws(self.filesystem)
+        filesystem = none_throws(self.filesystem)
 
         if filesystem.is_mounted():
             search_directory = Path(filesystem.mount_point)
-            all_matches = helpers.find_all_matched_files_in(search_directory, file_name)
+            all_matches = find_all_matched_files_in(search_directory, file_name)
 
             return list(all_matches)
 

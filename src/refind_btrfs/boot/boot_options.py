@@ -29,20 +29,27 @@ from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device.mount_options import MountOptions
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    has_items,
+    is_none_or_whitespace,
+    none_throws,
+    replace_root_in_path,
+)
 
 
 class BootOptions:
-    def __init__(self, raw_options: str) -> None:
+    def __init__(self, raw_options: Optional[str]) -> None:
         root_mount_options: Optional[Tuple[int, MountOptions]] = None
         initrd_options: List[Tuple[int, str]] = []
         other_options: List[Tuple[int, str]] = []
 
-        if not helpers.is_none_or_whitespace(raw_options):
-            split_options = raw_options.strip(constants.DOUBLE_QUOTE).split()
+        if not is_none_or_whitespace(raw_options):
+            split_options = (
+                none_throws(raw_options).strip(constants.DOUBLE_QUOTE).split()
+            )
 
             for position, option in enumerate(split_options):
-                if not helpers.is_none_or_whitespace(option):
+                if not is_none_or_whitespace(option):
                     if option.startswith(constants.ROOTFLAGS_PREFIX):
                         normalized_option = option.replace(
                             constants.ROOTFLAGS_PREFIX, constants.EMPTY_STR
@@ -82,23 +89,19 @@ class BootOptions:
         )
 
         if root_mount_options is not None:
-            position = root_mount_options[0]
-            option = root_mount_options[1]
-            result[position] = constants.ROOTFLAGS_PREFIX + str(option)
+            result[root_mount_options[0]] = constants.ROOTFLAGS_PREFIX + str(
+                root_mount_options[1]
+            )
 
-        if helpers.has_items(initrd_options):
-            for value in initrd_options:
-                position = value[0]
-                option = value[1]
-                result[position] = constants.INITRD_PREFIX + option
+        if has_items(initrd_options):
+            for initrd_option in initrd_options:
+                result[initrd_option[0]] = initrd_option[1]
 
-        if helpers.has_items(other_options):
-            for value in other_options:
-                position = value[0]
-                option = value[1]
-                result[position] = option
+        if has_items(other_options):
+            for other_option in other_options:
+                result[other_option[0]] = other_option[1]
 
-        if helpers.has_items(result):
+        if has_items(result):
             joined_options = constants.BOOT_OPTION_SEPARATOR.join(result)
 
             return constants.DOUBLE_QUOTE + joined_options + constants.DOUBLE_QUOTE
@@ -128,21 +131,21 @@ class BootOptions:
         if include_paths:
             initrd_options = self._initrd_options
 
-            if helpers.has_items(initrd_options):
+            if has_items(initrd_options):
                 current_logical_path = current_subvolume.logical_path
                 replacement_logical_path = replacement_subvolume.logical_path
 
                 self._initrd_options = [
                     (
-                        option[0],
-                        helpers.replace_root_in_path(
-                            option[1],
+                        initrd_option[0],
+                        replace_root_in_path(
+                            initrd_option[1],
                             current_logical_path,
                             replacement_logical_path,
                             (constants.FORWARD_SLASH, constants.BACKSLASH),
                         ),
                     )
-                    for option in initrd_options
+                    for initrd_option in initrd_options
                 ]
 
     @classmethod
@@ -165,8 +168,8 @@ class BootOptions:
 
     @property
     def initrd_options(self) -> List[str]:
-        return [value[1] for value in self._initrd_options]
+        return [initrd_option[1] for initrd_option in self._initrd_options]
 
     @property
     def other_options(self) -> List[str]:
-        return [value[1] for value in self._other_options]
+        return [other_option[1] for other_option in self._other_options]

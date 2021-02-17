@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from refind_btrfs.common import constants
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import is_none_or_whitespace, none_throws
 
 from ..boot_stanza import BootStanza
 from .base_migration_strategy import BaseMigrationStrategy
@@ -61,15 +61,15 @@ class BootStanzaMigrationStrategy(BaseMigrationStrategy):
 
         if is_latest:
             current_state = self._current_state
-            replacement_loader_path = current_state.loader_path
-            replacement_initrd_path = current_state.initrd_path
+            replacement_loader_path = none_throws(current_state.loader_path)
+            replacement_initrd_path = none_throws(current_state.initrd_path)
 
         if include_paths:
-            replacement_loader_path = self.replacement_loader_path
+            replacement_loader_path = none_throws(self.replacement_loader_path)
             replacement_initrd_path_candidate = self.replacement_initrd_path
 
-            if not helpers.is_none_or_whitespace(replacement_initrd_path_candidate):
-                replacement_initrd_path = replacement_initrd_path_candidate
+            if not is_none_or_whitespace(replacement_initrd_path_candidate):
+                replacement_initrd_path = none_throws(replacement_initrd_path_candidate)
 
         return State(
             self.replacement_name,

@@ -61,6 +61,10 @@ confidence=
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
 disable=missing-module-docstring,
+        missing-class-docstring,
+        unsubscriptable-object,
+        inherit-non-class,
+        too-few-public-methods,
         broad-except,
         print-statement,
         parameter-unpacking,

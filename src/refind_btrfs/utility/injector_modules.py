@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import Generator, cast
+from typing import Generator
 
 from injector import Binder, Module, SingletonScope, multiprovider
 from transitions.core import State
@@ -46,7 +46,7 @@ from refind_btrfs.system import (
     BtrfsUtilSubvolumeCommandFactory,
     SystemDeviceCommandFactory,
 )
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_method
 
 from .file_package_config_provider import FilePackageConfigProvider
 from .logger_factories import StreamLoggerFactory, SystemdLoggerFactory
@@ -80,7 +80,7 @@ class CommonModule(Module):
             value: str = state_name.value
             arguments = [value]
 
-            if helpers.has_method(model, value):
+            if has_method(model, value):
                 arguments *= 2
 
             yield State(*arguments)

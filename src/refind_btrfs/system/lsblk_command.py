@@ -37,7 +37,7 @@ from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import default_if_none, is_none_or_whitespace
 
 
 class LsblkCommand(DeviceCommand):
@@ -66,7 +66,7 @@ class LsblkCommand(DeviceCommand):
         except CalledProcessError as e:
             stderr = cast(str, e.stderr)
 
-            if helpers.is_none_or_whitespace(stderr):
+            if is_none_or_whitespace(stderr):
                 message = "lsblk execution failed!"
             else:
                 message = f"lsblk execution failed: '{stderr.rstrip()}'!"
@@ -121,7 +121,7 @@ class LsblkCommand(DeviceCommand):
         except CalledProcessError as e:
             stderr = cast(str, e.stderr)
 
-            if helpers.is_none_or_whitespace(stderr):
+            if is_none_or_whitespace(stderr):
                 message = "lsblk execution failed!"
             else:
                 message = f"lsblk execution failed: '{stderr.rstrip()}'!"
@@ -136,7 +136,7 @@ class LsblkCommand(DeviceCommand):
             lsblk_parsed_output.get(LsblkJsonKey.BLOCKDEVICES.value)
         )
         lsblk_partition_table_columns = [
-            helpers.default_if_none(
+            default_if_none(
                 lsblk_blockdevice.get(lsblk_column_key.value), constants.EMPTY_STR
             )
             for lsblk_column_key in [
@@ -164,7 +164,7 @@ class LsblkCommand(DeviceCommand):
     ) -> Generator[BlockDevice, None, None]:
         for lsblk_blockdevice in lsblk_blockdevices:
             lsblk_blockdevice_columns = [
-                helpers.default_if_none(
+                default_if_none(
                     lsblk_blockdevice.get(lsblk_column_key.value), constants.EMPTY_STR
                 )
                 for lsblk_column_key in [
@@ -189,7 +189,7 @@ class LsblkCommand(DeviceCommand):
     ) -> Generator[Partition, None, None]:
         for lsblk_partition in lsblk_partitions:
             lsblk_part_columns = [
-                helpers.default_if_none(
+                default_if_none(
                     lsblk_partition.get(lsblk_column_key.value), constants.EMPTY_STR
                 )
                 for lsblk_column_key in [
@@ -199,7 +199,7 @@ class LsblkCommand(DeviceCommand):
                 ]
             ]
             lsblk_fs_columns = [
-                helpers.default_if_none(
+                default_if_none(
                     lsblk_partition.get(lsblk_column_key.value), constants.EMPTY_STR
                 )
                 for lsblk_column_key in [
@@ -213,7 +213,7 @@ class LsblkCommand(DeviceCommand):
             yield (
                 Partition(*lsblk_part_columns)
                 .with_part_type(
-                    helpers.default_if_none(
+                    default_if_none(
                         lsblk_partition.get(LsblkColumn.PART_TYPE.value),
                         constants.EMPTY_STR,
                     )

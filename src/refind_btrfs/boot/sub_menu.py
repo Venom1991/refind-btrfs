@@ -29,7 +29,7 @@ from typing import Generator, List, Optional, Set
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, RefindOption
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import is_none_or_whitespace, none_throws
 
 from .boot_options import BootOptions
 
@@ -64,12 +64,12 @@ class SubMenu:
 
         loader_path = self.loader_path
 
-        if not helpers.is_none_or_whitespace(loader_path):
+        if not is_none_or_whitespace(loader_path):
             result.append(f"{option_indent}{RefindOption.LOADER.value} {loader_path}")
 
         initrd_path = self.initrd_path
 
-        if not helpers.is_none_or_whitespace(initrd_path):
+        if not is_none_or_whitespace(initrd_path):
             result.append(f"{option_indent}{RefindOption.INITRD.value} {initrd_path}")
 
         graphics = self.graphics
@@ -85,14 +85,14 @@ class SubMenu:
         if not boot_options is None:
             boot_options_str = str(boot_options)
 
-            if not helpers.is_none_or_whitespace(boot_options_str):
+            if not is_none_or_whitespace(boot_options_str):
                 result.append(
                     f"{option_indent}{RefindOption.BOOT_OPTIONS.value} {boot_options_str}"
                 )
 
         add_boot_options_str = str(self.add_boot_options)
 
-        if not helpers.is_none_or_whitespace(add_boot_options_str):
+        if not is_none_or_whitespace(add_boot_options_str):
             result.append(
                 f"{option_indent}{RefindOption.ADD_BOOT_OPTIONS.value} {add_boot_options_str}"
             )
@@ -122,28 +122,31 @@ class SubMenu:
         is_disabled = self.is_disabled
 
         return (
-            helpers.is_none_or_whitespace(loader_path)
+            is_none_or_whitespace(loader_path)
             and (initrd_path is None or initrd_path != constants.EMPTY_STR)
             and boot_options is None
             and not is_disabled
         )
 
     def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
-        loader_path = self.loader_path
-        initrd_path = self.initrd_path
-        boot_options = self.boot_options
-        add_boot_options = self.add_boot_options
+        is_disabled = self.is_disabled
 
-        if not helpers.is_none_or_whitespace(loader_path):
-            yield loader_path
+        if not is_disabled:
+            loader_path = self.loader_path
+            initrd_path = self.initrd_path
+            boot_options = self.boot_options
+            add_boot_options = self.add_boot_options
 
-        if not helpers.is_none_or_whitespace(initrd_path):
-            yield initrd_path
+            if not is_none_or_whitespace(loader_path):
+                yield none_throws(loader_path)
 
-        if not boot_options is None:
-            yield from boot_options.initrd_options
+            if not is_none_or_whitespace(initrd_path):
+                yield none_throws(initrd_path)
 
-        yield from add_boot_options.initrd_options
+            if not boot_options is None:
+                yield from boot_options.initrd_options
+
+            yield from add_boot_options.initrd_options
 
     @property
     def name(self) -> str:

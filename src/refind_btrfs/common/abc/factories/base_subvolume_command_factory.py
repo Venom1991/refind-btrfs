@@ -22,12 +22,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from abc import ABC, abstractmethod
-from typing import Type
 
 from ..commands import SubvolumeCommand
 
 
 class BaseSubvolumeCommandFactory(ABC):
     @abstractmethod
-    def subvolume_command(self) -> Type[SubvolumeCommand]:
+    def subvolume_command(self) -> SubvolumeCommand:
         pass

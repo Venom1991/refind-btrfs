@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import List, NewType, cast
+from typing import Collection, cast
 
 from injector import inject
 from more_itertools import first, last
@@ -35,11 +35,11 @@ from refind_btrfs.common.exceptions import (
     SubvolumeError,
     UnchangedConfiguration,
 )
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_items, is_singleton
 
 from .model import Model
 
-States = NewType("States", List[State])
+States = Collection[State]
 
 
 class RefindBtrfsMachine(Machine):
@@ -52,9 +52,9 @@ class RefindBtrfsMachine(Machine):
     ):
         self._logger = logger_factory.logger(__name__)
 
-        if not helpers.has_items(states) or helpers.is_singleton(states):
+        if not has_items(states) or is_singleton(states):
             raise ValueError(
-                "The 'states' list must be initialized and contain at least two items!"
+                "The 'states' parameter must be initialized and contain at least two items!"
             )
 
         initial = cast(State, first(states))
@@ -62,7 +62,7 @@ class RefindBtrfsMachine(Machine):
 
         if initial.name != expected_initial_name:
             raise ValueError(
-                "The first item of the 'states' list must "
+                "The first item of the 'states' parameter must "
                 f"be a state named '{expected_initial_name}'!"
             )
 
@@ -71,7 +71,7 @@ class RefindBtrfsMachine(Machine):
 
         if final.name != expected_final_name:
             raise ValueError(
-                "The last item of the 'states' list must "
+                "The last item of the 'states' parameter must "
                 f"be a state named '{expected_final_name}'!"
             )
 
@@ -79,7 +79,7 @@ class RefindBtrfsMachine(Machine):
 
         super().__init__(
             model=model,
-            states=states,
+            states=list(states),
             initial=initial,
             auto_transitions=False,
             name=__name__,

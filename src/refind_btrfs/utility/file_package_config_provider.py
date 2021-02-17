@@ -56,7 +56,7 @@ from refind_btrfs.common.enums import (
 from refind_btrfs.common.exceptions import PackageConfigError
 from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
 
-from . import helpers
+from .helpers import discern_path_relation_of, has_items, try_parse_uuid
 
 
 class FilePackageConfigProvider(BasePackageConfigProvider):
@@ -154,9 +154,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         for snapshot_search in snapshot_searches:
             search_directory = snapshot_search.directory
-            path_relation = helpers.discern_path_relation_of(
-                output_directory, search_directory
-            )
+            path_relation = discern_path_relation_of(output_directory, search_directory)
 
             if path_relation == PathRelation.SAME:
                 raise PackageConfigError(
@@ -255,7 +253,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     def _map_to_snapshot_manipulation(
         snapshot_manipulation_value: Table,
     ) -> SnapshotManipulation:
-        count_key: str = SnapshotManipulationConfigKey.COUNT.value
+        selection_count_key: str = SnapshotManipulationConfigKey.SELECTION_COUNT.value
         modify_read_only_flag_key: str = (
             SnapshotManipulationConfigKey.MODIFY_READ_ONLY_FLAG.value
         )
@@ -266,7 +264,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             SnapshotManipulationConfigKey.CLEANUP_EXCLUSION.value
         )
         all_keys = [
-            count_key,
+            selection_count_key,
             modify_read_only_flag_key,
             destination_directory_key,
             cleanup_exclusion_key,
@@ -276,29 +274,29 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             if key not in snapshot_manipulation_value:
                 raise PackageConfigError(f"Missing option '{key}'!")
 
-        count_value = snapshot_manipulation_value[count_key]
+        selection_count_value = snapshot_manipulation_value[selection_count_key]
 
-        if isinstance(count_value, int):
-            count = int(count_value)
+        if isinstance(selection_count_value, int):
+            selection_count = int(selection_count_value)
 
-            if count <= 0:
+            if selection_count <= 0:
                 raise PackageConfigError(
-                    f"The '{count_key}' option must be greater than zero!"
+                    f"The '{selection_count_key}' option must be greater than zero!"
                 )
-        elif isinstance(count_value, str):
-            actual_str = str(count_value).strip()
-            expected_str = constants.SNAPSHOT_COUNT_INFINITY
+        elif isinstance(selection_count_value, str):
+            actual_str = str(selection_count_value).strip()
+            expected_str = constants.SNAPSHOT_SELECTION_COUNT_INFINITY
 
             if actual_str != expected_str:
                 raise PackageConfigError(
-                    f"In case the '{count_key}' option is a string "
+                    f"In case the '{selection_count_key}' option is a string "
                     f"it can only be set to '{expected_str}'!"
                 )
 
-            count = sys.maxsize
+            selection_count = sys.maxsize
         else:
             raise PackageConfigError(
-                f"The '{count_key}' option must be either an integer or a string!"
+                f"The '{selection_count_key}' option must be either an integer or a string!"
             )
 
         modify_read_only_flag_value = snapshot_manipulation_value[
@@ -333,14 +331,14 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         cleanup_exclusion = list(cleanup_exclusion_value)
         uuids: List[UUID] = []
 
-        if helpers.has_items(cleanup_exclusion):
+        if has_items(cleanup_exclusion):
             for item in cleanup_exclusion:
                 if not isinstance(item, str):
                     raise PackageConfigError(
                         f"Every member of the '{cleanup_exclusion_key}' array must be a string!"
                     )
 
-                uuid = helpers.try_parse_uuid(item)
+                uuid = try_parse_uuid(item)
 
                 if uuid is None:
                     raise PackageConfigError(f"Could not parse '{item}' as an UUID!")
@@ -348,7 +346,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                 uuids.append(uuid)
 
         return SnapshotManipulation(
-            count,
+            selection_count,
             modify_read_only_flag,
             destination_directory,
             set(

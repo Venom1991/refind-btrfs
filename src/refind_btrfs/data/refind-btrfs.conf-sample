@@ -50,7 +50,7 @@ max_depth = 2
 ## to enable booting into snapshots as well as deleting those that aren't
 ## needed anymore.
 #
-# count = <int> or <string>
+# selection_count = <int> or <string>
 ## Number of snapshots (sorted descending by creation time) to include or
 ## "inf" to always include every currently present snapshot.
 #
@@ -77,7 +77,7 @@ max_depth = 2
 ## with regards to the "modify_read_only_flag" option.
 
 [snapshot-manipulation]
-count = 5
+selection_count = 5
 modify_read_only_flag = false
 destination_dir = "/root/.refind-btrfs"
 cleanup_exclusion = []
@@ -102,9 +102,10 @@ cleanup_exclusion = []
 ## sub-menus which do not override the main stanza's "loader" and "options"
 ## fields and which do not delete (i.e., set it to nothing) its "initrd" field
 ## are taken into consideration.
-## WARNING: Enabling this option in combination with setting a large "count"
-## value (greater than 10, for example) or, worse yet, by setting it to "inf"
-## can potentially result in an overcrowded "Boot Options" menu.
+## WARNING: Enabling this option in combination with setting a large
+## "selection_count" value (greater than 10, for example) or, worse yet, by
+## setting it to "inf" can potentially result in an overcrowded "Boot Options"
+## menu.
 
 [boot-stanza-generation]
 refind_config = "refind.conf"

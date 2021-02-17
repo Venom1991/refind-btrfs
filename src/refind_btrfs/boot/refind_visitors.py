@@ -38,6 +38,11 @@ from .boot_stanza import BootStanza
 from .sub_menu import SubMenu
 
 
+class ContextWithVisitor(NamedTuple):
+    child_context_func: Callable[[ParserRuleContext], ParserRuleContext]
+    visitor_func: Callable[[], RefindConfigParserVisitor]
+
+
 class BootStanzaVisitor(RefindConfigParserVisitor):
     def visitBoot_stanza(
         self, ctx: RefindConfigParser.Boot_stanzaContext
@@ -88,72 +93,68 @@ class MenuEntryVisitor(RefindConfigParserVisitor):
 
 
 class OptionVisitor(RefindConfigParserVisitor):
-    class ContextWithVisitor(NamedTuple):
-        child_context: Callable[[ParserRuleContext], ParserRuleContext]
-        visitor: Callable[[], RefindConfigParser]
-
     def __init__(self) -> None:
         self._main_option_mappings = {
-            RefindOption.VOLUME: self.ContextWithVisitor(
+            RefindOption.VOLUME: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.volume, VolumeVisitor
             ),
-            RefindOption.LOADER: self.ContextWithVisitor(
+            RefindOption.LOADER: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.loader, LoaderVisitor
             ),
-            RefindOption.INITRD: self.ContextWithVisitor(
+            RefindOption.INITRD: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.main_initrd, InitrdVisitor
             ),
-            RefindOption.ICON: self.ContextWithVisitor(
+            RefindOption.ICON: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.icon, IconVisitor
             ),
-            RefindOption.OS_TYPE: self.ContextWithVisitor(
+            RefindOption.OS_TYPE: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.os_type, OsTypeVisitor
             ),
-            RefindOption.GRAPHICS: self.ContextWithVisitor(
+            RefindOption.GRAPHICS: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.graphics, GraphicsVisitor
             ),
-            RefindOption.BOOT_OPTIONS: self.ContextWithVisitor(
+            RefindOption.BOOT_OPTIONS: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.main_boot_options,
                 BootOptionsVisitor,
             ),
-            RefindOption.DISABLED: self.ContextWithVisitor(
+            RefindOption.DISABLED: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.disabled, DisabledVisitor
             ),
-            RefindOption.SUB_MENU_ENTRY: self.ContextWithVisitor(
+            RefindOption.SUB_MENU_ENTRY: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.sub_menu, SubMenuVisitor
             ),
         }
         self._sub_option_mappings = {
-            RefindOption.LOADER: self.ContextWithVisitor(
+            RefindOption.LOADER: ContextWithVisitor(
                 RefindConfigParser.Sub_optionContext.loader, LoaderVisitor
             ),
-            RefindOption.INITRD: self.ContextWithVisitor(
+            RefindOption.INITRD: ContextWithVisitor(
                 RefindConfigParser.Sub_optionContext.sub_initrd, InitrdVisitor
             ),
-            RefindOption.GRAPHICS: self.ContextWithVisitor(
+            RefindOption.GRAPHICS: ContextWithVisitor(
                 RefindConfigParser.Sub_optionContext.graphics, GraphicsVisitor
             ),
-            RefindOption.BOOT_OPTIONS: self.ContextWithVisitor(
+            RefindOption.BOOT_OPTIONS: ContextWithVisitor(
                 RefindConfigParser.Sub_optionContext.sub_boot_options,
                 BootOptionsVisitor,
             ),
-            RefindOption.ADD_BOOT_OPTIONS: self.ContextWithVisitor(
+            RefindOption.ADD_BOOT_OPTIONS: ContextWithVisitor(
                 RefindConfigParser.Sub_optionContext.add_boot_options,
                 BootOptionsVisitor,
             ),
-            RefindOption.DISABLED: self.ContextWithVisitor(
+            RefindOption.DISABLED: ContextWithVisitor(
                 RefindConfigParser.Sub_optionContext.disabled, DisabledVisitor
             ),
         }
 
     def visitMain_option(
         self, ctx: RefindConfigParser.Main_optionContext
-    ) -> Generator[Tuple[int, Any], None, None]:
+    ) -> Generator[Tuple[RefindOption, Any], None, None]:
         yield from OptionVisitor._map_to_option(ctx, self._main_option_mappings)
 
     def visitSub_option(
         self, ctx: RefindConfigParser.Sub_optionContext
-    ) -> Generator[Tuple[int, Any], None, None]:
+    ) -> Generator[Tuple[RefindOption, Any], None, None]:
         yield from OptionVisitor._map_to_option(ctx, self._sub_option_mappings)
 
     @staticmethod
@@ -161,10 +162,10 @@ class OptionVisitor(RefindConfigParserVisitor):
         ctx: ParserRuleContext, mappings: Dict[RefindOption, ContextWithVisitor]
     ) -> Generator[Tuple[RefindOption, Any], None, None]:
         for key, value in mappings.items():
-            option_context = value.child_context(ctx)
+            option_context = value.child_context_func(ctx)
 
             if option_context is not None:
-                visitor = value.visitor()
+                visitor = value.visitor_func()
 
                 yield key, option_context.accept(visitor)
                 return

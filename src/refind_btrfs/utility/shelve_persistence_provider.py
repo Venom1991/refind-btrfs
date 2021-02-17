@@ -48,6 +48,8 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
                 if not package_config.has_been_modified(constants.PACKAGE_CONFIG_FILE):
                     return package_config
 
+        return None
+
     def save_package_config(self, value: PackageConfig) -> None:
         db_key: str = LocalDbKey.PACKAGE_CONFIG.value
 

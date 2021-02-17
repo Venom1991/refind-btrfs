@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from itertools import chain
 from pathlib import Path
-from typing import Generator, Iterable, List, Optional
+from typing import Collection, Generator, Iterable, List, Optional
 
 from more_itertools import always_iterable
 
@@ -34,7 +34,7 @@ from refind_btrfs.common.abc import BaseConfig
 from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_items, is_none_or_whitespace, none_throws
 
 from .boot_stanza import BootStanza
 from .migrations import Migration
@@ -65,29 +65,29 @@ class RefindConfig(BaseConfig):
         boot_stanzas = self.boot_stanzas
         included_configs = self.included_configs
 
-        if helpers.has_items(boot_stanzas):
+        if has_items(boot_stanzas):
             yield from (
                 boot_stanza
-                for boot_stanza in boot_stanzas
+                for boot_stanza in none_throws(boot_stanzas)
                 if boot_stanza.is_matched_with(partition)
             )
 
-        if helpers.has_items(included_configs):
+        if has_items(included_configs):
             yield from chain.from_iterable(
                 config.get_boot_stanzas_matched_with(partition)
-                for config in included_configs
+                for config in none_throws(included_configs)
             )
 
     def get_included_configs_difference_from(
         self, other: RefindConfig
-    ) -> Optional[Iterable[RefindConfig]]:
-        self_included_configs = self.included_configs
+    ) -> Optional[Collection[RefindConfig]]:
+        if self.has_included_configs():
+            self_included_configs = none_throws(self.included_configs)
 
-        if helpers.has_items(self_included_configs):
-            other_included_configs = other.included_configs
-
-            if not helpers.has_items(other_included_configs):
+            if not other.has_included_configs():
                 return self_included_configs
+
+            other_included_configs = none_throws(other.included_configs)
 
             return set(
                 included_config
@@ -100,27 +100,30 @@ class RefindConfig(BaseConfig):
     def generate_new_from(
         self,
         partition: Partition,
-        bootable_snapshots: Iterable[Subvolume],
+        bootable_snapshots: Collection[Subvolume],
         include_paths: bool,
         include_sub_menus: bool,
     ) -> Generator[RefindConfig, None, None]:
         matched_boot_stanzas = list(self.get_boot_stanzas_matched_with(partition))
 
-        if not helpers.has_items(matched_boot_stanzas):
+        if not has_items(matched_boot_stanzas):
             raise RefindConfigError(
                 "rEFInd config does not contain any boot stanzas matched with the root partition!"
             )
 
         file_path = self.file_path
         parent_directory = file_path.parent
-        included_configs = self.included_configs
+        included_configs: List[RefindConfig] = []
+
+        if self.has_included_configs():
+            included_configs = none_throws(self.included_configs)
 
         for boot_stanza in matched_boot_stanzas:
             migration = Migration(boot_stanza, partition, bootable_snapshots)
             migrated_boot_stanza = migration.migrate(include_paths, include_sub_menus)
             boot_stanza_file_name = migrated_boot_stanza.file_name
 
-            if not helpers.is_none_or_whitespace(boot_stanza_file_name):
+            if not is_none_or_whitespace(boot_stanza_file_name):
                 destination_directory = (
                     parent_directory / constants.SNAPSHOT_STANZAS_CONFIG_DIR
                 )
@@ -138,6 +141,11 @@ class RefindConfig(BaseConfig):
                     included_configs[index] = boot_stanza_config
 
                 yield boot_stanza_config
+
+        self._included_configs = included_configs
+
+    def has_included_configs(self) -> bool:
+        return has_items(self.included_configs)
 
     @property
     def boot_stanzas(self) -> Optional[List[BootStanza]]:

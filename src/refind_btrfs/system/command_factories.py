@@ -21,8 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import Type
-
 from injector import inject
 
 from refind_btrfs.common.abc import (
@@ -45,13 +43,13 @@ class SystemDeviceCommandFactory(BaseDeviceCommandFactory):
     def __init__(self, logger_factory: BaseLoggerFactory) -> None:
         self._logger_factory = logger_factory
 
-    def physical_device_command(self) -> Type[DeviceCommand]:
+    def physical_device_command(self) -> DeviceCommand:
         return LsblkCommand(self._logger_factory)
 
-    def live_device_command(self) -> Type[DeviceCommand]:
+    def live_device_command(self) -> DeviceCommand:
         return FindmntCommand(self._logger_factory)
 
-    def static_device_command(self) -> Type[DeviceCommand]:
+    def static_device_command(self) -> DeviceCommand:
         return FstabCommand(self._logger_factory)
 
 
@@ -65,5 +63,5 @@ class BtrfsUtilSubvolumeCommandFactory(BaseSubvolumeCommandFactory):
         self._logger_factory = logger_factory
         self._package_config_provider = package_config_provider
 
-    def subvolume_command(self) -> Type[SubvolumeCommand]:
+    def subvolume_command(self) -> SubvolumeCommand:
         return BtrfsUtilCommand(self._logger_factory, self._package_config_provider)

@@ -37,7 +37,7 @@ from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import default_if_none, is_none_or_whitespace
 
 
 class FindmntCommand(DeviceCommand):
@@ -88,7 +88,7 @@ class FindmntCommand(DeviceCommand):
         except CalledProcessError as e:
             stderr = cast(str, e.stderr)
 
-            if helpers.is_none_or_whitespace(stderr):
+            if is_none_or_whitespace(stderr):
                 message = "findmnt execution failed!"
             else:
                 message = f"findmnt execution failed: '{stderr.rstrip()}'!"
@@ -105,7 +105,7 @@ class FindmntCommand(DeviceCommand):
                 findmnt_parsed_output.get(FindmntJsonKey.FILESYSTEMS.value)
             )
             if block_device.is_matched_with(
-                helpers.default_if_none(
+                default_if_none(
                     findmnt_partition.get(FindmntColumn.DEVICE_NAME.value),
                     constants.EMPTY_STR,
                 )
@@ -128,7 +128,7 @@ class FindmntCommand(DeviceCommand):
     ) -> Generator[Partition, None, None]:
         for findmnt_partition in findmnt_partitions:
             findmnt_part_columns = [
-                helpers.default_if_none(
+                default_if_none(
                     findmnt_partition.get(findmnt_column_key.value), constants.EMPTY_STR
                 )
                 for findmnt_column_key in [
@@ -138,7 +138,7 @@ class FindmntCommand(DeviceCommand):
                 ]
             ]
             findmnt_fs_columns = [
-                helpers.default_if_none(
+                default_if_none(
                     findmnt_partition.get(findmnt_column_key.value), constants.EMPTY_STR
                 )
                 for findmnt_column_key in [
@@ -152,7 +152,7 @@ class FindmntCommand(DeviceCommand):
             yield (
                 Partition(*findmnt_part_columns).with_filesystem(
                     Filesystem(*findmnt_fs_columns).with_mount_options(
-                        helpers.default_if_none(
+                        default_if_none(
                             findmnt_partition.get(FindmntColumn.FS_MOUNT_OPTIONS.value),
                             constants.EMPTY_STR,
                         )

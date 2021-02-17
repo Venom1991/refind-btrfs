@@ -33,7 +33,11 @@ from more_itertools import last
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, RefindOption
 from refind_btrfs.device.partition import Partition
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    has_items,
+    is_none_or_whitespace,
+    none_throws,
+)
 
 from .boot_options import BootOptions
 from .sub_menu import SubMenu
@@ -44,7 +48,7 @@ class BootStanza:
         self,
         name: str,
         volume: Optional[str],
-        loader_path: str,
+        loader_path: Optional[str],
         initrd_path: Optional[str],
         icon_path: Optional[str],
         os_type: Optional[str],
@@ -85,25 +89,27 @@ class BootStanza:
 
         icon_path = self.icon_path
 
-        if not helpers.is_none_or_whitespace(icon_path):
+        if not is_none_or_whitespace(icon_path):
             result.append(f"{option_indent}{RefindOption.ICON.value} {icon_path}")
 
         volume = self.volume
 
-        if not helpers.is_none_or_whitespace(volume):
+        if not is_none_or_whitespace(volume):
             result.append(f"{option_indent}{RefindOption.VOLUME.value} {volume}")
 
-        loader_path = self._loader_path
-        result.append(f"{option_indent}{RefindOption.LOADER.value} {loader_path}")
+        loader_path = self.loader_path
+
+        if not is_none_or_whitespace(loader_path):
+            result.append(f"{option_indent}{RefindOption.LOADER.value} {loader_path}")
 
         initrd_path = self.initrd_path
 
-        if not helpers.is_none_or_whitespace(initrd_path):
+        if not is_none_or_whitespace(initrd_path):
             result.append(f"{option_indent}{RefindOption.INITRD.value} {initrd_path}")
 
         os_type = self.os_type
 
-        if not helpers.is_none_or_whitespace(os_type):
+        if not is_none_or_whitespace(os_type):
             result.append(f"{option_indent}{RefindOption.OS_TYPE.value} {os_type}")
 
         graphics = self.graphics
@@ -118,15 +124,15 @@ class BootStanza:
 
         boot_options_str = str(self.boot_options)
 
-        if not helpers.is_none_or_whitespace(boot_options_str):
+        if not is_none_or_whitespace(boot_options_str):
             result.append(
                 f"{option_indent}{RefindOption.BOOT_OPTIONS.value} {boot_options_str}"
             )
 
         sub_menus = self.sub_menus
 
-        if helpers.has_items(sub_menus):
-            result.extend([str(sub_menu) for sub_menu in sub_menus])
+        if has_items(sub_menus):
+            result.extend(str(sub_menu) for sub_menu in none_throws(sub_menus))
 
         is_disabled = self.is_disabled
 
@@ -143,49 +149,64 @@ class BootStanza:
         return self
 
     def is_matched_with(self, partition: Partition) -> bool:
-        volume = self.volume
-        is_disabled = self.is_disabled
-        filesystem = helpers.none_throws(partition.filesystem)
-        volume_comparers = [partition.uuid, partition.label, filesystem.label]
+        if self.can_be_used_for_bootable_snapshot():
+            stripped_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
+            filesystem = none_throws(partition.filesystem)
+            volume_comparers = [partition.uuid, partition.label, filesystem.label]
 
-        if (
-            not helpers.is_none_or_whitespace(volume)
-            and volume.strip(constants.DOUBLE_QUOTE) in volume_comparers
-            and not is_disabled
-        ):
-            boot_options = self.boot_options
-            subvolume = helpers.none_throws(filesystem.subvolume)
+            if stripped_volume in volume_comparers:
+                boot_options = self.boot_options
+                subvolume = none_throws(filesystem.subvolume)
 
-            if boot_options.is_matched_with(subvolume):
-                return True
-            else:
-                sub_menus = self.sub_menus
+                if boot_options.is_matched_with(subvolume):
+                    return True
+                else:
+                    sub_menus = self.sub_menus
 
-                if helpers.has_items(sub_menus):
-                    return any(
-                        sub_menu.is_matched_with(subvolume) for sub_menu in sub_menus
-                    )
+                    if has_items(sub_menus):
+                        return any(
+                            sub_menu.is_matched_with(subvolume)
+                            for sub_menu in none_throws(sub_menus)
+                        )
 
         return False
 
-    def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
+    def has_sub_menus(self) -> bool:
+        return has_items(self.sub_menus)
+
+    def can_be_used_for_bootable_snapshot(self) -> bool:
         loader_path = self.loader_path
         initrd_path = self.initrd_path
-        boot_options = self.boot_options
+        is_disabled = self.is_disabled
 
-        yield loader_path
+        return (
+            not is_none_or_whitespace(loader_path)
+            and not is_none_or_whitespace(initrd_path)
+            and not is_disabled
+        )
 
-        if not helpers.is_none_or_whitespace(initrd_path):
-            yield initrd_path
+    def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
+        is_disabled = self.is_disabled
 
-        yield from boot_options.initrd_options
+        if not is_disabled:
+            loader_path = self.loader_path
+            initrd_path = self.initrd_path
+            boot_options = self.boot_options
 
-        sub_menus = self.sub_menus
+            if not is_none_or_whitespace(loader_path):
+                yield none_throws(loader_path)
 
-        if helpers.has_items(sub_menus):
-            yield from chain.from_iterable(
-                sub_menu.all_boot_file_paths for sub_menu in sub_menus
-            )
+            if not is_none_or_whitespace(initrd_path):
+                yield none_throws(initrd_path)
+
+            yield from boot_options.initrd_options
+
+            sub_menus = self.sub_menus
+
+            if has_items(sub_menus):
+                yield from chain.from_iterable(
+                    sub_menu.all_boot_file_paths for sub_menu in none_throws(sub_menus)
+                )
 
     @property
     def name(self) -> str:
@@ -196,7 +217,7 @@ class BootStanza:
         return self._volume
 
     @property
-    def loader_path(self) -> str:
+    def loader_path(self) -> Optional[str]:
         return self._loader_path
 
     @property
@@ -229,16 +250,16 @@ class BootStanza:
 
     @cached_property
     def file_name(self) -> str:
-        volume = self.volume
-
-        if not helpers.is_none_or_whitespace(volume):
-            loader_path = self.loader_path
+        if self.can_be_used_for_bootable_snapshot():
+            stripped_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
             dir_separator_pattern = re.compile(constants.DIR_SEPARATOR_PATTERN)
-            split_loader_path = dir_separator_pattern.split(loader_path)
+            split_loader_path = dir_separator_pattern.split(
+                none_throws(self.loader_path)
+            )
             loader = last(split_loader_path)
             extension = constants.CONFIG_FILE_EXTENSION
 
-            return f"{volume.strip(constants.DOUBLE_QUOTE)}_{loader}{extension}".lower()
+            return f"{stripped_volume}_{loader}{extension}".lower()
 
         return constants.EMPTY_STR
 

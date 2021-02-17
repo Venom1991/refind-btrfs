@@ -26,7 +26,7 @@ import os
 import re
 from inspect import ismethod
 from pathlib import Path
-from typing import Any, Generator, Iterable, Optional, Tuple, TypeVar
+from typing import Any, Generator, Optional, Sized, Tuple, TypeVar
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -84,18 +84,18 @@ def has_method(obj: Any, method_name: str) -> bool:
     return False
 
 
-def has_items(value: Optional[Iterable[Any]]) -> bool:
+def has_items(value: Optional[Sized]) -> bool:
     return value is not None and len(value) > 0
 
 
-def is_singleton(value: Optional[Iterable[Any]]) -> bool:
+def is_singleton(value: Optional[Sized]) -> bool:
     return value is not None and len(value) == 1
 
 
-def item_count_suffix(value: Iterable[Any]) -> str:
+def item_count_suffix(value: Sized) -> str:
     assert has_items(
         value
-    ), "The 'value' iterable must be initialized and contain least one item!"
+    ), "The 'value' parameter must be initialized and contain least one item!"
 
     return constants.EMPTY_STR if is_singleton(value) else "s"
 
@@ -208,7 +208,7 @@ def replace_root_in_path(
 _T = TypeVar("_T")
 
 
-def none_throws(value: Optional[_T], message: str = "Unexpected `None`") -> _T:
+def none_throws(value: Optional[_T], message: str = "Unexpected 'None'") -> _T:
     if value is None:
         raise AssertionError(message)
 

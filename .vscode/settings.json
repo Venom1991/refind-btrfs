@@ -68,9 +68,11 @@
     "python.formatting.provider": "black",
     "python.languageServer": "Pylance",
     "python.linting.enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
+    "python.pythonPath": "/home/luka/Projects/Python/refind-btrfs/.venv/bin/python",
     "search.exclude": {
         "**/.venv": true
     },

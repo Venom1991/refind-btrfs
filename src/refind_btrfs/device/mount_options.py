@@ -28,7 +28,7 @@ from more_itertools import first, last
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import PartitionError
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_items, is_none_or_whitespace, try_parse_int
 
 from .subvolume import Subvolume
 
@@ -46,7 +46,7 @@ class MountOptions:
         )
 
         for position, option in enumerate(split_mount_options):
-            if not helpers.is_none_or_whitespace(option):
+            if not is_none_or_whitespace(option):
                 if parameterized_option_prefix_pattern.match(option):
                     split_parameterized_option = option.split(
                         constants.PARAMETERIZED_OPTION_SEPARATOR
@@ -74,21 +74,17 @@ class MountOptions:
             (len(simple_options), len(parameterized_options))
         )
 
-        if helpers.has_items(simple_options):
-            for value in simple_options:
-                position = value[0]
-                option = value[1]
-                result[position] = option
+        if has_items(simple_options):
+            for simple_option in simple_options:
+                result[simple_option[0]] = simple_option[1]
 
-        if helpers.has_items(parameterized_options):
-            for key, value in parameterized_options.items():
-                position = value[0]
-                option = value[1]
-                result[position] = constants.PARAMETERIZED_OPTION_SEPARATOR.join(
-                    (key, option)
+        if has_items(parameterized_options):
+            for option_name, option_value in parameterized_options.items():
+                result[option_value[0]] = constants.PARAMETERIZED_OPTION_SEPARATOR.join(
+                    (option_name, option_value[1])
                 )
 
-        if helpers.has_items(result):
+        if has_items(result):
             return constants.COLUMN_SEPARATOR.join(result)
 
         return constants.EMPTY_STR
@@ -113,7 +109,7 @@ class MountOptions:
             subvolid_value = subvolid_tuple[1]
             num_id = subvolume.num_id
 
-            subvolid_matched = helpers.try_parse_int(subvolid_value) == num_id
+            subvolid_matched = try_parse_int(subvolid_value) == num_id
 
         return subvol_matched or subvolid_matched
 
@@ -154,8 +150,11 @@ class MountOptions:
 
     @property
     def simple_options(self) -> List[str]:
-        return [value[1] for value in self._simple_options]
+        return [simple_option[1] for simple_option in self._simple_options]
 
     @property
     def parameterized_options(self) -> Dict[str, str]:
-        return {key: value[1] for key, value in self._parameterized_options.items()}
+        return {
+            option_name: option_value[1]
+            for option_name, option_value in self._parameterized_options.items()
+        }

@@ -26,7 +26,7 @@ from __future__ import annotations
 import re
 from typing import Iterable, List, Optional, Union
 
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import has_items, none_throws
 
 from .partition import Partition
 from .partition_table import PartitionTable
@@ -66,10 +66,10 @@ class BlockDevice:
         else:
             dependencies = self.dependencies
 
-            if helpers.has_items(dependencies):
+            if has_items(dependencies):
                 return any(
                     dependency.is_matched_with(partition_name)
-                    for dependency in dependencies
+                    for dependency in none_throws(dependencies)
                 )
 
         return False
@@ -110,15 +110,30 @@ class BlockDevice:
 
     @property
     def esp(self) -> Optional[Partition]:
-        return self._physical_partition_table.esp
+        partition_table = self._physical_partition_table
+
+        if partition_table is not None:
+            return partition_table.esp
+
+        return None
 
     @property
     def root(self) -> Optional[Partition]:
-        return self._live_partition_table.root
+        partition_table = self._live_partition_table
+
+        if partition_table is not None:
+            return partition_table.root
+
+        return None
 
     @property
     def boot(self) -> Optional[Partition]:
-        return self._live_partition_table.boot
+        partition_table = self._live_partition_table
+
+        if partition_table is not None:
+            return partition_table.boot
+
+        return None
 
     @property
     def dependencies(self) -> Optional[List[BlockDevice]]:

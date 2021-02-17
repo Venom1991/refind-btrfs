@@ -30,7 +30,12 @@ from uuid import UUID
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    discern_path_relation_of,
+    has_items,
+    is_none_or_whitespace,
+    none_throws,
+)
 
 if TYPE_CHECKING:
     from refind_btrfs.common.abc import DeviceCommand
@@ -97,8 +102,8 @@ class Subvolume:
         formatted_time_created = self.time_created.strftime("%Y-%m-%d_%H-%M-%S")
 
         if self.is_newly_created:
-            source_num_id = self._created_from.num_id
-            num_id = source_num_id
+            created_from = none_throws(self._created_from)
+            num_id = created_from.num_id
         else:
             num_id = self.num_id
 
@@ -109,7 +114,7 @@ class Subvolume:
     def located_in(self, parent_directory: Path):
         name = self.name
 
-        if helpers.is_none_or_whitespace(name):
+        if is_none_or_whitespace(name):
             raise ValueError("The 'name' property must be initialized beforehand!")
 
         self._filesystem_path = parent_directory / name
@@ -151,7 +156,7 @@ class Subvolume:
         return self.is_snapshot() and self.parent_uuid == subvolume.uuid
 
     def has_snapshots(self) -> bool:
-        return helpers.has_items(self.snapshots)
+        return has_items(self.snapshots)
 
     def can_be_added(self, comparison_iterable: Iterable[Subvolume]) -> bool:
         if self not in comparison_iterable:
@@ -175,14 +180,12 @@ class Subvolume:
 
     def is_located_in(self, parent_directory: Path) -> bool:
         if self.is_newly_created:
-            created_from = self._created_from
+            created_from = none_throws(self._created_from)
             filesystem_path = created_from.filesystem_path
         else:
             filesystem_path = self.filesystem_path
 
-        path_relation = helpers.discern_path_relation_of(
-            parent_directory, filesystem_path
-        )
+        path_relation = discern_path_relation_of(parent_directory, filesystem_path)
         expected_results = [PathRelation.SAME, PathRelation.SECOND_NESTED_IN_FIRST]
 
         return path_relation in expected_results

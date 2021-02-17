@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 from logging import Handler, NullHandler, StreamHandler
-from typing import Type
 
 from systemd.journal import JournalHandler
 
@@ -31,15 +30,15 @@ from refind_btrfs.common.abc import BaseLoggerFactory
 
 
 class NullLoggerFactory(BaseLoggerFactory):
-    def get_handler(self) -> Type[Handler]:
+    def get_handler(self) -> Handler:
         return NullHandler()
 
 
 class StreamLoggerFactory(BaseLoggerFactory):
-    def get_handler(self) -> Type[Handler]:
+    def get_handler(self) -> Handler:
         return StreamHandler(sys.stdout)
 
 
 class SystemdLoggerFactory(BaseLoggerFactory):
-    def get_handler(self) -> Type[Handler]:
+    def get_handler(self) -> Handler:
         return JournalHandler()

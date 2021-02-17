@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from argparse import ArgumentParser
-from typing import cast
+from typing import Optional, cast
 
 from injector import Injector
 
@@ -31,11 +31,11 @@ from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
 from refind_btrfs.common.enums import RunMode
 from refind_btrfs.common.exceptions import PackageConfigError
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import check_access_rights, none_throws
 from refind_btrfs.utility.injector_modules import CLIModule, WatchdogModule
 
 # pylint: disable=inconsistent-return-statements
-def initialize_injector() -> Injector:
+def initialize_injector() -> Optional[Injector]:
     one_time_mode: str = RunMode.ONE_TIME.value
     background_mode: str = RunMode.BACKGROUND.value
     parser = ArgumentParser(
@@ -56,22 +56,24 @@ def initialize_injector() -> Injector:
     )
 
     arguments = parser.parse_args()
-    run_mode = cast(str, helpers.none_throws(arguments.run_mode))
+    run_mode = cast(str, none_throws(arguments.run_mode))
 
     if run_mode == one_time_mode:
         return Injector(CLIModule)
     elif run_mode == background_mode:
         return Injector(WatchdogModule)
 
+    return None
+
 
 def main() -> int:
     exit_code = os.EX_OK
-    injector = initialize_injector()
+    injector = none_throws(initialize_injector())
     logger_factory = injector.get(BaseLoggerFactory)
     logger = logger_factory.logger(__name__)
 
     try:
-        helpers.check_access_rights()
+        check_access_rights()
 
         runner = injector.get(BaseRunner)
         exit_code = runner.run()

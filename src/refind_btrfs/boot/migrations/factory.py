@@ -22,10 +22,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from functools import singledispatchmethod
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import none_throws
 
 from ..boot_stanza import BootStanza
 from ..sub_menu import SubMenu
@@ -46,7 +46,7 @@ class Factory:
         include_paths: bool,
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
-    ) -> Type[BaseMigrationStrategy]:
+    ) -> BaseMigrationStrategy:
         type_name = type(argument).__name__
 
         raise NotImplementedError(
@@ -56,14 +56,14 @@ class Factory:
     # pylint: disable=unused-argument
     @migration_strategy.register(BootStanza)
     @staticmethod
-    def _(
+    def _boot_stanza(
         argument: BootStanza,
         current_subvolume: Subvolume,
         replacement_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
-    ) -> Type[BaseMigrationStrategy]:
+    ) -> BaseMigrationStrategy:
         return BootStanzaMigrationStrategy(
             argument, current_subvolume, replacement_subvolume, include_paths, is_latest
         )
@@ -71,19 +71,19 @@ class Factory:
     # pylint: disable=unused-argument
     @migration_strategy.register(SubMenu)
     @staticmethod
-    def _(
+    def _sub_menu(
         argument: SubMenu,
         current_subvolume: Subvolume,
         replacement_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
-    ) -> Type[BaseMigrationStrategy]:
+    ) -> BaseMigrationStrategy:
         return SubMenuMigrationStrategy(
             argument,
             current_subvolume,
             replacement_subvolume,
-            helpers.none_throws(inherit_from_state),
+            none_throws(inherit_from_state),
             include_paths,
             is_latest,
         )

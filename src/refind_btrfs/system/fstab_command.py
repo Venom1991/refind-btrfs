@@ -23,9 +23,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import fileinput
 import re
-from io import TextIOWrapper
 from pathlib import Path
-from typing import Dict, Generator
+from typing import Dict, Generator, TextIO
 from uuid import uuid4
 
 from refind_btrfs.common import constants
@@ -37,7 +36,12 @@ from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    default_if_none,
+    is_none_or_whitespace,
+    none_throws,
+    try_parse_int,
+)
 
 
 class FstabCommand(DeviceCommand):
@@ -69,8 +73,8 @@ class FstabCommand(DeviceCommand):
             )
 
         logger = self._logger
-        root = helpers.none_throws(partition_table.root)
-        filesystem = helpers.none_throws(root.filesystem)
+        root = none_throws(partition_table.root)
+        filesystem = none_throws(root.filesystem)
 
         try:
             logger.info(f"Modifying the '{fstab_path}' file.")
@@ -148,7 +152,7 @@ class FstabCommand(DeviceCommand):
     def _is_line_matched_with_filesystem(line: str, filesystem: Filesystem) -> bool:
         comment_pattern = re.compile(constants.COMMENT_PATTERN)
 
-        if helpers.is_none_or_whitespace(line) or comment_pattern.match(line):
+        if is_none_or_whitespace(line) or comment_pattern.match(line):
             return False
 
         split_line = line.split()
@@ -158,17 +162,17 @@ class FstabCommand(DeviceCommand):
 
     @staticmethod
     def _map_to_partitions(
-        fstab_file: TextIOWrapper,
+        fstab_file: TextIO,
     ) -> Generator[Partition, None, None]:
         comment_pattern = re.compile(constants.COMMENT_PATTERN)
 
         for line in fstab_file:
-            if helpers.is_none_or_whitespace(line) or comment_pattern.match(line):
+            if is_none_or_whitespace(line) or comment_pattern.match(line):
                 continue
 
             split_line = line.split()
-            fs_dump = helpers.try_parse_int(split_line[FstabColumn.FS_DUMP.value])
-            fs_fsck = helpers.try_parse_int(split_line[FstabColumn.FS_FSCK.value])
+            fs_dump = try_parse_int(split_line[FstabColumn.FS_DUMP.value])
+            fs_fsck = try_parse_int(split_line[FstabColumn.FS_FSCK.value])
             filesystem = (
                 Filesystem(
                     constants.EMPTY_STR,
@@ -177,8 +181,8 @@ class FstabCommand(DeviceCommand):
                     split_line[FstabColumn.FS_MOUNT_POINT.value],
                 )
                 .with_dump_and_fsck(
-                    helpers.default_if_none(fs_dump, 0),
-                    helpers.default_if_none(fs_fsck, 0),
+                    default_if_none(fs_dump, 0),
+                    default_if_none(fs_fsck, 0),
                 )
                 .with_mount_options(split_line[FstabColumn.FS_MOUNT_OPTIONS.value])
             )

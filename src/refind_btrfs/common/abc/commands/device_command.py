@@ -48,11 +48,11 @@ class DeviceCommand(ABC):
         pass
 
     @get_partition_table_for.register(BlockDevice)
-    def _(self, argument: BlockDevice) -> PartitionTable:
+    def _block_device(self, argument: BlockDevice) -> PartitionTable:
         return self._block_device_partition_table(argument)
 
     @get_partition_table_for.register(Subvolume)
-    def _(self, argument: Subvolume) -> PartitionTable:
+    def _subvolume(self, argument: Subvolume) -> PartitionTable:
         return self._subvolume_partition_table(argument)
 
     @abstractmethod

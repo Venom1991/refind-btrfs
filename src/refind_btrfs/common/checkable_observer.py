@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import Optional, Type
+from typing import Optional
 
 from watchdog.observers import Observer
 from watchdog.observers.api import DEFAULT_OBSERVER_TIMEOUT
@@ -31,7 +31,7 @@ class CheckableObserver(Observer):
     def __init__(self):
         super().__init__(DEFAULT_OBSERVER_TIMEOUT)
 
-        self._exception: Optional[Type[Exception]] = None
+        self._exception: Optional[Exception] = None
 
     # pylint: disable=raising-bad-type
     def check(self) -> None:

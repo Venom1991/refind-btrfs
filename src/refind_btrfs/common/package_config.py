@@ -28,7 +28,7 @@ from typing import Generator, Iterable, List, NamedTuple, Set
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import find_all_directories_in, has_items
 
 
 class SnapshotSearch(NamedTuple):
@@ -50,7 +50,7 @@ class SnapshotSearch(NamedTuple):
 
 
 class SnapshotManipulation(NamedTuple):
-    count: int
+    selection_count: int
     modify_read_only_flag: bool
     destination_directory: Path
     cleanup_exclusion: Set[Subvolume]
@@ -92,12 +92,12 @@ class PackageConfig(BaseConfig):
     def _get_directories_for_watch(self) -> Generator[Path, None, None]:
         snapshot_searches = self.snapshot_searches
 
-        if helpers.has_items(snapshot_searches):
+        if has_items(snapshot_searches):
             for snapshot_search in snapshot_searches:
                 directory = snapshot_search.directory
                 max_depth = snapshot_search.max_depth - 1
 
-                yield from helpers.find_all_directories_in(directory, max_depth)
+                yield from find_all_directories_in(directory, max_depth)
 
     @property
     def exit_if_root_is_snapshot(self) -> bool:

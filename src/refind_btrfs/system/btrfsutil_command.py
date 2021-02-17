@@ -35,7 +35,11 @@ from refind_btrfs.common.abc import (
 )
 from refind_btrfs.common.exceptions import SubvolumeError
 from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import (
+    default_if_none,
+    none_throws,
+    try_convert_bytes_to_uuid,
+)
 
 
 class BtrfsUtilCommand(SubvolumeCommand):
@@ -73,12 +77,12 @@ class BtrfsUtilCommand(SubvolumeCommand):
                 subvolume_info = btrfsutil.subvolume_info(
                     filesystem_path_str, subvolume_id
                 )
-                self_uuid = helpers.default_if_none(
-                    helpers.try_convert_bytes_to_uuid(subvolume_info.uuid),
+                self_uuid = default_if_none(
+                    try_convert_bytes_to_uuid(subvolume_info.uuid),
                     constants.EMPTY_UUID,
                 )
-                parent_uuid = helpers.default_if_none(
-                    helpers.try_convert_bytes_to_uuid(subvolume_info.parent_uuid),
+                parent_uuid = default_if_none(
+                    try_convert_bytes_to_uuid(subvolume_info.parent_uuid),
                     constants.EMPTY_UUID,
                 )
 
@@ -212,7 +216,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
             searched_directories.add(resolved_path)
 
             if is_snapshot_of:
-                yield subvolume
+                yield none_throws(subvolume)
             else:
                 subdirectories = (
                     child for child in directory.iterdir() if child.is_dir()
@@ -296,7 +300,9 @@ class BtrfsUtilCommand(SubvolumeCommand):
                 f"Could not create a new writable snapshot at '{snapshot_directory}'!"
             ) from e
 
-        return self.get_subvolume_from(snapshot_directory).as_newly_created_from(source)
+        writable_snapshot = self.get_subvolume_from(snapshot_directory)
+
+        return none_throws(writable_snapshot).as_newly_created_from(source)
 
     @property
     def package_config(self) -> PackageConfig:

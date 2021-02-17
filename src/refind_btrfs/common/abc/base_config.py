@@ -3,7 +3,7 @@ from os import stat_result
 from pathlib import Path
 from typing import Optional
 
-from refind_btrfs.utility import helpers
+from refind_btrfs.utility.helpers import none_throws
 
 
 class BaseConfig(ABC):
@@ -40,7 +40,7 @@ class BaseConfig(ABC):
         if current_file_path != actual_file_path:
             return True
 
-        current_file_stat = helpers.none_throws(self.file_stat)
+        current_file_stat = none_throws(self.file_stat)
         actual_file_stat = actual_file_path.stat()
 
         return current_file_stat.st_mtime != actual_file_stat.st_mtime
