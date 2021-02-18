@@ -29,49 +29,50 @@ COMMENT : '#' (~[\n])* NEWLINE? -> skip ;
 IGNORED_OPTION
     : (
           'timeout'
-        | 'shutdown_after_timeout'
-        | 'use_nvram'
-        | 'screensaver'
-        | 'hideui'
-        | 'icons_dir'
+        | 'also_scan_dirs'
         | 'banner'
         | 'banner_scale'
         | 'big_icon_size'
-        | 'small_icon_size'
+        | 'csr_values'
+        | 'default_selection'
+        | 'don\'t_scan_dirs'
+        | 'don\'t_scan_files'
+        | 'don\'t_scan_tools'
+        | 'don\'t_scan_volumes'
+        | 'dont_scan_dirs'
+        | 'dont_scan_files'
+        | 'dont_scan_firmware'
+        | 'dont_scan_tools'
+        | 'dont_scan_volumes'
+        | 'enable_and_lock_vmx'
+        | 'enable_mouse'
+        | 'enable_touch'
+        | 'extra_kernel_version_strings'
+        | 'fold_linux_kernels'
+        | 'font'
+        | 'hideui'
+        | 'icons_dir'
+        | 'max_tags'
+        | 'mouse_size'
+        | 'mouse_speed'
+        | 'resolution'
+        | 'scan_all_linux_kernels'
+        | 'scan_delay'
+        | 'scan_driver_dirs'
+        | 'scanfor'
+        | 'screensaver'
         | 'selection_big'
         | 'selection_small'
         | 'showtools'
-        | 'font'
-        | 'textonly'
-        | 'textmode'
-        | 'resolution'
-        | 'enable_touch'
-        | 'enable_mouse'
-        | 'mouse_size'
-        | 'mouse_speed'
-        | 'use_graphics_for'
-        | 'scan_driver_dirs'
-        | 'scanfor'
-        | 'uefi_deep_legacy_scan'
-        | 'scan_delay'
-        | 'also_scan_dirs'
-        | 'dont_scan_volumes'
-        | 'don\'t_scan_volumes'
-        | 'dont_scan_dirs'
-        | 'don\'t_scan_dirs'
-        | 'dont_scan_files'
-        | 'don\'t_scan_files'
-        | 'dont_scan_tools'
-        | 'don\'t_scan_tools'
-        | 'windows_recovery_files'
-        | 'scan_all_linux_kernels'
-        | 'fold_linux_kernels'
-        | 'extra_kernel_version_strings'
-        | 'max_tags'
-        | 'default_selection'
-        | 'enable_and_lock_vmx'
+        | 'shutdown_after_timeout'
+        | 'small_icon_size'
         | 'spoof_osx_version'
-        | 'csr_values'
+        | 'textmode'
+        | 'textonly'
+        | 'uefi_deep_legacy_scan'
+        | 'use_graphics_for'
+        | 'use_nvram'
+        | 'windows_recovery_files'
       ) (~[\n])* NEWLINE? -> skip ;
 
 MENU_ENTRY : (MAIN_MENU_ENTRY | SUB_MENU_ENTRY) ;
@@ -86,12 +87,16 @@ OS_TYPE : 'ostype' WHITESPACE -> pushMode(STRICT_PARAMETER_MODE) ;
 GRAPHICS : 'graphics' WHITESPACE -> pushMode(STRICT_PARAMETER_MODE) ;
 BOOT_OPTIONS : 'options' ;
 ADD_BOOT_OPTIONS : 'add_options' ;
+FIRMWARE_BOOTNUM : 'firmware_bootnum' ;
 DISABLED : 'disabled' ;
 
 INCLUDE : 'include' ;
 
 OPEN_BRACE : '{' ;
 CLOSE_BRACE : '}' ;
+
+HEX_INTEGER : HEX_DIGIT+ ;
+fragment HEX_DIGIT: [0-9a-fA-F] ;
 
 STRING: (QUOTED_STRING | UNQUOTED_STRING) ;
 fragment QUOTED_STRING : '"' (~[\n])+ '"' ;

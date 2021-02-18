@@ -69,6 +69,11 @@ class RefindConfigParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by RefindConfigParser#firmware_bootnum.
+    def visitFirmware_bootnum(self, ctx:RefindConfigParser.Firmware_bootnumContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by RefindConfigParser#disabled.
     def visitDisabled(self, ctx:RefindConfigParser.DisabledContext):
         return self.visitChildren(ctx)

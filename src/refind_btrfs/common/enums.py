@@ -136,18 +136,19 @@ class LocalDbKey(Enum):
 
 @unique
 class RefindOption(Enum):
-    MENU_ENTRY = "menuentry"
-    VOLUME = "volume"
-    LOADER = "loader"
-    INITRD = "initrd"
-    ICON = "icon"
-    OS_TYPE = "ostype"
-    GRAPHICS = "graphics"
-    BOOT_OPTIONS = "options"
     ADD_BOOT_OPTIONS = "add_options"
+    BOOT_OPTIONS = "options"
     DISABLED = "disabled"
-    SUB_MENU_ENTRY = "submenuentry"
+    FIRMWARE_BOOTNUM = "firmware_bootnum"
+    GRAPHICS = "graphics"
+    ICON = "icon"
     INCLUDE = "include"
+    INITRD = "initrd"
+    LOADER = "loader"
+    MENU_ENTRY = "menuentry"
+    OS_TYPE = "ostype"
+    SUB_MENU_ENTRY = "submenuentry"
+    VOLUME = "volume"
 
 
 @unique

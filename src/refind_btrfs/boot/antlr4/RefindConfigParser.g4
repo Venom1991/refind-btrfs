@@ -43,6 +43,7 @@ main_option
     | os_type
     | graphics
     | main_boot_options
+    | firmware_bootnum
     | disabled
     | sub_menu
     ;
@@ -54,6 +55,7 @@ icon : ICON STRING ;
 os_type : OS_TYPE OS_TYPE_PARAMETER ;
 graphics : GRAPHICS GRAPHICS_PARAMETER ;
 main_boot_options : BOOT_OPTIONS STRING ;
+firmware_bootnum: FIRMWARE_BOOTNUM HEX_INTEGER ;
 disabled : DISABLED;
 
 // "submenuentry" section

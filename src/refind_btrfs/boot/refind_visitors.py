@@ -31,6 +31,7 @@ from more_itertools import always_iterable, only
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, OSTypeParameter, RefindOption
 from refind_btrfs.common.exceptions import RefindConfigError
+from refind_btrfs.utility.helpers import try_parse_int
 
 from .antlr4 import RefindConfigParser, RefindConfigParserVisitor
 from .boot_options import BootOptions
@@ -67,6 +68,9 @@ class BootStanzaVisitor(RefindConfigParserVisitor):
         boot_options = only(
             always_iterable(main_options.get(RefindOption.BOOT_OPTIONS))
         )
+        firmware_bootnum = only(
+            always_iterable(main_options.get(RefindOption.FIRMWARE_BOOTNUM))
+        )
         disabled = only(
             always_iterable(main_options.get(RefindOption.DISABLED)), default=False
         )
@@ -81,6 +85,7 @@ class BootStanzaVisitor(RefindConfigParserVisitor):
             os_type,
             graphics,
             BootOptions(boot_options),
+            firmware_bootnum,
             disabled,
         ).with_sub_menus(sub_menus)
 
@@ -116,6 +121,10 @@ class OptionVisitor(RefindConfigParserVisitor):
             RefindOption.BOOT_OPTIONS: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.main_boot_options,
                 BootOptionsVisitor,
+            ),
+            RefindOption.FIRMWARE_BOOTNUM: ContextWithVisitor(
+                RefindConfigParser.Main_optionContext.firmware_bootnum,
+                FirmwareBootnumVisitor,
             ),
             RefindOption.DISABLED: ContextWithVisitor(
                 RefindConfigParser.Main_optionContext.disabled, DisabledVisitor
@@ -297,6 +306,20 @@ class BootOptionsVisitor(RefindConfigParserVisitor):
         token = ctx.STRING()
 
         return token.getText()
+
+
+class FirmwareBootnumVisitor(RefindConfigParserVisitor):
+    def visitFirmware_bootnum(
+        self, ctx: RefindConfigParser.Firmware_bootnumContext
+    ) -> int:
+        token = ctx.HEX_INTEGER()
+        text = token.getText()
+        firmware_bootnum = try_parse_int(text, 16)
+
+        if firmware_bootnum is None:
+            raise RefindConfigError(f"Unexpected 'firmware_bootnum' option - '{text}'!")
+
+        return firmware_bootnum
 
 
 class DisabledVisitor(RefindConfigParserVisitor):

@@ -1,5 +1,6 @@
 {
     "antlr4.generation": {
+        "alternativeJar": "/usr/share/java/antlr-4.9.1-complete.jar",
         "language": "Python3",
         "listeners": false,
         "mode": "external",
@@ -8,6 +9,7 @@
     "code-runner.clearPreviousOutput": true,
     "code-runner.runInTerminal": true,
     "cSpell.words": [
+        "Bootnum",
         "Btrfs",
         "ELILO",
         "EPERM",
@@ -72,7 +74,7 @@
     "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-    "python.pythonPath": "/home/luka/Projects/Python/refind-btrfs/.venv/bin/python",
+    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
     "search.exclude": {
         "**/.venv": true
     },

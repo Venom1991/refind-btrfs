@@ -54,6 +54,7 @@ class BootStanza:
         os_type: Optional[str],
         graphics: Optional[bool],
         boot_options: BootOptions,
+        firmware_bootnum: Optional[int],
         is_disabled: bool,
     ) -> None:
         self._name = name
@@ -64,6 +65,7 @@ class BootStanza:
         self._os_type = os_type
         self._graphics = graphics
         self._boot_options = boot_options
+        self._firmware_bootnum = firmware_bootnum
         self._is_disabled = is_disabled
         self._sub_menus: Optional[List[SubMenu]] = None
 
@@ -127,6 +129,13 @@ class BootStanza:
         if not is_none_or_whitespace(boot_options_str):
             result.append(
                 f"{option_indent}{RefindOption.BOOT_OPTIONS.value} {boot_options_str}"
+            )
+
+        firmware_bootnum = self.firmware_bootnum
+
+        if not firmware_bootnum is None:
+            result.append(
+                f"{option_indent}{RefindOption.FIRMWARE_BOOTNUM.value} {firmware_bootnum:04x}"
             )
 
         sub_menus = self.sub_menus
@@ -239,6 +248,10 @@ class BootStanza:
     @property
     def boot_options(self) -> BootOptions:
         return self._boot_options
+
+    @property
+    def firmware_bootnum(self) -> Optional[int]:
+        return self._firmware_bootnum
 
     @property
     def is_disabled(self) -> bool:

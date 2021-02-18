@@ -115,6 +115,7 @@ class Migration:
             boot_stanza.os_type,
             boot_stanza.graphics,
             none_throws(boot_stanza_migration_result.boot_options),
+            boot_stanza.firmware_bootnum,
             boot_stanza.is_disabled,
         ).with_sub_menus(result_sub_menus)
 
