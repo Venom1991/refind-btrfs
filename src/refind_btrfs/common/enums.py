@@ -114,7 +114,7 @@ class SnapshotSearchConfigKey(Enum):
 
 @unique
 class SnapshotManipulationConfigKey(Enum):
-    SELECTION_COUNT = "count"
+    SELECTION_COUNT = "selection_count"
     MODIFY_READ_ONLY_FLAG = "modify_read_only_flag"
     DESTINATION_DIRECTORY = "destination_dir"
     CLEANUP_EXCLUSION = "cleanup_exclusion"
