@@ -51,8 +51,8 @@ class BootOptions:
             for position, option in enumerate(split_options):
                 if not is_none_or_whitespace(option):
                     if option.startswith(constants.ROOTFLAGS_PREFIX):
-                        normalized_option = option.replace(
-                            constants.ROOTFLAGS_PREFIX, constants.EMPTY_STR
+                        normalized_option = option.removeprefix(
+                            constants.ROOTFLAGS_PREFIX
                         )
 
                         if root_mount_options is not None:
@@ -67,9 +67,7 @@ class BootOptions:
 
                         root_mount_options = (position, MountOptions(normalized_option))
                     elif option.startswith(constants.INITRD_PREFIX):
-                        normalized_option = option.replace(
-                            constants.INITRD_PREFIX, constants.EMPTY_STR
-                        )
+                        normalized_option = option.removeprefix(constants.INITRD_PREFIX)
 
                         initrd_options.append((position, normalized_option))
                     else:
