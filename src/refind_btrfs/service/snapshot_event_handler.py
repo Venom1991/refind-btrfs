@@ -58,7 +58,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
         machine: RefindBtrfsMachine,
     ) -> None:
         self._logger = logger_factory.logger(__name__)
-        self._subvolume_command = subvolume_command_factory.subvolume_command()
+        self._subvolume_command_factory = subvolume_command_factory
         self._package_config_provider = package_config_provider
         self._persistence_provider = persistence_provider
         self._machine = machine
@@ -109,7 +109,9 @@ class SnapshotEventHandler(FileSystemEventHandler):
             search_directory = snapshot_search.directory
 
             if snapshot_search.directory in parents:
-                distance = discern_distance_between(search_directory, created_directory)
+                distance = discern_distance_between(
+                    (search_directory, created_directory)
+                )
 
                 if distance is not None:
                     max_depth = snapshot_search.max_depth - distance
@@ -147,7 +149,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
         self, directory: Path, max_depth: int, current_depth: int = 0
     ) -> bool:
         if current_depth <= max_depth:
-            subvolume_command = self._subvolume_command
+            subvolume_command = self._subvolume_command_factory.subvolume_command()
             resolved_path = directory.resolve()
             subvolume = subvolume_command.get_subvolume_from(resolved_path)
             is_snapshot = subvolume is not None and subvolume.is_snapshot()

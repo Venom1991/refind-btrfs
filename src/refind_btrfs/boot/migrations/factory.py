@@ -50,13 +50,13 @@ class Factory:
         type_name = type(argument).__name__
 
         raise NotImplementedError(
-            f"Cannot instantiate migration strategy for type '{type_name}'!"
+            f"Cannot instantiate the migration strategy for parameter of type '{type_name}'!"
         )
 
     # pylint: disable=unused-argument
     @migration_strategy.register(BootStanza)
     @staticmethod
-    def _boot_stanza(
+    def _boot_stanza_overload(
         argument: BootStanza,
         current_subvolume: Subvolume,
         replacement_subvolume: Subvolume,
@@ -71,7 +71,7 @@ class Factory:
     # pylint: disable=unused-argument
     @migration_strategy.register(SubMenu)
     @staticmethod
-    def _sub_menu(
+    def _sub_menu_overload(
         argument: SubMenu,
         current_subvolume: Subvolume,
         replacement_subvolume: Subvolume,

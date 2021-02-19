@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from pathlib import Path
+from typing import Tuple
 from uuid import UUID
 
 
@@ -53,13 +54,6 @@ BTRFS_TYPE = "btrfs"
 SNAPSHOT_SELECTION_COUNT_INFINITY = "inf"
 SNAPSHOTS_ROOT_DIR_PERMISSIONS = 0o750
 
-COMMENT_PATTERN = r"^\s*#.*"
-INCLUDE_OPTION_PATTERN = r"^include .+$"
-PARAMETERIZED_OPTION_PREFIX_PATTERN = r"^\S+="
-DIR_SEPARATOR_PATTERN = r"\\|/"
-SUBVOLUME_NAME_PATTERN = (
-    r"((rw|ro)(subvol|snap))_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_ID\d+"
-)
 
 ROOTFLAGS_PREFIX = "rootflags="
 INITRD_PREFIX = "initrd="
@@ -79,6 +73,15 @@ NEWLINE = "\n"
 EMPTY_STR = ""
 EMPTY_HEX_UUID = "00000000-0000-0000-0000-000000000000"
 EMPTY_UUID = UUID(hex=EMPTY_HEX_UUID)
+DEFAULT_DIR_SEPARATOR_PAIR: Tuple[str, str] = (BACKSLASH, FORWARD_SLASH)
+
+COMMENT_PATTERN = r"^\s*#.*"
+INCLUDE_OPTION_PATTERN = r"^include .+$"
+PARAMETERIZED_OPTION_PREFIX_PATTERN = r"^\S+="
+DIR_SEPARATOR_PATTERN = f"({BACKSLASH * 2}|{FORWARD_SLASH})"
+SUBVOLUME_NAME_PATTERN = (
+    r"((rw|ro)(subvol|snap))_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_ID\d+"
+)
 
 CONFIG_FILE_EXTENSION = ".conf"
 

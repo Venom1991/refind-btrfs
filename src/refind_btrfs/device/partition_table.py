@@ -58,24 +58,25 @@ class PartitionTable:
 
         return self
 
-    def has_been_migrated_to(self, replacement_subvolume: Subvolume) -> bool:
+    def is_matched_with(self, subvolume: Subvolume) -> bool:
+        root = self.root
+
+        if root is not None:
+            filesystem = none_throws(root.filesystem)
+            mount_options = none_throws(filesystem.mount_options)
+
+            return mount_options.is_matched_with(subvolume)
+
+        return False
+
+    def migrate_from_to(
+        self, current_subvolume: Subvolume, replacement_subvolume: Subvolume
+    ) -> None:
         root = none_throws(self.root)
         filesystem = none_throws(root.filesystem)
         mount_options = none_throws(filesystem.mount_options)
 
-        return mount_options.is_matched_with(replacement_subvolume)
-
-    def as_migrated_from_to(
-        self, current_subvolume: Subvolume, replacement_subvolume: Subvolume
-    ) -> PartitionTable:
-        replacement = deepcopy(self)
-        root = none_throws(replacement.root)
-        filesystem = none_throws(root.filesystem)
-        mount_options = none_throws(filesystem.mount_options)
-
         mount_options.migrate_from_to(current_subvolume, replacement_subvolume)
-
-        return replacement
 
     @property
     def uuid(self) -> str:

@@ -32,7 +32,7 @@ from .mount_options import MountOptions
 from .subvolume import Subvolume
 
 if TYPE_CHECKING:
-    from refind_btrfs.common.abc import SubvolumeCommand
+    from refind_btrfs.common.abc import BaseSubvolumeCommandFactory
 
 
 class Filesystem:
@@ -61,14 +61,18 @@ class Filesystem:
 
         return self
 
-    def initialize_subvolume_using(self, subvolume_command: SubvolumeCommand) -> None:
-        filesystem_path = Path(self.mount_point)
-        subvolume = subvolume_command.get_subvolume_from(filesystem_path)
+    def initialize_subvolume_using(
+        self, subvolume_command_factory: BaseSubvolumeCommandFactory
+    ) -> None:
+        if not self.has_subvolume():
+            filesystem_path = Path(self.mount_point)
+            subvolume_command = subvolume_command_factory.subvolume_command()
+            subvolume = subvolume_command.get_subvolume_from(filesystem_path)
 
-        if subvolume is not None:
-            snapshots = subvolume_command.get_snapshots_for(subvolume)
+            if subvolume is not None:
+                snapshots = subvolume_command.get_snapshots_for(subvolume)
 
-            self._subvolume = subvolume.with_snapshots(snapshots)
+                self._subvolume = subvolume.with_snapshots(snapshots)
 
     def is_of_type(self, fs_type: str) -> bool:
         return self.fs_type == fs_type

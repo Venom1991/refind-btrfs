@@ -40,7 +40,7 @@ class DeviceCommand(ABC):
         type_name = type(argument).__name__
 
         raise NotImplementedError(
-            f"Cannot get partition table for argument of type '{type_name}'!"
+            f"Cannot get the partition table for parameter of type '{type_name}'!"
         )
 
     @abstractmethod
@@ -48,11 +48,11 @@ class DeviceCommand(ABC):
         pass
 
     @get_partition_table_for.register(BlockDevice)
-    def _block_device(self, argument: BlockDevice) -> PartitionTable:
+    def _block_device_overload(self, argument: BlockDevice) -> PartitionTable:
         return self._block_device_partition_table(argument)
 
     @get_partition_table_for.register(Subvolume)
-    def _subvolume(self, argument: Subvolume) -> PartitionTable:
+    def _subvolume_overload(self, argument: Subvolume) -> PartitionTable:
         return self._subvolume_partition_table(argument)
 
     @abstractmethod

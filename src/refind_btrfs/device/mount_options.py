@@ -118,7 +118,8 @@ class MountOptions:
     ) -> None:
         if not self.is_matched_with(current_subvolume):
             raise PartitionError(
-                "Mount options are not matched with the current subvolume!"
+                "The mount options are not matched with the "
+                "'current_subvolume' parameter (by 'subvol' or 'subvolid')!"
             )
 
         parameterized_options = self._parameterized_options

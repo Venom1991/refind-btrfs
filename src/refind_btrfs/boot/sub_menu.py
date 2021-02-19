@@ -29,7 +29,7 @@ from typing import Generator, List, Optional, Set
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, RefindOption
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility.helpers import is_none_or_whitespace, none_throws
+from refind_btrfs.utility.helpers import is_empty, is_none_or_whitespace, none_throws
 
 from .boot_options import BootOptions
 
@@ -123,7 +123,7 @@ class SubMenu:
 
         return (
             is_none_or_whitespace(loader_path)
-            and (initrd_path is None or initrd_path != constants.EMPTY_STR)
+            and (initrd_path is None or not is_empty(initrd_path))
             and boot_options is None
             and not is_disabled
         )

@@ -24,12 +24,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, TYPE_CHECKING, Union
 
 from refind_btrfs.utility.helpers import has_items, none_throws
 
 from .partition import Partition
 from .partition_table import PartitionTable
+
+if TYPE_CHECKING:
+    from refind_btrfs.common.abc import BaseDeviceCommandFactory
 
 
 class BlockDevice:
@@ -45,20 +48,28 @@ class BlockDevice:
         self._live_partition_table: Optional[PartitionTable] = None
         self._dependencies: Optional[List[BlockDevice]] = None
 
-    def with_partition_tables(
-        self,
-        physical_partition_table: PartitionTable,
-        live_partition_table: PartitionTable,
-    ) -> BlockDevice:
-        self._physical_partition_table = physical_partition_table
-        self._live_partition_table = live_partition_table
-
-        return self
-
     def with_dependencies(self, dependencies: Iterable[BlockDevice]) -> BlockDevice:
         self._dependencies = list(dependencies)
 
         return self
+
+    def initialize_partition_tables_using(
+        self,
+        device_comand_factory: BaseDeviceCommandFactory,
+    ) -> None:
+        if not self.has_physical_partition_table():
+            physical_device_command = device_comand_factory.physical_device_command()
+
+            self._physical_partition_table = (
+                physical_device_command.get_partition_table_for(self)
+            )
+
+        if not self.has_live_partition_table():
+            live_device_command = device_comand_factory.live_device_command()
+
+            self._live_partition_table = live_device_command.get_partition_table_for(
+                self
+            )
 
     def is_matched_with(self, partition_name: str) -> bool:
         if self.name == partition_name:
@@ -73,6 +84,12 @@ class BlockDevice:
                 )
 
         return False
+
+    def has_physical_partition_table(self) -> bool:
+        return self.physical_partition_table is not None
+
+    def has_live_partition_table(self) -> bool:
+        return self.live_partition_table is not None
 
     def has_esp(self) -> bool:
         return self.esp is not None
@@ -110,30 +127,32 @@ class BlockDevice:
 
     @property
     def esp(self) -> Optional[Partition]:
-        partition_table = self._physical_partition_table
-
-        if partition_table is not None:
-            return partition_table.esp
+        if self.has_physical_partition_table():
+            return none_throws(self.physical_partition_table).esp
 
         return None
 
     @property
     def root(self) -> Optional[Partition]:
-        partition_table = self._live_partition_table
-
-        if partition_table is not None:
-            return partition_table.root
+        if self.has_live_partition_table():
+            return none_throws(self.live_partition_table).root
 
         return None
 
     @property
     def boot(self) -> Optional[Partition]:
-        partition_table = self._live_partition_table
-
-        if partition_table is not None:
-            return partition_table.boot
+        if self.has_live_partition_table():
+            return none_throws(self.live_partition_table).boot
 
         return None
+
+    @property
+    def physical_partition_table(self) -> Optional[PartitionTable]:
+        return self._physical_partition_table
+
+    @property
+    def live_partition_table(self) -> Optional[PartitionTable]:
+        return self._live_partition_table
 
     @property
     def dependencies(self) -> Optional[List[BlockDevice]]:

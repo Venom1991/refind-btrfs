@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import groupby
-from typing import Callable, Collection, Generator, List, NamedTuple, Optional
+from typing import Callable, Collection, List, NamedTuple, Optional
 
 from injector import inject
 from more_itertools import only, take
@@ -114,9 +114,13 @@ class Model:
         self._preparation_result: Optional[PreparationResult] = None
 
     def initialize_block_devices(self) -> None:
-        all_block_devices = list(self._get_all_block_devices())
+        device_command_factory = self._device_command_factory
+        physical_device_command = device_command_factory.physical_device_command()
+        all_block_devices = list(physical_device_command.get_block_devices())
 
         if has_items(all_block_devices):
+            for block_device in all_block_devices:
+                block_device.initialize_partition_tables_using(device_command_factory)
 
             def block_device_filter(
                 filter_func: Callable[[BlockDevice], bool],
@@ -127,23 +131,22 @@ class Model:
                     if filter_func(block_device)
                 )
 
-            block_devices = BlockDevices(
+            filtered_block_devices = BlockDevices(
                 block_device_filter(BlockDevice.has_esp),
                 block_device_filter(BlockDevice.has_root),
                 block_device_filter(BlockDevice.has_boot),
             )
         else:
-            block_devices = BlockDevices.none()
+            filtered_block_devices = BlockDevices.none()
 
-        self._block_devices = block_devices
+        self._block_devices = filtered_block_devices
 
     def initialize_root_subvolume(self) -> None:
         subvolume_command_factory = self._subvolume_command_factory
         root = self.root_partition
         filesystem = none_throws(root.filesystem)
-        subvolume_command = subvolume_command_factory.subvolume_command()
 
-        filesystem.initialize_subvolume_using(subvolume_command)
+        filesystem.initialize_subvolume_using(subvolume_command_factory)
 
     def initialize_boot_stanzas(self) -> None:
         refind_config = self.refind_config
@@ -176,6 +179,13 @@ class Model:
             for snapshot in bootable_snapshots
             if snapshot.can_be_removed(snapshots_union)
         ]
+
+        if has_items(snapshots_for_addition):
+            device_command_factory = self._device_command_factory
+
+            for snapshot in snapshots_for_addition:
+                snapshot.initialize_partition_table_using(device_command_factory)
+
         current_boot_stanza_generation = package_config.boot_stanza_generation
         previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
 
@@ -335,11 +345,20 @@ class Model:
         snapshots_for_removal = preparation_result.snapshots_for_removal
 
         if has_items(snapshots_for_addition):
+            subvolume = self.root_subvolume
+            boot_stanzas = self.boot_stanzas
             suffix = item_count_suffix(snapshots_for_addition)
 
             logger.info(
                 f"Found {len(snapshots_for_addition)} snapshot{suffix} for addition."
             )
+
+            for snapshot in snapshots_for_addition:
+                snapshot.check_static_partition_table(subvolume)
+
+                if self._should_include_paths_during_generation():
+                    for boot_stanza in boot_stanzas:
+                        snapshot.check_boot_files_existence(subvolume, boot_stanza)
 
         if has_items(snapshots_for_removal):
             suffix = item_count_suffix(snapshots_for_removal)
@@ -355,36 +374,16 @@ class Model:
 
     # endregion
 
-    def _get_all_block_devices(self) -> Generator[BlockDevice, None, None]:
-        device_command_factory = self._device_command_factory
-        physical_device_command = device_command_factory.physical_device_command()
-        live_device_command = device_command_factory.live_device_command()
-        block_devices = physical_device_command.get_block_devices()
-
-        for block_device in block_devices:
-            physical_partition_table = physical_device_command.get_partition_table_for(
-                block_device
-            )
-            live_partition_table = live_device_command.get_partition_table_for(
-                block_device
-            )
-
-            yield block_device.with_partition_tables(
-                physical_partition_table, live_partition_table
-            )
-
     def _process_snapshots(self) -> List[Subvolume]:
-        subvolume_command_factory = self._subvolume_command_factory
+        subvolume_command = self._subvolume_command_factory.subvolume_command()
         persistence_provider = self._persistence_provider
         preparation_result = self.preparation_result
-        subvolume_command = subvolume_command_factory.subvolume_command()
         previous_run_result = persistence_provider.get_previous_run_result()
         bootable_snapshots = previous_run_result.bootable_snapshots
         snapshots_for_addition = preparation_result.snapshots_for_addition
 
         if has_items(snapshots_for_addition):
             device_command_factory = self._device_command_factory
-            static_device_command = device_command_factory.static_device_command()
             subvolume = self.root_subvolume
 
             for addition in snapshots_for_addition:
@@ -393,7 +392,7 @@ class Model:
                 )
 
                 bootable_snapshot.modify_partition_table_using(
-                    subvolume, static_device_command
+                    subvolume, device_command_factory
                 )
 
                 if bootable_snapshot not in bootable_snapshots:

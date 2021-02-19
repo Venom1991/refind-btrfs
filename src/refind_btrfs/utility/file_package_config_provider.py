@@ -154,7 +154,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         for snapshot_search in snapshot_searches:
             search_directory = snapshot_search.directory
-            path_relation = discern_path_relation_of(output_directory, search_directory)
+            path_relation = discern_path_relation_of(
+                (output_directory, search_directory)
+            )
 
             if path_relation == PathRelation.SAME:
                 raise PackageConfigError(

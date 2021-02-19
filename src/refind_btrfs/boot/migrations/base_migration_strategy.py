@@ -31,7 +31,7 @@ from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import (
     is_none_or_whitespace,
     none_throws,
-    replace_root_in_path,
+    replace_root_part_in,
 )
 
 from ..boot_options import BootOptions
@@ -60,16 +60,18 @@ class BaseMigrationStrategy(ABC):
     @property
     def replacement_name(self) -> str:
         subvolume_name_pattern = re.compile(rf"\({constants.SUBVOLUME_NAME_PATTERN}\)")
-        current_name = self._current_state.name.strip(constants.DOUBLE_QUOTE)
+        normalized_current_name = self._current_state.name.strip(constants.DOUBLE_QUOTE)
         replacement_subvolume_name = self._replacement_subvolume.name
-        match = subvolume_name_pattern.search(current_name)
+        match = subvolume_name_pattern.search(normalized_current_name)
 
         if match:
             replacement_name = subvolume_name_pattern.sub(
-                f"({replacement_subvolume_name})", current_name
+                f"({replacement_subvolume_name})", normalized_current_name
             )
         else:
-            replacement_name = f"{current_name} ({replacement_subvolume_name})"
+            replacement_name = (
+                f"{normalized_current_name} ({replacement_subvolume_name})"
+            )
 
         return f"{constants.DOUBLE_QUOTE}{replacement_name}{constants.DOUBLE_QUOTE}"
 
@@ -78,7 +80,7 @@ class BaseMigrationStrategy(ABC):
         current_loader_path = self._current_state.loader_path
 
         if not is_none_or_whitespace(current_loader_path):
-            return replace_root_in_path(
+            return replace_root_part_in(
                 none_throws(current_loader_path),
                 self._current_subvolume.logical_path,
                 self._replacement_subvolume.logical_path,
@@ -91,7 +93,7 @@ class BaseMigrationStrategy(ABC):
         current_initrd_path = self._current_state.initrd_path
 
         if not is_none_or_whitespace(current_initrd_path):
-            return replace_root_in_path(
+            return replace_root_part_in(
                 none_throws(current_initrd_path),
                 self._current_subvolume.logical_path,
                 self._replacement_subvolume.logical_path,

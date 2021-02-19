@@ -29,6 +29,8 @@ from pathlib import Path
 from typing import Any, Generator, Optional, Sized, Tuple, TypeVar
 from uuid import UUID
 
+from more_itertools import first
+
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
 
@@ -72,7 +74,7 @@ def is_none_or_whitespace(value: Optional[str]) -> bool:
     if value is None:
         return True
 
-    return value == constants.EMPTY_STR or value.isspace()
+    return is_empty(value) or value.isspace()
 
 
 def has_method(obj: Any, method_name: str) -> bool:
@@ -131,9 +133,9 @@ def find_all_directories_in(
             )
 
 
-def discern_path_relation_of(first: Path, second: Path) -> PathRelation:
-    first_resolved = first.resolve()
-    second_resolved = second.resolve()
+def discern_path_relation_of(path_pair: Tuple[Path, Path]) -> PathRelation:
+    first_resolved = path_pair[0].resolve()
+    second_resolved = path_pair[1].resolve()
 
     if first_resolved == second_resolved:
         return PathRelation.SAME
@@ -151,16 +153,16 @@ def discern_path_relation_of(first: Path, second: Path) -> PathRelation:
     return PathRelation.UNRELATED
 
 
-def discern_distance_between(first: Path, second: Path) -> Optional[int]:
-    path_relation = discern_path_relation_of(first, second)
+def discern_distance_between(path_pair: Tuple[Path, Path]) -> Optional[int]:
+    path_relation = discern_path_relation_of(path_pair)
 
     if path_relation != PathRelation.UNRELATED:
         distance = 0
 
         if path_relation != PathRelation.SAME:
             if path_relation == PathRelation.FIRST_NESTED_IN_SECOND:
-                first_parts = first.parts
-                second_stem = second.stem
+                first_parts = path_pair[0].parts
+                second_stem = path_pair[1].stem
 
                 for part in reversed(first_parts):
                     if part != second_stem:
@@ -168,8 +170,8 @@ def discern_distance_between(first: Path, second: Path) -> Optional[int]:
                     else:
                         break
             elif path_relation == PathRelation.SECOND_NESTED_IN_FIRST:
-                first_stem = first.stem
-                second_parts = second.parts
+                first_stem = path_pair[0].stem
+                second_parts = path_pair[1].parts
 
                 for part in reversed(second_parts):
                     if part != first_stem:
@@ -182,11 +184,28 @@ def discern_distance_between(first: Path, second: Path) -> Optional[int]:
     return None
 
 
-def replace_root_in_path(
+def normalize_dir_separators(
+    path: str,
+    separator_replacement: Tuple[str, str] = constants.DEFAULT_DIR_SEPARATOR_PAIR,
+) -> str:
+    path_with_replaced_separators = path.replace(*separator_replacement)
+    pattern = re.compile(rf"(?P<prefix>^({constants.DIR_SEPARATOR_PATTERN}){{2,}})")
+    match = pattern.match(path_with_replaced_separators)
+
+    if match:
+        prefix = match.group("prefix")
+        path_with_replaced_separators = path_with_replaced_separators.removeprefix(
+            first(prefix) * (len(prefix) - 1)
+        )
+
+    return path_with_replaced_separators
+
+
+def replace_root_part_in(
     full_path: str,
     current_root_part: str,
     replacement_root_part: str,
-    dir_separator_replacement: Optional[Tuple[str, str]] = None,
+    separator_replacement: Tuple[str, str] = constants.DEFAULT_DIR_SEPARATOR_PAIR,
 ) -> str:
     pattern = re.compile(
         rf"(?P<prefix>^{constants.DIR_SEPARATOR_PATTERN}?)"
@@ -197,12 +216,7 @@ def replace_root_in_path(
         rf"\g<prefix>{replacement_root_part}\g<suffix>", full_path
     )
 
-    if dir_separator_replacement is not None:
-        return substituted_full_path.replace(
-            dir_separator_replacement[0], dir_separator_replacement[1]
-        )
-
-    return substituted_full_path
+    return normalize_dir_separators(substituted_full_path, separator_replacement)
 
 
 _T = TypeVar("_T")

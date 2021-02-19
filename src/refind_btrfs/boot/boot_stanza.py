@@ -37,6 +37,7 @@ from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
     none_throws,
+    normalize_dir_separators,
 )
 
 from .boot_options import BootOptions
@@ -159,11 +160,11 @@ class BootStanza:
 
     def is_matched_with(self, partition: Partition) -> bool:
         if self.can_be_used_for_bootable_snapshot():
-            stripped_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
+            normalized_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
             filesystem = none_throws(partition.filesystem)
             volume_comparers = [partition.uuid, partition.label, filesystem.label]
 
-            if stripped_volume in volume_comparers:
+            if normalized_volume in volume_comparers:
                 boot_options = self.boot_options
                 subvolume = none_throws(filesystem.subvolume)
 
@@ -264,7 +265,7 @@ class BootStanza:
     @cached_property
     def file_name(self) -> str:
         if self.can_be_used_for_bootable_snapshot():
-            stripped_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
+            normalized_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
             dir_separator_pattern = re.compile(constants.DIR_SEPARATOR_PATTERN)
             split_loader_path = dir_separator_pattern.split(
                 none_throws(self.loader_path)
@@ -272,10 +273,13 @@ class BootStanza:
             loader = last(split_loader_path)
             extension = constants.CONFIG_FILE_EXTENSION
 
-            return f"{stripped_volume}_{loader}{extension}".lower()
+            return f"{normalized_volume}_{loader}{extension}".lower()
 
         return constants.EMPTY_STR
 
     @cached_property
     def all_boot_file_paths(self) -> Set[str]:
-        return set(self._get_all_boot_file_paths())
+        return set(
+            normalize_dir_separators(boot_file_path)
+            for boot_file_path in self._get_all_boot_file_paths()
+        )

@@ -33,7 +33,7 @@ from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
     none_throws,
-    replace_root_in_path,
+    replace_root_part_in,
 )
 
 
@@ -95,7 +95,7 @@ class BootOptions:
 
         if has_items(initrd_options):
             for initrd_option in initrd_options:
-                result[initrd_option[0]] = initrd_option[1]
+                result[initrd_option[0]] = constants.INITRD_PREFIX + initrd_option[1]
 
         if has_items(other_options):
             for other_option in other_options:
@@ -138,11 +138,14 @@ class BootOptions:
                 self._initrd_options = [
                     (
                         initrd_option[0],
-                        replace_root_in_path(
+                        replace_root_part_in(
                             initrd_option[1],
                             current_logical_path,
                             replacement_logical_path,
-                            (constants.FORWARD_SLASH, constants.BACKSLASH),
+                            (
+                                constants.FORWARD_SLASH,
+                                constants.BACKSLASH,
+                            ),
                         ),
                     )
                     for initrd_option in initrd_options

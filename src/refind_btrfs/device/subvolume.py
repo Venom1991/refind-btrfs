@@ -25,20 +25,24 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
+from typing import List, TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
 from uuid import UUID
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
+from refind_btrfs.common.exceptions import SubvolumeError
 from refind_btrfs.utility.helpers import (
     discern_path_relation_of,
     has_items,
     is_none_or_whitespace,
+    replace_root_part_in,
     none_throws,
 )
 
 if TYPE_CHECKING:
-    from refind_btrfs.common.abc import DeviceCommand
+    from refind_btrfs.boot import BootStanza
+    from refind_btrfs.common.abc import BaseDeviceCommandFactory
+    from refind_btrfs.device.partition_table import PartitionTable
 
 
 class NumIdRelation(NamedTuple):
@@ -71,6 +75,7 @@ class Subvolume:
         self._parent_num_id = num_id_relation.parent_id
         self._is_read_only = is_read_only
         self._created_from: Optional[Subvolume] = None
+        self._static_partition_table: Optional[PartitionTable] = None
         self._snapshots: Optional[Set[Subvolume]] = None
 
     def __eq__(self, other: object) -> bool:
@@ -149,11 +154,24 @@ class Subvolume:
             .located_in(directory)
         )
 
+    def initialize_partition_table_using(
+        self, device_command_factory: BaseDeviceCommandFactory
+    ) -> None:
+        if not self.has_static_partition_table():
+            static_device_command = device_command_factory.static_device_command()
+
+            self._static_partition_table = (
+                static_device_command.get_partition_table_for(self)
+            )
+
     def is_snapshot(self) -> bool:
         return self.parent_uuid != constants.EMPTY_UUID
 
     def is_snapshot_of(self, subvolume: Subvolume) -> bool:
         return self.is_snapshot() and self.parent_uuid == subvolume.uuid
+
+    def has_static_partition_table(self) -> bool:
+        return self.static_partition_table is not None
 
     def has_snapshots(self) -> bool:
         return has_items(self.snapshots)
@@ -185,22 +203,75 @@ class Subvolume:
         else:
             filesystem_path = self.filesystem_path
 
-        path_relation = discern_path_relation_of(parent_directory, filesystem_path)
+        path_relation = discern_path_relation_of((parent_directory, filesystem_path))
         expected_results = [PathRelation.SAME, PathRelation.SECOND_NESTED_IN_FIRST]
 
         return path_relation in expected_results
 
     def modify_partition_table_using(
-        self, current_subvolume: Subvolume, device_command: DeviceCommand
+        self,
+        current_subvolume: Subvolume,
+        device_command_factory: BaseDeviceCommandFactory,
     ) -> None:
-        current_partition_table = device_command.get_partition_table_for(self)
+        self.initialize_partition_table_using(device_command_factory)
 
-        if not current_partition_table.has_been_migrated_to(self):
-            replacement_partition_table = current_partition_table.as_migrated_from_to(
-                current_subvolume, self
+        static_partition_table = none_throws(self.static_partition_table)
+
+        if not static_partition_table.is_matched_with(self):
+            static_device_command = device_command_factory.static_device_command()
+
+            static_partition_table.migrate_from_to(current_subvolume, self)
+            static_device_command.save_partition_table(static_partition_table)
+
+    def check_static_partition_table(self, root_subvolume: Subvolume) -> None:
+        logical_path = self.logical_path
+
+        if not self.has_static_partition_table():
+            raise SubvolumeError(
+                f"The '{logical_path}' snapshot's static "
+                "partition table is not initialized!"
             )
 
-            device_command.save_partition_table(replacement_partition_table)
+        static_partition_table = none_throws(self.static_partition_table)
+
+        if not static_partition_table.is_matched_with(root_subvolume):
+            raise SubvolumeError(
+                f"The '{logical_path}' snapshot's static partition table is not "
+                "matched with the root subvolume (by 'subvol' or 'subvolid')!"
+            )
+
+    def check_boot_files_existence(
+        self, root_subvolume: Subvolume, boot_stanza: BootStanza
+    ) -> None:
+        self_filesystem_path_str = str(self.filesystem_path)
+        self_logical_path = self.logical_path
+        root_logical_path = root_subvolume.logical_path
+        missing_boot_file_paths: List[str] = []
+        matched_boot_file_paths = (
+            file_path
+            for file_path in boot_stanza.all_boot_file_paths
+            if root_logical_path in file_path
+        )
+
+        for file_path in matched_boot_file_paths:
+            replaced_file_path = Path(
+                replace_root_part_in(
+                    file_path, root_logical_path, self_filesystem_path_str
+                )
+            )
+
+            if not replaced_file_path.exists():
+                missing_boot_file_paths.append(replaced_file_path.name)
+
+        if has_items(missing_boot_file_paths):
+            separator = constants.COLUMN_SEPARATOR + constants.SPACE
+            normalized_boot_stanza_name = boot_stanza.name.strip(constants.DOUBLE_QUOTE)
+
+            raise SubvolumeError(
+                f"Found missing boot files in the '{self_logical_path}' snapshot "
+                f"required by the '{normalized_boot_stanza_name}' boot stanza: "
+                f"{separator.join(missing_boot_file_paths)}!"
+            )
 
     @property
     def name(self) -> str:
@@ -241,6 +312,10 @@ class Subvolume:
     @property
     def is_newly_created(self) -> bool:
         return self._created_from is not None
+
+    @property
+    def static_partition_table(self) -> Optional[PartitionTable]:
+        return self._static_partition_table
 
     @property
     def snapshots(self) -> Optional[Set[Subvolume]]:
