@@ -124,6 +124,11 @@ class Subvolume:
 
         self._filesystem_path = parent_directory / name
 
+        if self.has_static_partition_table():
+            static_partition_table = none_throws(self.static_partition_table)
+
+            static_partition_table.align_with(self)
+
         return self
 
     def as_writable(self) -> Subvolume:
@@ -131,11 +136,10 @@ class Subvolume:
 
         return self
 
-    def as_newly_created_from(self, created_from: Subvolume) -> Subvolume:
-        source_time_created = created_from.time_created
+    def as_newly_created_from(self, other: Subvolume) -> Subvolume:
+        self._created_from = other
 
-        self._time_created = source_time_created
-        self._created_from = created_from
+        self.align_with(other)
 
         return self
 
@@ -208,6 +212,10 @@ class Subvolume:
 
         return path_relation in expected_results
 
+    def align_with(self, other: Subvolume) -> None:
+        self._time_created = other.time_created
+        self._static_partition_table = other.static_partition_table
+
     def modify_partition_table_using(
         self,
         current_subvolume: Subvolume,
@@ -228,15 +236,22 @@ class Subvolume:
 
         if not self.has_static_partition_table():
             raise SubvolumeError(
-                f"The '{logical_path}' snapshot's static "
+                f"The '{logical_path}' subvolume's static "
                 "partition table is not initialized!"
             )
 
         static_partition_table = none_throws(self.static_partition_table)
+        root = static_partition_table.root
+
+        if root is None:
+            raise SubvolumeError(
+                f"Could not find the root partition in the '{logical_path}' "
+                "subvolume's static partition table!"
+            )
 
         if not static_partition_table.is_matched_with(root_subvolume):
             raise SubvolumeError(
-                f"The '{logical_path}' snapshot's static partition table is not "
+                f"The '{logical_path}' subvolume's static partition table is not "
                 "matched with the root subvolume (by 'subvol' or 'subvolid')!"
             )
 

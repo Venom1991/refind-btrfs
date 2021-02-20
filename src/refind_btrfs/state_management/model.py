@@ -65,7 +65,7 @@ class BlockDevices(NamedTuple):
 
     @classmethod
     def none(cls) -> BlockDevices:
-        return BlockDevices(None, None, None)
+        return cls(None, None, None)
 
 
 class PreparationResult(NamedTuple):
@@ -89,7 +89,7 @@ class ProcessingResult(NamedTuple):
 
     @classmethod
     def none(cls) -> ProcessingResult:
-        return ProcessingResult([], None)
+        return cls([], None)
 
 
 class Model:

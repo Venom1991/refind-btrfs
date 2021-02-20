@@ -23,9 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import fileinput
 import re
-from pathlib import Path
-from typing import Dict, Generator, TextIO
-from uuid import uuid4
+from typing import Generator, TextIO
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseLoggerFactory, DeviceCommand
@@ -35,8 +33,10 @@ from refind_btrfs.device.block_device import BlockDevice
 from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.partition_table import PartitionTable
+from refind_btrfs.device.static_partition_table import StaticPartitionTable
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import (
+    checked_cast,
     default_if_none,
     is_none_or_whitespace,
     none_throws,
@@ -45,8 +45,6 @@ from refind_btrfs.utility.helpers import (
 
 
 class FstabCommand(DeviceCommand):
-    all_fstab_paths: Dict[PartitionTable, Path] = {}
-
     def __init__(self, logger_factory: BaseLoggerFactory) -> None:
         self._logger = logger_factory.logger(__name__)
 
@@ -65,21 +63,16 @@ class FstabCommand(DeviceCommand):
         )
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
-        fstab_path = FstabCommand.all_fstab_paths.get(partition_table)
-
-        if fstab_path is None:
-            raise PartitionError(
-                "The partition table must be read from the fstab file before saving it!"
-            )
-
         logger = self._logger
+        static_partition_table = checked_cast(StaticPartitionTable, partition_table)
+        fstab_file_path = static_partition_table.fstab_file_path
         root = none_throws(partition_table.root)
         filesystem = none_throws(root.filesystem)
 
         try:
-            logger.info(f"Modifying the '{fstab_path}' file.")
+            logger.info(f"Modifying the '{fstab_file_path}' file.")
 
-            with fileinput.input(str(fstab_path), inplace=True) as fstab_file:
+            with fileinput.input(str(fstab_file_path), inplace=True) as fstab_file:
                 for line in fstab_file:
                     if FstabCommand._is_line_matched_with_filesystem(line, filesystem):
                         split_line = line.split()
@@ -96,7 +89,7 @@ class FstabCommand(DeviceCommand):
                         if not match:
                             raise PartitionError(
                                 f"Could not find the root partition's expected "
-                                f"mount options in the '{fstab_path}' file!"
+                                f"mount options in the '{fstab_file_path}' file!"
                             )
 
                         modified_mount_options = str(filesystem.mount_options)
@@ -110,14 +103,16 @@ class FstabCommand(DeviceCommand):
                     print(line, end=constants.EMPTY_STR)
         except OSError as e:
             logger.exception("fileinput.input() call failed!")
-            raise PartitionError(f"Could not modify the '{fstab_path}' file!") from e
+            raise PartitionError(
+                f"Could not modify the '{fstab_file_path}' file!"
+            ) from e
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
         filesystem_path = subvolume.filesystem_path
-        fstab_path = filesystem_path / constants.FSTAB_FILE
+        fstab_file_path = filesystem_path / constants.FSTAB_FILE
 
-        if not fstab_path.exists():
-            raise PartitionError(f"The '{fstab_path}' file does not exist!")
+        if not fstab_file_path.exists():
+            raise PartitionError(f"The '{fstab_file_path}' file does not exist!")
 
         logger = self._logger
         logical_path = subvolume.logical_path
@@ -128,25 +123,15 @@ class FstabCommand(DeviceCommand):
                 f"subvolume '{logical_path}' from its fstab file."
             )
 
-            with fstab_path.open("r") as fstab_file:
-                uuid = str(uuid4())
-                partition_table = PartitionTable(
-                    uuid, constants.FSTAB_PT_TYPE
-                ).with_partitions(FstabCommand._map_to_partitions(fstab_file))
-                root = partition_table.root
-
-                if root is None:
-                    raise PartitionError(
-                        f"Could not find a mount point matched with "
-                        f"the root partition in the '{fstab_path}' file!"
-                    )
-
-                FstabCommand.all_fstab_paths[partition_table] = fstab_path
-
-                return partition_table
+            with fstab_file_path.open("r") as fstab_file:
+                return StaticPartitionTable(fstab_file_path).with_partitions(
+                    FstabCommand._map_to_partitions(fstab_file)
+                )
         except OSError as e:
             logger.exception("Path.open('r') call failed!")
-            raise PartitionError(f"Could not read from the '{fstab_path}' file!") from e
+            raise PartitionError(
+                f"Could not read from the '{fstab_file_path}' file!"
+            ) from e
 
     @staticmethod
     def _is_line_matched_with_filesystem(line: str, filesystem: Filesystem) -> bool:

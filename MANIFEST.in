@@ -5,7 +5,7 @@ include LICENSE.txt
 # Include ANTLR generated files
 recursive-include src/refind_btrfs/boot/antlr4 *.py
 
-# Include data
+# Include data files
 recursive-include src/refind_btrfs/data *
 
 # Exclude all bytecode

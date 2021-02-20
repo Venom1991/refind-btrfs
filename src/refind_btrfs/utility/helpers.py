@@ -26,7 +26,7 @@ import os
 import re
 from inspect import ismethod
 from pathlib import Path
-from typing import Any, Generator, Optional, Sized, Tuple, TypeVar
+from typing import Any, Generator, Optional, Sized, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from more_itertools import first
@@ -234,3 +234,12 @@ def default_if_none(value: Optional[_T], default: _T) -> _T:
         return default
 
     return value
+
+
+def checked_cast(destination_type: Type[_T], value: Any) -> _T:
+    if not isinstance(value, destination_type):
+        raise TypeError(
+            f"The 'value' parameter cannot be cast to type '{destination_type.__name__}'!"
+        )
+
+    return cast(_T, value)

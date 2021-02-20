@@ -125,7 +125,7 @@ class RefindConfig(BaseConfig):
 
             if not is_none_or_whitespace(boot_stanza_file_name):
                 destination_directory = (
-                    parent_directory / constants.SNAPSHOT_STANZAS_CONFIG_DIR
+                    parent_directory / constants.SNAPSHOT_STANZAS_DIR_NAME
                 )
                 boot_stanza_config_file_path = (
                     destination_directory / boot_stanza_file_name

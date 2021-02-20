@@ -23,7 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from copy import deepcopy
 from functools import cached_property
 from typing import Iterable, List, Optional
 
@@ -68,6 +67,9 @@ class PartitionTable:
             return mount_options.is_matched_with(subvolume)
 
         return False
+
+    def align_with(self, subvolume: Subvolume) -> None:
+        pass
 
     def migrate_from_to(
         self, current_subvolume: Subvolume, replacement_subvolume: Subvolume

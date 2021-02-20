@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Tuple
 from uuid import UUID
 
+PACKAGE_NAME = "refind-btrfs"
 
 ROOT_UID = 0
 
@@ -40,7 +41,7 @@ MESSAGE_CTRL_C_INTERRUPT = "Ctrl+C interrupt detected, exiting..."
 MESSAGE_UNEXPECTED_ERROR = "An unexpected error happened, exiting..."
 
 WATCH_TIMEOUT = 1
-BACKGROUND_MODE_PID_NAME = "refind-btrfs-watchdog"
+BACKGROUND_MODE_PID_NAME = PACKAGE_NAME + "-watchdog"
 
 MTAB_PT_TYPE = "mtab"
 FSTAB_PT_TYPE = "fstab"
@@ -73,6 +74,7 @@ NEWLINE = "\n"
 EMPTY_STR = ""
 EMPTY_HEX_UUID = "00000000-0000-0000-0000-000000000000"
 EMPTY_UUID = UUID(hex=EMPTY_HEX_UUID)
+EMPTY_PATH = Path(".")
 DEFAULT_DIR_SEPARATOR_PAIR: Tuple[str, str] = (BACKSLASH, FORWARD_SLASH)
 
 COMMENT_PATTERN = r"^\s*#.*"
@@ -84,16 +86,18 @@ SUBVOLUME_NAME_PATTERN = (
 )
 
 CONFIG_FILE_EXTENSION = ".conf"
+CONFIG_FILE_NAME = PACKAGE_NAME + CONFIG_FILE_EXTENSION
+SNAPSHOT_STANZAS_DIR_NAME = "btrfs-snapshot-stanzas"
 
-EMPTY_PATH = Path()
+CURRENT_DIR = Path(__file__).parent
+DATA_DIR = CURRENT_DIR.parent / "data"
 ROOT_DIR = Path("/")
 BOOT_DIR = Path("boot")
 ETC_DIR = Path("etc")
 VAR_DIR = Path("var")
 LIB_DIR = Path("lib")
-SNAPSHOT_STANZAS_CONFIG_DIR = Path("btrfs-snapshot-stanzas")
-PACKAGE_DIR = Path("refind-btrfs")
 
 FSTAB_FILE = ETC_DIR / "fstab"
-PACKAGE_CONFIG_FILE = ROOT_DIR / ETC_DIR / "refind-btrfs.conf"
-DB_FILE = ROOT_DIR / VAR_DIR / LIB_DIR / PACKAGE_DIR / "local_db"
+DB_FILE = ROOT_DIR / VAR_DIR / LIB_DIR / PACKAGE_NAME / "local_db"
+MAIN_PACKAGE_CONFIG_FILE = ROOT_DIR / ETC_DIR / CONFIG_FILE_NAME
+DEFAULT_PACKAGE_CONFIG_FILE = DATA_DIR / (CONFIG_FILE_NAME + "-sample")

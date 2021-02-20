@@ -156,7 +156,7 @@ class BootOptions:
             for boot_options in all_boot_options
         ]
 
-        return BootOptions(constants.SPACE.join(all_boot_options_str).strip())
+        return cls(constants.SPACE.join(all_boot_options_str).strip())
 
     @property
     def root_mount_options(self) -> Optional[MountOptions]:

@@ -75,7 +75,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         if config is None:
             logger = self._logger
-            config_file_path = constants.PACKAGE_CONFIG_FILE
+            config_file_path = constants.MAIN_PACKAGE_CONFIG_FILE
 
             if not config_file_path.exists():
                 raise PackageConfigError(
