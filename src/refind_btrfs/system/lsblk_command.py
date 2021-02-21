@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import subprocess
 from subprocess import CalledProcessError
-from typing import Any, Generator, Iterable, cast
+from typing import Any, Generator, Iterable
 
 from more_itertools import always_iterable, one
 
@@ -37,7 +37,11 @@ from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility.helpers import default_if_none, is_none_or_whitespace
+from refind_btrfs.utility.helpers import (
+    checked_cast,
+    default_if_none,
+    is_none_or_whitespace,
+)
 
 
 class LsblkCommand(DeviceCommand):
@@ -64,7 +68,7 @@ class LsblkCommand(DeviceCommand):
                 lsblk_command.split(), capture_output=True, check=True, text=True
             )
         except CalledProcessError as e:
-            stderr = cast(str, e.stderr)
+            stderr = checked_cast(str, e.stderr)
 
             if is_none_or_whitespace(stderr):
                 message = "lsblk execution failed!"
@@ -119,7 +123,7 @@ class LsblkCommand(DeviceCommand):
                 lsblk_command.split(), check=True, capture_output=True, text=True
             )
         except CalledProcessError as e:
-            stderr = cast(str, e.stderr)
+            stderr = checked_cast(str, e.stderr)
 
             if is_none_or_whitespace(stderr):
                 message = "lsblk execution failed!"

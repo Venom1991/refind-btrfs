@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 from argparse import ArgumentParser
-from typing import Optional, cast
+from typing import Optional
 
 from injector import Injector
 
@@ -31,10 +31,10 @@ from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
 from refind_btrfs.common.enums import RunMode
 from refind_btrfs.common.exceptions import PackageConfigError
-from refind_btrfs.utility.helpers import check_access_rights, none_throws
+from refind_btrfs.utility.helpers import check_access_rights, checked_cast, none_throws
 from refind_btrfs.utility.injector_modules import CLIModule, WatchdogModule
 
-# pylint: disable=inconsistent-return-statements
+
 def initialize_injector() -> Optional[Injector]:
     one_time_mode: str = RunMode.ONE_TIME.value
     background_mode: str = RunMode.BACKGROUND.value
@@ -56,7 +56,7 @@ def initialize_injector() -> Optional[Injector]:
     )
 
     arguments = parser.parse_args()
-    run_mode = cast(str, none_throws(arguments.run_mode))
+    run_mode = checked_cast(str, none_throws(arguments.run_mode))
 
     if run_mode == one_time_mode:
         return Injector(CLIModule)

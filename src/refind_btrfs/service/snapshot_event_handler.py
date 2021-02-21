@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
 from threading import Lock
-from typing import Set, cast
+from typing import Set
 
 from injector import inject
 from more_itertools import only
@@ -44,7 +44,11 @@ from refind_btrfs.common.abc import (
 )
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine
-from refind_btrfs.utility.helpers import discern_distance_between, has_items
+from refind_btrfs.utility.helpers import (
+    checked_cast,
+    discern_distance_between,
+    has_items,
+)
 
 
 class SnapshotEventHandler(FileSystemEventHandler):
@@ -71,7 +75,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
         )
 
         if is_dir_created_event:
-            dir_created_event = cast(DirCreatedEvent, event)
+            dir_created_event = checked_cast(DirCreatedEvent, event)
             logger = self._logger
             created_directory = Path(dir_created_event.src_path)
 
@@ -88,7 +92,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
         )
 
         if is_dir_deleted_event:
-            dir_deleted_event = cast(DirDeletedEvent, event)
+            dir_deleted_event = checked_cast(DirDeletedEvent, event)
             logger = self._logger
             deleted_directory = Path(dir_deleted_event.src_path)
 

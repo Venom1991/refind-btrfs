@@ -59,9 +59,16 @@ class BaseMigrationStrategy(ABC):
 
     @property
     def replacement_name(self) -> str:
+        replacement_subvolume = self._replacement_subvolume
+
+        if not replacement_subvolume.is_named():
+            raise ValueError(
+                "The replacement subvolume's '_name' attribute must be initialized beforehand!"
+            )
+
         subvolume_name_pattern = re.compile(rf"\({constants.SUBVOLUME_NAME_PATTERN}\)")
         normalized_current_name = self._current_state.name.strip(constants.DOUBLE_QUOTE)
-        replacement_subvolume_name = self._replacement_subvolume.name
+        replacement_subvolume_name = none_throws(replacement_subvolume.name)
         match = subvolume_name_pattern.search(normalized_current_name)
 
         if match:

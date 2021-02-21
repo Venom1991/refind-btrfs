@@ -25,13 +25,14 @@ from __future__ import annotations
 
 import shelve
 from pathlib import Path
-from typing import Dict, Optional, cast
+from typing import Dict, Optional
 
 from refind_btrfs.boot import RefindConfig
-from refind_btrfs.common import constants, PackageConfig
+from refind_btrfs.common import PackageConfig, constants
 from refind_btrfs.common.abc import BasePersistenceProvider
 from refind_btrfs.common.enums import LocalDbKey
 from refind_btrfs.state_management.model import ProcessingResult
+from refind_btrfs.utility.helpers import checked_cast
 
 
 class ShelvePersistenceProvider(BasePersistenceProvider):
@@ -43,7 +44,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
 
         with shelve.open(self._db_filename) as local_db:
             if db_key in local_db:
-                package_config = cast(PackageConfig, local_db[db_key])
+                package_config = checked_cast(PackageConfig, local_db[db_key])
 
                 if not package_config.has_been_modified(
                     constants.MAIN_PACKAGE_CONFIG_FILE
@@ -63,7 +64,9 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
 
         with shelve.open(self._db_filename) as local_db:
             if db_key in local_db:
-                all_refind_configs = cast(Dict[Path, RefindConfig], local_db[db_key])
+                all_refind_configs = checked_cast(
+                    Dict[Path, RefindConfig], local_db[db_key]
+                )
                 refind_config = all_refind_configs.get(file_path)
 
                 if refind_config is not None:
@@ -83,7 +86,9 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
             all_refind_configs: Optional[Dict[Path, RefindConfig]] = None
 
             if db_key in local_db:
-                all_refind_configs = cast(Dict[Path, RefindConfig], local_db[db_key])
+                all_refind_configs = checked_cast(
+                    Dict[Path, RefindConfig], local_db[db_key]
+                )
             else:
                 all_refind_configs = {}
 

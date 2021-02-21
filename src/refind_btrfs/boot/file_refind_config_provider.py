@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
 from pathlib import Path
-from typing import Dict, Generator, Iterable, List, cast
+from typing import Dict, Generator, Iterable, List
 
 from antlr4 import CommonTokenStream, FileStream
 from injector import inject
@@ -40,6 +40,7 @@ from refind_btrfs.common.enums import RefindOption
 from refind_btrfs.common.exceptions import RefindConfigError, RefindSyntaxError
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.utility.helpers import (
+    checked_cast,
     has_items,
     is_none_or_whitespace,
     is_singleton,
@@ -95,7 +96,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                     f"Found multiple '{refind_config_file}' files (at most one is expected)!"
                 )
 
-            config_file_path = cast(
+            config_file_path = checked_cast(
                 Path, one(none_throws(refind_config_search_result))
             ).resolve()
 
@@ -256,7 +257,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 "Could not load rEFInd configuration from file!"
             ) from e
         else:
-            config_option_contexts = cast(
+            config_option_contexts = checked_cast(
                 List[RefindConfigParser.Config_optionContext],
                 refind_context.config_option(),
             )
@@ -304,7 +305,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 boot_stanza_context = config_option_context.boot_stanza()
 
                 if boot_stanza_context is not None:
-                    yield cast(
+                    yield checked_cast(
                         BootStanza, boot_stanza_context.accept(boot_stanza_visitor)
                     )
 
@@ -319,4 +320,4 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 include_context = config_option_context.include()
 
                 if include_context is not None:
-                    yield cast(str, include_context.accept(include_visitor))
+                    yield checked_cast(str, include_context.accept(include_visitor))

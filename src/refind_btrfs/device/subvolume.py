@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 from typing import List, TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
@@ -65,7 +66,7 @@ class Subvolume:
         num_id_relation: NumIdRelation,
         is_read_only: bool,
     ) -> None:
-        self._name: str = constants.EMPTY_STR
+        self._name: Optional[str] = None
         self._filesystem_path = filesystem_path
         self._logical_path = logical_path
         self._time_created = time_created
@@ -92,7 +93,14 @@ class Subvolume:
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, Subvolume):
-            return self.time_created < other.time_created
+            attributes_for_comparison = [
+                none_throws(subvolume.created_from).time_created
+                if subvolume.is_newly_created()
+                else subvolume.time_created
+                for subvolume in (self, other)
+            ]
+
+            return attributes_for_comparison[0] < attributes_for_comparison[1]
 
         return False
 
@@ -101,33 +109,31 @@ class Subvolume:
 
         return self
 
-    def named(self) -> Subvolume:
+    def as_named(self) -> Subvolume:
         type_prefix = "ro" if self.is_read_only else "rw"
         type_prefix += "snap" if self.is_snapshot() else "subvol"
-        formatted_time_created = self.time_created.strftime("%Y-%m-%d_%H-%M-%S")
 
-        if self.is_newly_created:
-            created_from = none_throws(self._created_from)
+        if self.is_newly_created():
+            created_from = none_throws(self.created_from)
+            time_created = created_from.time_created
             num_id = created_from.num_id
         else:
+            time_created = self.time_created
             num_id = self.num_id
+
+        formatted_time_created = time_created.strftime("%Y-%m-%d_%H-%M-%S")
 
         self._name = f"{type_prefix}_{formatted_time_created}_ID{num_id}"
 
         return self
 
-    def located_in(self, parent_directory: Path):
-        name = self.name
+    def as_located_in(self, parent_directory: Path) -> Subvolume:
+        if not self.is_named():
+            raise ValueError("The '_name' attribute must be initialized beforehand!")
 
-        if is_none_or_whitespace(name):
-            raise ValueError("The 'name' property must be initialized beforehand!")
+        name = none_throws(self.name)
 
         self._filesystem_path = parent_directory / name
-
-        if self.has_static_partition_table():
-            static_partition_table = none_throws(self.static_partition_table)
-
-            static_partition_table.align_with(self)
 
         return self
 
@@ -139,7 +145,10 @@ class Subvolume:
     def as_newly_created_from(self, other: Subvolume) -> Subvolume:
         self._created_from = other
 
-        self.align_with(other)
+        if other.has_static_partition_table():
+            self._static_partition_table = deepcopy(
+                none_throws(other.static_partition_table)
+            )
 
         return self
 
@@ -154,8 +163,8 @@ class Subvolume:
                 False,
             )
             .as_newly_created_from(self)
-            .named()
-            .located_in(directory)
+            .as_named()
+            .as_located_in(directory)
         )
 
     def initialize_partition_table_using(
@@ -168,11 +177,32 @@ class Subvolume:
                 static_device_command.get_partition_table_for(self)
             )
 
+    def is_named(self) -> bool:
+        return not is_none_or_whitespace(self.name)
+
     def is_snapshot(self) -> bool:
         return self.parent_uuid != constants.EMPTY_UUID
 
     def is_snapshot_of(self, subvolume: Subvolume) -> bool:
         return self.is_snapshot() and self.parent_uuid == subvolume.uuid
+
+    def is_located_in(self, parent_directory: Path) -> bool:
+        if self.is_newly_created():
+            created_from = none_throws(self.created_from)
+            filesystem_path = created_from.filesystem_path
+        else:
+            filesystem_path = self.filesystem_path
+
+        path_relation = discern_path_relation_of((parent_directory, filesystem_path))
+        expected_results: List[PathRelation] = [
+            PathRelation.SAME,
+            PathRelation.SECOND_NESTED_IN_FIRST,
+        ]
+
+        return path_relation in expected_results
+
+    def is_newly_created(self) -> bool:
+        return self.created_from is not None
 
     def has_static_partition_table(self) -> bool:
         return self.static_partition_table is not None
@@ -183,7 +213,7 @@ class Subvolume:
     def can_be_added(self, comparison_iterable: Iterable[Subvolume]) -> bool:
         if self not in comparison_iterable:
             return not any(
-                subvolume.is_newly_created and subvolume.is_snapshot_of(self)
+                subvolume.is_newly_created() and subvolume.is_snapshot_of(self)
                 for subvolume in comparison_iterable
             )
 
@@ -191,7 +221,7 @@ class Subvolume:
 
     def can_be_removed(self, comparison_iterable: Iterable[Subvolume]) -> bool:
         if self not in comparison_iterable:
-            if self.is_newly_created:
+            if self.is_newly_created():
                 return not any(
                     self.is_snapshot_of(subvolume) for subvolume in comparison_iterable
                 )
@@ -199,22 +229,6 @@ class Subvolume:
             return True
 
         return False
-
-    def is_located_in(self, parent_directory: Path) -> bool:
-        if self.is_newly_created:
-            created_from = none_throws(self._created_from)
-            filesystem_path = created_from.filesystem_path
-        else:
-            filesystem_path = self.filesystem_path
-
-        path_relation = discern_path_relation_of((parent_directory, filesystem_path))
-        expected_results = [PathRelation.SAME, PathRelation.SECOND_NESTED_IN_FIRST]
-
-        return path_relation in expected_results
-
-    def align_with(self, other: Subvolume) -> None:
-        self._time_created = other.time_created
-        self._static_partition_table = other.static_partition_table
 
     def modify_partition_table_using(
         self,
@@ -289,7 +303,7 @@ class Subvolume:
             )
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self._name
 
     @property
@@ -325,8 +339,8 @@ class Subvolume:
         return self._is_read_only
 
     @property
-    def is_newly_created(self) -> bool:
-        return self._created_from is not None
+    def created_from(self) -> Optional[Subvolume]:
+        return self._created_from
 
     @property
     def static_partition_table(self) -> Optional[PartitionTable]:

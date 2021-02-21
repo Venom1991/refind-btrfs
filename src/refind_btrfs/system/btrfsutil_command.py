@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, List, Optional, Set, cast
+from typing import Generator, List, Optional, Set
 
 import btrfsutil
 
@@ -36,6 +36,7 @@ from refind_btrfs.common.abc import (
 from refind_btrfs.common.exceptions import SubvolumeError
 from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
 from refind_btrfs.utility.helpers import (
+    checked_cast,
     default_if_none,
     none_throws,
     try_convert_bytes_to_uuid,
@@ -149,7 +150,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
         else:
             destination = source
 
-        return destination.named()
+        return destination.as_named()
 
     def delete_snapshot(self, snapshot: Subvolume) -> None:
         logger = self._logger
@@ -165,7 +166,7 @@ class BtrfsUtilCommand(SubvolumeCommand):
             if is_subvolume:
                 root_dir_str = str(constants.ROOT_DIR)
                 num_id = snapshot.num_id
-                deleted_subvolumes = cast(
+                deleted_subvolumes = checked_cast(
                     List[int], btrfsutil.deleted_subvolumes(root_dir_str)
                 )
 

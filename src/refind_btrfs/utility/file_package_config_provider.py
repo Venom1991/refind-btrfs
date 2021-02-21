@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, List, cast
+from typing import Generator, List
 from uuid import UUID
 
 from injector import inject
@@ -56,7 +56,7 @@ from refind_btrfs.common.enums import (
 from refind_btrfs.common.exceptions import PackageConfigError
 from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
 
-from .helpers import discern_path_relation_of, has_items, try_parse_uuid
+from .helpers import checked_cast, discern_path_relation_of, has_items, try_parse_uuid
 
 
 class FilePackageConfigProvider(BasePackageConfigProvider):
@@ -137,7 +137,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         snapshot_searches = list(
             unique_everseen(
                 FilePackageConfigProvider._map_to_snapshot_searches(
-                    cast(AoT, toml_document[snapshot_searches_key])
+                    checked_cast(AoT, toml_document[snapshot_searches_key])
                 )
             )
         )
@@ -148,7 +148,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             )
 
         snapshot_manipulation = FilePackageConfigProvider._map_to_snapshot_manipulation(
-            cast(Table, toml_document[snapshot_manipulation_key])
+            checked_cast(Table, toml_document[snapshot_manipulation_key])
         )
         output_directory = snapshot_manipulation.destination_directory
 
@@ -182,7 +182,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         boot_stanza_generation = (
             FilePackageConfigProvider._map_to_boot_stanza_generation(
-                cast(Table, toml_document[boot_stanza_generation_key])
+                checked_cast(Table, toml_document[boot_stanza_generation_key])
             )
         )
 

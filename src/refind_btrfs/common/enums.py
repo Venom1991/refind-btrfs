@@ -26,7 +26,7 @@ from typing import Any, List
 
 
 class AutoNameToLower(Enum):
-    # pylint: disable=no-member, no-self-argument, unused-argument
+    # pylint: disable=unused-argument
     @staticmethod
     def _generate_next_value_(
         name: str, start: int, count: int, last_values: List[Any]

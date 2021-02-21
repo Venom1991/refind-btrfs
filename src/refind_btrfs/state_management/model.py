@@ -402,7 +402,7 @@ class Model:
 
         if has_items(snapshots_for_removal):
             for removal in snapshots_for_removal:
-                if removal.is_newly_created:
+                if removal.is_newly_created():
                     subvolume_command.delete_snapshot(removal)
 
                 if removal in bootable_snapshots:

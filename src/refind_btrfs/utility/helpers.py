@@ -239,7 +239,8 @@ def default_if_none(value: Optional[_T], default: _T) -> _T:
 def checked_cast(destination_type: Type[_T], value: Any) -> _T:
     if not isinstance(value, destination_type):
         raise TypeError(
-            f"The 'value' parameter cannot be cast to type '{destination_type.__name__}'!"
+            f"The 'value' parameter of type '{type(value).__name__}' "
+            f"cannot be cast to type '{destination_type}'!"
         )
 
     return cast(_T, value)

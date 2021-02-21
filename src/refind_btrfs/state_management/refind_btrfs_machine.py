@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import Collection, cast
+from typing import Collection
 
 from injector import inject
 from more_itertools import first, last
@@ -35,7 +35,7 @@ from refind_btrfs.common.exceptions import (
     SubvolumeError,
     UnchangedConfiguration,
 )
-from refind_btrfs.utility.helpers import has_items, is_singleton
+from refind_btrfs.utility.helpers import checked_cast, has_items, is_singleton
 
 from .model import Model
 
@@ -57,7 +57,7 @@ class RefindBtrfsMachine(Machine):
                 "The 'states' parameter must be initialized and contain at least two items!"
             )
 
-        initial = cast(State, first(states))
+        initial = checked_cast(State, first(states))
         expected_initial_name: str = StateNames.INITIAL.value
 
         if initial.name != expected_initial_name:
@@ -66,7 +66,7 @@ class RefindBtrfsMachine(Machine):
                 f"be a state named '{expected_initial_name}'!"
             )
 
-        final = cast(State, last(states))
+        final = checked_cast(State, last(states))
         expected_final_name: str = StateNames.FINAL.value
 
         if final.name != expected_final_name:

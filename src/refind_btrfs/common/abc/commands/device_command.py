@@ -37,10 +37,8 @@ class DeviceCommand(ABC):
 
     @singledispatchmethod
     def get_partition_table_for(self, argument: Any) -> PartitionTable:
-        type_name = type(argument).__name__
-
         raise NotImplementedError(
-            f"Cannot get the partition table for parameter of type '{type_name}'!"
+            f"Cannot get the partition table for parameter of type '{type(argument).__name__}'!"
         )
 
     @abstractmethod

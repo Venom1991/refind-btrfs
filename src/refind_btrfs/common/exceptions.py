@@ -21,11 +21,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import cast
-
 from more_itertools import first_true
 
 from refind_btrfs.common import constants
+from refind_btrfs.utility.helpers import checked_cast
 
 
 class RefindBtrfsError(Exception):
@@ -33,7 +32,7 @@ class RefindBtrfsError(Exception):
         super().__init__(args)
 
         if args is not None:
-            self._message = cast(
+            self._message = checked_cast(
                 str,
                 first_true(
                     args,

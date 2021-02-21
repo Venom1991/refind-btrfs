@@ -33,10 +33,8 @@ from refind_btrfs.device.block_device import BlockDevice
 from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.device.partition import Partition
 from refind_btrfs.device.partition_table import PartitionTable
-from refind_btrfs.device.static_partition_table import StaticPartitionTable
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import (
-    checked_cast,
     default_if_none,
     is_none_or_whitespace,
     none_throws,
@@ -64,8 +62,7 @@ class FstabCommand(DeviceCommand):
 
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         logger = self._logger
-        static_partition_table = checked_cast(StaticPartitionTable, partition_table)
-        fstab_file_path = static_partition_table.fstab_file_path
+        fstab_file_path = none_throws(partition_table.fstab_file_path)
         root = none_throws(partition_table.root)
         filesystem = none_throws(root.filesystem)
 
@@ -124,8 +121,10 @@ class FstabCommand(DeviceCommand):
             )
 
             with fstab_file_path.open("r") as fstab_file:
-                return StaticPartitionTable(fstab_file_path).with_partitions(
-                    FstabCommand._map_to_partitions(fstab_file)
+                return (
+                    PartitionTable(constants.EMPTY_HEX_UUID, constants.FSTAB_PT_TYPE)
+                    .with_fstab_file_path(fstab_file_path)
+                    .with_partitions(FstabCommand._map_to_partitions(fstab_file))
                 )
         except OSError as e:
             logger.exception("Path.open('r') call failed!")

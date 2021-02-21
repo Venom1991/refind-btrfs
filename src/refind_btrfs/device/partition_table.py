@@ -24,10 +24,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from functools import cached_property
+from pathlib import Path
 from typing import Iterable, List, Optional
 
 from more_itertools import only
 
+from refind_btrfs.common import constants
 from refind_btrfs.utility.helpers import has_items, none_throws
 
 from .partition import Partition
@@ -38,6 +40,7 @@ class PartitionTable:
     def __init__(self, uuid: str, pt_type: str) -> None:
         self._uuid = uuid
         self._pt_type = pt_type
+        self._fstab_file_path: Optional[Path] = None
         self._partitions: Optional[List[Partition]] = None
 
     def __eq__(self, other: object) -> bool:
@@ -51,6 +54,11 @@ class PartitionTable:
 
     def __hash__(self) -> int:
         return hash(self.uuid)
+
+    def with_fstab_file_path(self, fstab_file_path: Path) -> PartitionTable:
+        self._fstab_file_path = fstab_file_path
+
+        return self
 
     def with_partitions(self, partitions: Iterable[Partition]) -> PartitionTable:
         self._partitions = list(partitions)
@@ -68,8 +76,8 @@ class PartitionTable:
 
         return False
 
-    def align_with(self, subvolume: Subvolume) -> None:
-        pass
+    def has_partitions(self) -> bool:
+        return has_items(self.partitions)
 
     def migrate_from_to(
         self, current_subvolume: Subvolume, replacement_subvolume: Subvolume
@@ -77,8 +85,11 @@ class PartitionTable:
         root = none_throws(self.root)
         filesystem = none_throws(root.filesystem)
         mount_options = none_throws(filesystem.mount_options)
+        replacement_filesystem_path = replacement_subvolume.filesystem_path
 
         mount_options.migrate_from_to(current_subvolume, replacement_subvolume)
+
+        self._fstab_file_path = replacement_filesystem_path / constants.FSTAB_FILE
 
     @property
     def uuid(self) -> str:
@@ -88,25 +99,31 @@ class PartitionTable:
     def pt_type(self) -> str:
         return self._pt_type
 
+    @property
+    def fstab_file_path(self) -> Optional[Path]:
+        return self._fstab_file_path
+
+    @property
+    def partitions(self) -> Optional[List[Partition]]:
+        return self._partitions
+
     @cached_property
     def esp(self) -> Optional[Partition]:
-        partitions = self._partitions
-
-        if has_items(partitions):
+        if self.has_partitions():
             return only(
-                partition for partition in none_throws(partitions) if partition.is_esp()
+                partition
+                for partition in none_throws(self.partitions)
+                if partition.is_esp()
             )
 
         return None
 
     @cached_property
     def root(self) -> Optional[Partition]:
-        partitions = self._partitions
-
-        if has_items(partitions):
+        if self.has_partitions():
             return only(
                 partition
-                for partition in none_throws(partitions)
+                for partition in none_throws(self.partitions)
                 if partition.is_root()
             )
 
@@ -114,12 +131,10 @@ class PartitionTable:
 
     @cached_property
     def boot(self) -> Optional[Partition]:
-        partitions = self._partitions
-
-        if has_items(partitions):
+        if self.has_partitions():
             return only(
                 partition
-                for partition in none_throws(partitions)
+                for partition in none_throws(self.partitions)
                 if partition.is_boot()
             )
 

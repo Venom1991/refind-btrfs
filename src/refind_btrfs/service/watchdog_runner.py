@@ -25,7 +25,7 @@ import os
 import signal
 from signal import signal as register_signal_handler
 from types import FrameType
-from typing import Optional, cast
+from typing import Optional
 
 import systemd.daemon as systemd_daemon
 from injector import inject
@@ -39,6 +39,7 @@ from refind_btrfs.common.abc import (
     BaseRunner,
 )
 from refind_btrfs.common.exceptions import UnsupportedConfiguration
+from refind_btrfs.utility.helpers import checked_cast
 
 
 class WatchdogRunner(BaseRunner):
@@ -100,7 +101,7 @@ class WatchdogRunner(BaseRunner):
                 observer.join()
         except PidFileAlreadyRunningError as e:
             exit_code = constants.EX_NOT_OK
-            running_pid = cast(int, e.pid)
+            running_pid = checked_cast(int, e.pid)
 
             logger.error(e.message)
             systemd_daemon.notify(

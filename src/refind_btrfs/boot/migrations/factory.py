@@ -47,10 +47,9 @@ class Factory:
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
     ) -> BaseMigrationStrategy:
-        type_name = type(argument).__name__
-
         raise NotImplementedError(
-            f"Cannot instantiate the migration strategy for parameter of type '{type_name}'!"
+            "Cannot instantiate the migration strategy for "
+            f"parameter of type '{type(argument).__name__}'!"
         )
 
     # pylint: disable=unused-argument

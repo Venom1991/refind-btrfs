@@ -22,13 +22,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 import re
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, Tuple
 
 from more_itertools import first, last
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import PartitionError
-from refind_btrfs.utility.helpers import has_items, is_none_or_whitespace, try_parse_int
+from refind_btrfs.utility.helpers import (
+    checked_cast,
+    has_items,
+    is_none_or_whitespace,
+    try_parse_int,
+)
 
 from .subvolume import Subvolume
 
@@ -51,8 +56,8 @@ class MountOptions:
                     split_parameterized_option = option.split(
                         constants.PARAMETERIZED_OPTION_SEPARATOR
                     )
-                    option_name = cast(str, first(split_parameterized_option))
-                    option_value = cast(str, last(split_parameterized_option))
+                    option_name = checked_cast(str, first(split_parameterized_option))
+                    option_value = checked_cast(str, last(split_parameterized_option))
 
                     if option_name in parameterized_options:
                         raise PartitionError(
