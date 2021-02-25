@@ -27,7 +27,7 @@ from injector import inject
 from more_itertools import first, last
 from transitions import Machine, State
 
-from refind_btrfs.common.abc import BaseLoggerFactory
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.enums import StateNames
 from refind_btrfs.common.exceptions import (
     PartitionError,

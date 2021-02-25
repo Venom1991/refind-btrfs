@@ -26,7 +26,8 @@ import os
 from injector import inject
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
+from refind_btrfs.common.abc import BaseRunner
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.exceptions import UnsupportedConfiguration
 from refind_btrfs.state_management import RefindBtrfsMachine
 

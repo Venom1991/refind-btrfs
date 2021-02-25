@@ -30,6 +30,7 @@ from typing import Any, Generator, Optional, Sized, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from more_itertools import first
+from typeguard import check_type, typechecked
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
@@ -42,6 +43,7 @@ def check_access_rights() -> None:
         raise PermissionError(error_code, os.strerror(error_code))
 
 
+@typechecked
 def try_parse_int(value: str, base: int = 10) -> Optional[int]:
     try:
         return int(value, base)
@@ -49,6 +51,7 @@ def try_parse_int(value: str, base: int = 10) -> Optional[int]:
         return None
 
 
+@typechecked
 def try_parse_uuid(value: str) -> Optional[UUID]:
     try:
         return UUID(hex=value)
@@ -56,6 +59,7 @@ def try_parse_uuid(value: str) -> Optional[UUID]:
         return None
 
 
+@typechecked
 def try_convert_bytes_to_uuid(value: bytes) -> Optional[UUID]:
     try:
         return UUID(bytes=value)
@@ -63,6 +67,7 @@ def try_convert_bytes_to_uuid(value: bytes) -> Optional[UUID]:
         return None
 
 
+@typechecked
 def is_empty(value: Optional[str]) -> bool:
     if value is None:
         return False
@@ -70,6 +75,7 @@ def is_empty(value: Optional[str]) -> bool:
     return value == constants.EMPTY_STR
 
 
+@typechecked
 def is_none_or_whitespace(value: Optional[str]) -> bool:
     if value is None:
         return True
@@ -77,6 +83,7 @@ def is_none_or_whitespace(value: Optional[str]) -> bool:
     return is_empty(value) or value.isspace()
 
 
+@typechecked
 def has_method(obj: Any, method_name: str) -> bool:
     if hasattr(obj, method_name):
         attr = getattr(obj, method_name)
@@ -86,14 +93,17 @@ def has_method(obj: Any, method_name: str) -> bool:
     return False
 
 
+@typechecked
 def has_items(value: Optional[Sized]) -> bool:
     return value is not None and len(value) > 0
 
 
+@typechecked
 def is_singleton(value: Optional[Sized]) -> bool:
     return value is not None and len(value) == 1
 
 
+@typechecked
 def item_count_suffix(value: Sized) -> str:
     assert has_items(
         value
@@ -102,6 +112,7 @@ def item_count_suffix(value: Sized) -> str:
     return constants.EMPTY_STR if is_singleton(value) else "s"
 
 
+@typechecked
 def find_all_matched_files_in(
     root_directory: Path, file_name: str
 ) -> Generator[Path, None, None]:
@@ -116,6 +127,7 @@ def find_all_matched_files_in(
                 yield from find_all_matched_files_in(child, file_name)
 
 
+@typechecked
 def find_all_directories_in(
     root_directory: Path, max_depth: int, current_depth: int = 0
 ) -> Generator[Path, None, None]:
@@ -133,6 +145,7 @@ def find_all_directories_in(
             )
 
 
+@typechecked
 def discern_path_relation_of(path_pair: Tuple[Path, Path]) -> PathRelation:
     first_resolved = path_pair[0].resolve()
     second_resolved = path_pair[1].resolve()
@@ -153,6 +166,7 @@ def discern_path_relation_of(path_pair: Tuple[Path, Path]) -> PathRelation:
     return PathRelation.UNRELATED
 
 
+@typechecked
 def discern_distance_between(path_pair: Tuple[Path, Path]) -> Optional[int]:
     path_relation = discern_path_relation_of(path_pair)
 
@@ -184,7 +198,8 @@ def discern_distance_between(path_pair: Tuple[Path, Path]) -> Optional[int]:
     return None
 
 
-def normalize_dir_separators(
+@typechecked
+def normalize_dir_separators_in(
     path: str,
     separator_replacement: Tuple[str, str] = constants.DEFAULT_DIR_SEPARATOR_PAIR,
 ) -> str:
@@ -201,6 +216,7 @@ def normalize_dir_separators(
     return path_with_replaced_separators
 
 
+@typechecked
 def replace_root_part_in(
     full_path: str,
     current_root_part: str,
@@ -216,7 +232,7 @@ def replace_root_part_in(
         rf"\g<prefix>{replacement_root_part}\g<suffix>", full_path
     )
 
-    return normalize_dir_separators(substituted_full_path, separator_replacement)
+    return normalize_dir_separators_in(substituted_full_path, separator_replacement)
 
 
 _T = TypeVar("_T")
@@ -237,10 +253,6 @@ def default_if_none(value: Optional[_T], default: _T) -> _T:
 
 
 def checked_cast(destination_type: Type[_T], value: Any) -> _T:
-    if not isinstance(value, destination_type):
-        raise TypeError(
-            f"The 'value' parameter of type '{type(value).__name__}' "
-            f"cannot be cast to type '{destination_type}'!"
-        )
+    check_type("value", value, destination_type)
 
     return cast(_T, value)

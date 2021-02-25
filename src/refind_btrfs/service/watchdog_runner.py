@@ -33,11 +33,9 @@ from pid import PidFile, PidFileAlreadyRunningError
 from watchdog.events import FileSystemEventHandler
 
 from refind_btrfs.common import CheckableObserver, constants
-from refind_btrfs.common.abc import (
-    BaseLoggerFactory,
-    BasePackageConfigProvider,
-    BaseRunner,
-)
+from refind_btrfs.common.abc import BaseRunner
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
+from refind_btrfs.common.abc.providers import BasePackageConfigProvider
 from refind_btrfs.common.exceptions import UnsupportedConfiguration
 from refind_btrfs.utility.helpers import checked_cast
 

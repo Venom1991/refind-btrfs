@@ -30,8 +30,8 @@ from injector import inject
 from more_itertools import last, one
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.abc import (
-    BaseLoggerFactory,
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
+from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
     BaseRefindConfigProvider,

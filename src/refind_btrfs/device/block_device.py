@@ -24,17 +24,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional, TYPE_CHECKING, Union
+from typing import Iterable, List, Optional, Union
 
+from typeguard import typechecked
+
+from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.utility.helpers import has_items, none_throws
 
-from .partition import Partition
-from .partition_table import PartitionTable
 
-if TYPE_CHECKING:
-    from refind_btrfs.common.abc import BaseDeviceCommandFactory
-
-
+@typechecked
 class BlockDevice:
     def __init__(self, name: str, d_type: str, major_minor: str) -> None:
         self._name = name
@@ -126,6 +126,22 @@ class BlockDevice:
         return self._minor_number
 
     @property
+    def physical_partition_table(
+        self,
+    ) -> Optional[PartitionTable]:
+        return self._physical_partition_table
+
+    @property
+    def live_partition_table(
+        self,
+    ) -> Optional[PartitionTable]:
+        return self._live_partition_table
+
+    @property
+    def dependencies(self) -> Optional[List[BlockDevice]]:
+        return self._dependencies
+
+    @property
     def esp(self) -> Optional[Partition]:
         if self.has_physical_partition_table():
             return none_throws(self.physical_partition_table).esp
@@ -145,15 +161,3 @@ class BlockDevice:
             return none_throws(self.live_partition_table).boot
 
         return None
-
-    @property
-    def physical_partition_table(self) -> Optional[PartitionTable]:
-        return self._physical_partition_table
-
-    @property
-    def live_partition_table(self) -> Optional[PartitionTable]:
-        return self._live_partition_table
-
-    @property
-    def dependencies(self) -> Optional[List[BlockDevice]]:
-        return self._dependencies

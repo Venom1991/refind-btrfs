@@ -26,10 +26,13 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import List, TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
+from typing import List, Iterable, NamedTuple, Optional, Set
 from uuid import UUID
 
+from typeguard import typechecked
+
 from refind_btrfs.common import constants
+from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
 from refind_btrfs.common.enums import PathRelation
 from refind_btrfs.common.exceptions import SubvolumeError
 from refind_btrfs.utility.helpers import (
@@ -40,10 +43,7 @@ from refind_btrfs.utility.helpers import (
     none_throws,
 )
 
-if TYPE_CHECKING:
-    from refind_btrfs.boot import BootStanza
-    from refind_btrfs.common.abc import BaseDeviceCommandFactory
-    from refind_btrfs.device.partition_table import PartitionTable
+from refind_btrfs.device.partition_table import PartitionTable
 
 
 class NumIdRelation(NamedTuple):
@@ -56,6 +56,7 @@ class UuidRelation(NamedTuple):
     parent_uuid: UUID
 
 
+@typechecked
 class Subvolume:
     def __init__(
         self,
@@ -270,7 +271,7 @@ class Subvolume:
             )
 
     def check_boot_files_existence(
-        self, root_subvolume: Subvolume, boot_stanza: BootStanza
+        self, root_subvolume: Subvolume, boot_stanza
     ) -> None:
         self_filesystem_path_str = str(self.filesystem_path)
         self_logical_path = self.logical_path

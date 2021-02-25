@@ -29,7 +29,8 @@ from typing import Any, Generator, Iterable
 from more_itertools import always_iterable, one
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.abc import BaseLoggerFactory, DeviceCommand
+from refind_btrfs.common.abc.commands import DeviceCommand
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.enums import LsblkColumn, LsblkJsonKey
 from refind_btrfs.common.exceptions import PartitionError
 from refind_btrfs.device.block_device import BlockDevice

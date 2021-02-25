@@ -29,7 +29,7 @@ from watchdog.observers.api import DEFAULT_OBSERVER_TIMEOUT
 
 class CheckableObserver(Observer):
     def __init__(self):
-        super().__init__(DEFAULT_OBSERVER_TIMEOUT)
+        super().__init__(timeout=DEFAULT_OBSERVER_TIMEOUT)
 
         self._exception: Optional[Exception] = None
 

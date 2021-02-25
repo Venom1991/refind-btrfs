@@ -36,11 +36,13 @@ from watchdog.events import (
     FileSystemEventHandler,
 )
 
-from refind_btrfs.common.abc import (
+from refind_btrfs.common.abc.factories import (
     BaseLoggerFactory,
+    BaseSubvolumeCommandFactory,
+)
+from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
-    BaseSubvolumeCommandFactory,
 )
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine

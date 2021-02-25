@@ -21,15 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from __future__ import annotations
-
 import shelve
 from pathlib import Path
 from typing import Dict, Optional
 
 from refind_btrfs.boot import RefindConfig
 from refind_btrfs.common import PackageConfig, constants
-from refind_btrfs.common.abc import BasePersistenceProvider
+from refind_btrfs.common.abc.providers import BasePersistenceProvider
 from refind_btrfs.common.enums import LocalDbKey
 from refind_btrfs.state_management.model import ProcessingResult
 from refind_btrfs.utility.helpers import checked_cast

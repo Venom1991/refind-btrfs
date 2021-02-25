@@ -23,14 +23,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from injector import inject
 
-from refind_btrfs.common.abc import (
+from refind_btrfs.common.abc.commands import DeviceCommand, SubvolumeCommand
+from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
-    BasePackageConfigProvider,
     BaseSubvolumeCommandFactory,
-    DeviceCommand,
-    SubvolumeCommand,
 )
+from refind_btrfs.common.abc.providers import BasePackageConfigProvider
 
 from .btrfsutil_command import BtrfsUtilCommand
 from .findmnt_command import FindmntCommand

@@ -24,10 +24,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import re
 from typing import Dict, List, Tuple
 
-from more_itertools import first, last
+from typeguard import typechecked
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import PartitionError
+from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import (
     checked_cast,
     has_items,
@@ -35,9 +36,8 @@ from refind_btrfs.utility.helpers import (
     try_parse_int,
 )
 
-from .subvolume import Subvolume
 
-
+@typechecked
 class MountOptions:
     def __init__(self, raw_mount_options: str) -> None:
         split_mount_options = [
@@ -56,8 +56,8 @@ class MountOptions:
                     split_parameterized_option = option.split(
                         constants.PARAMETERIZED_OPTION_SEPARATOR
                     )
-                    option_name = checked_cast(str, first(split_parameterized_option))
-                    option_value = checked_cast(str, last(split_parameterized_option))
+                    option_name = checked_cast(str, split_parameterized_option[0])
+                    option_value = checked_cast(str, split_parameterized_option[1])
 
                     if option_name in parameterized_options:
                         raise PartitionError(
@@ -124,7 +124,7 @@ class MountOptions:
         if not self.is_matched_with(current_subvolume):
             raise PartitionError(
                 "The mount options are not matched with the "
-                "'current_subvolume' parameter (by 'subvol' or 'subvolid')!"
+                "'current_mountable' parameter (by 'subvol' or 'subvolid')!"
             )
 
         parameterized_options = self._parameterized_options

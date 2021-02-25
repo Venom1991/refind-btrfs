@@ -41,8 +41,8 @@ from refind_btrfs.common import (
     SnapshotSearch,
     constants,
 )
-from refind_btrfs.common.abc import (
-    BaseLoggerFactory,
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
+from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
 )

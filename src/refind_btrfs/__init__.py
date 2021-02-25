@@ -28,7 +28,8 @@ from typing import Optional
 from injector import Injector
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.abc import BaseLoggerFactory, BaseRunner
+from refind_btrfs.common.abc import BaseRunner
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.enums import RunMode
 from refind_btrfs.common.exceptions import PackageConfigError
 from refind_btrfs.utility.helpers import check_access_rights, checked_cast, none_throws

@@ -21,8 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from __future__ import annotations
-
 from typing import Collection, Generator, List, Optional
 
 from more_itertools import first

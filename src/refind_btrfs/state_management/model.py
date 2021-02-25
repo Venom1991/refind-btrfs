@@ -28,6 +28,7 @@ from typing import Callable, Collection, List, NamedTuple, Optional
 
 from injector import inject
 from more_itertools import only, take
+from typeguard import typechecked
 
 from refind_btrfs.boot import BootStanza, RefindConfig
 from refind_btrfs.common import (
@@ -35,13 +36,15 @@ from refind_btrfs.common import (
     BootStanzaGeneration,
     constants,
 )
-from refind_btrfs.common.abc import (
+from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
+    BaseSubvolumeCommandFactory,
+)
+from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
     BaseRefindConfigProvider,
-    BaseSubvolumeCommandFactory,
 )
 from refind_btrfs.common.exceptions import (
     UnchangedConfiguration,
@@ -92,6 +95,7 @@ class ProcessingResult(NamedTuple):
         return cls([], None)
 
 
+@typechecked
 class Model:
     @inject
     def __init__(

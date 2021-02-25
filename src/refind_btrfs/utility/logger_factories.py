@@ -26,7 +26,7 @@ from logging import Handler, NullHandler, StreamHandler
 
 from systemd.journal import JournalHandler
 
-from refind_btrfs.common.abc import BaseLoggerFactory
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 
 
 class NullLoggerFactory(BaseLoggerFactory):

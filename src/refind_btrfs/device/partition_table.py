@@ -28,14 +28,15 @@ from pathlib import Path
 from typing import Iterable, List, Optional
 
 from more_itertools import only
+from typeguard import typechecked
 
 from refind_btrfs.common import constants
+from refind_btrfs.device.partition import Partition
+from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import has_items, none_throws
 
-from .partition import Partition
-from .subvolume import Subvolume
 
-
+@typechecked
 class PartitionTable:
     def __init__(self, uuid: str, pt_type: str) -> None:
         self._uuid = uuid

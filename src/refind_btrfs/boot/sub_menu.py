@@ -21,8 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from __future__ import annotations
-
 from functools import cached_property
 from typing import Generator, List, Optional, Set
 

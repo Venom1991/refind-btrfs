@@ -26,7 +26,8 @@ import re
 from typing import Generator, TextIO
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.abc import BaseLoggerFactory, DeviceCommand
+from refind_btrfs.common.abc.commands import DeviceCommand
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.enums import FstabColumn
 from refind_btrfs.common.exceptions import PartitionError
 from refind_btrfs.device.block_device import BlockDevice

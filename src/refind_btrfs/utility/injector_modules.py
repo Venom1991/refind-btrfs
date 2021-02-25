@@ -29,14 +29,16 @@ from watchdog.events import FileSystemEventHandler
 
 from refind_btrfs.boot.file_refind_config_provider import FileRefindConfigProvider
 from refind_btrfs.common import CheckableObserver
-from refind_btrfs.common.abc import (
+from refind_btrfs.common.abc import BaseRunner
+from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
+    BaseSubvolumeCommandFactory,
+)
+from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
     BaseRefindConfigProvider,
-    BaseRunner,
-    BaseSubvolumeCommandFactory,
 )
 from refind_btrfs.common.enums import StateNames
 from refind_btrfs.console import CLIRunner

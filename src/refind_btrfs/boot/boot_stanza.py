@@ -37,7 +37,7 @@ from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
     none_throws,
-    normalize_dir_separators,
+    normalize_dir_separators_in,
 )
 
 from .boot_options import BootOptions
@@ -280,6 +280,6 @@ class BootStanza:
     @cached_property
     def all_boot_file_paths(self) -> Set[str]:
         return set(
-            normalize_dir_separators(boot_file_path)
+            normalize_dir_separators_in(boot_file_path)
             for boot_file_path in self._get_all_boot_file_paths()
         )

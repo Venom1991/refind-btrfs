@@ -26,7 +26,7 @@ import queue
 from injector import inject
 
 from refind_btrfs.common import CheckableObserver, constants
-from refind_btrfs.common.abc import BaseLoggerFactory
+from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.exceptions import UnsupportedConfiguration
 
 
