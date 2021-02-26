@@ -37,6 +37,7 @@ IGNORED_OPTION
         | 'default_selection'
         | 'don\'t_scan_dirs'
         | 'don\'t_scan_files'
+        | 'don\'t_scan_firmware'
         | 'don\'t_scan_tools'
         | 'don\'t_scan_volumes'
         | 'dont_scan_dirs'
@@ -52,6 +53,7 @@ IGNORED_OPTION
         | 'font'
         | 'hideui'
         | 'icons_dir'
+        | 'log_level'
         | 'max_tags'
         | 'mouse_size'
         | 'mouse_speed'
@@ -73,6 +75,7 @@ IGNORED_OPTION
         | 'use_graphics_for'
         | 'use_nvram'
         | 'windows_recovery_files'
+        | 'write_systemd_vars'
       ) (~[\n])* NEWLINE? -> skip ;
 
 MENU_ENTRY : (MAIN_MENU_ENTRY | SUB_MENU_ENTRY) ;
