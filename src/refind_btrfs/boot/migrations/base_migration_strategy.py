@@ -42,14 +42,14 @@ class BaseMigrationStrategy(ABC):
     def __init__(
         self,
         current_state: State,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
     ) -> None:
         self._current_state = current_state
-        self._current_subvolume = current_subvolume
-        self._replacement_subvolume = replacement_subvolume
+        self._source_subvolume = source_subvolume
+        self._destination_subvolume = destination_subvolume
         self._include_paths = include_paths
         self._is_latest = is_latest
 
@@ -58,86 +58,86 @@ class BaseMigrationStrategy(ABC):
         pass
 
     @property
-    def replacement_name(self) -> str:
-        replacement_subvolume = self._replacement_subvolume
+    def destination_name(self) -> str:
+        destination_subvolume = self._destination_subvolume
 
-        if not replacement_subvolume.is_named():
+        if not destination_subvolume.is_named():
             raise ValueError(
-                "The replacement subvolume's '_name' attribute must be initialized beforehand!"
+                "The destination subvolume's '_name' attribute must be initialized beforehand!"
             )
 
         subvolume_name_pattern = re.compile(rf"\({constants.SUBVOLUME_NAME_PATTERN}\)")
         normalized_current_name = self._current_state.name.strip(constants.DOUBLE_QUOTE)
-        replacement_subvolume_name = none_throws(replacement_subvolume.name)
+        destination_subvolume_name = none_throws(destination_subvolume.name)
         match = subvolume_name_pattern.search(normalized_current_name)
 
         if match:
-            replacement_name = subvolume_name_pattern.sub(
-                f"({replacement_subvolume_name})", normalized_current_name
+            destination_name = subvolume_name_pattern.sub(
+                f"({destination_subvolume_name})", normalized_current_name
             )
         else:
-            replacement_name = (
-                f"{normalized_current_name} ({replacement_subvolume_name})"
+            destination_name = (
+                f"{normalized_current_name} ({destination_subvolume_name})"
             )
 
-        return f"{constants.DOUBLE_QUOTE}{replacement_name}{constants.DOUBLE_QUOTE}"
+        return f"{constants.DOUBLE_QUOTE}{destination_name}{constants.DOUBLE_QUOTE}"
 
     @property
-    def replacement_loader_path(self) -> Optional[str]:
+    def destination_loader_path(self) -> Optional[str]:
         current_loader_path = self._current_state.loader_path
 
         if not is_none_or_whitespace(current_loader_path):
             return replace_root_part_in(
                 none_throws(current_loader_path),
-                self._current_subvolume.logical_path,
-                self._replacement_subvolume.logical_path,
+                self._source_subvolume.logical_path,
+                self._destination_subvolume.logical_path,
             )
 
         return None
 
     @property
-    def replacement_initrd_path(self) -> Optional[str]:
+    def destination_initrd_path(self) -> Optional[str]:
         current_initrd_path = self._current_state.initrd_path
 
         if not is_none_or_whitespace(current_initrd_path):
             return replace_root_part_in(
                 none_throws(current_initrd_path),
-                self._current_subvolume.logical_path,
-                self._replacement_subvolume.logical_path,
+                self._source_subvolume.logical_path,
+                self._destination_subvolume.logical_path,
             )
 
         return None
 
     @property
-    def replacement_boot_options(self) -> Optional[BootOptions]:
+    def destination_boot_options(self) -> Optional[BootOptions]:
         current_boot_options = self._current_state.boot_options
 
         if current_boot_options is not None:
-            replacement_boot_options = deepcopy(current_boot_options)
+            destination_boot_options = deepcopy(current_boot_options)
 
-            replacement_boot_options.migrate_from_to(
-                self._current_subvolume,
-                self._replacement_subvolume,
+            destination_boot_options.migrate_from_to(
+                self._source_subvolume,
+                self._destination_subvolume,
                 self._include_paths,
             )
 
-            return replacement_boot_options
+            return destination_boot_options
 
         return None
 
     @property
-    def replacement_add_boot_options(self) -> Optional[BootOptions]:
+    def destination_add_boot_options(self) -> Optional[BootOptions]:
         current_add_boot_options = self._current_state.add_boot_options
 
         if current_add_boot_options is not None:
-            replacement_add_boot_options = deepcopy(current_add_boot_options)
+            destination_add_boot_options = deepcopy(current_add_boot_options)
 
-            replacement_add_boot_options.migrate_from_to(
-                self._current_subvolume,
-                self._replacement_subvolume,
+            destination_add_boot_options.migrate_from_to(
+                self._source_subvolume,
+                self._destination_subvolume,
                 self._include_paths,
             )
 
-            return replacement_add_boot_options
+            return destination_add_boot_options
 
         return None

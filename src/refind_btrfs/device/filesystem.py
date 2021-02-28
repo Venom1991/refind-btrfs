@@ -26,15 +26,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Optional
 
-from typeguard import typechecked
-
 from refind_btrfs.common.abc.factories import BaseSubvolumeCommandFactory
-from refind_btrfs.device.mount_options import MountOptions
-from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import is_none_or_whitespace
 
+from .mount_options import MountOptions
+from .subvolume import Subvolume
 
-@typechecked
+
 class Filesystem:
     def __init__(self, uuid: str, label: str, fs_type: str, mount_point: str) -> None:
         self._uuid = uuid

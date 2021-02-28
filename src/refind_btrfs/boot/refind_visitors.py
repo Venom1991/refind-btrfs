@@ -22,8 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from collections import defaultdict
-from itertools import chain
-from typing import Any, Callable, Dict, Generator, NamedTuple, Tuple
+from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple
 
 from antlr4 import ParserRuleContext
 from more_itertools import always_iterable, only
@@ -31,7 +30,7 @@ from more_itertools import always_iterable, only
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, OSTypeParameter, RefindOption
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.utility.helpers import try_parse_int
+from refind_btrfs.utility.helpers import checked_cast, try_parse_int
 
 from .antlr4 import RefindConfigParser, RefindConfigParserVisitor
 from .boot_options import BootOptions
@@ -54,10 +53,14 @@ class BootStanzaVisitor(RefindConfigParserVisitor):
         option_visitor = OptionVisitor()
         main_options = defaultdict(list)
 
-        for key, value in chain.from_iterable(
-            context.accept(option_visitor) for context in main_option_contexts
-        ):
-            main_options[key].append(value)
+        for main_option_context in main_option_contexts:
+            main_option_tuple = main_option_context.accept(option_visitor)
+
+            if main_option_tuple is not None:
+                key = checked_cast(RefindOption, main_option_tuple[0])
+                value = main_option_tuple[1]
+
+                main_options[key].append(value)
 
         volume = only(always_iterable(main_options.get(RefindOption.VOLUME)))
         loader = only(always_iterable(main_options.get(RefindOption.LOADER)))
@@ -158,26 +161,27 @@ class OptionVisitor(RefindConfigParserVisitor):
 
     def visitMain_option(
         self, ctx: RefindConfigParser.Main_optionContext
-    ) -> Generator[Tuple[RefindOption, Any], None, None]:
-        yield from OptionVisitor._map_to_option(ctx, self._main_option_mappings)
+    ) -> Optional[Tuple[RefindOption, Any]]:
+        return OptionVisitor._map_to_option(ctx, self._main_option_mappings)
 
     def visitSub_option(
         self, ctx: RefindConfigParser.Sub_optionContext
-    ) -> Generator[Tuple[RefindOption, Any], None, None]:
-        yield from OptionVisitor._map_to_option(ctx, self._sub_option_mappings)
+    ) -> Optional[Tuple[RefindOption, Any]]:
+        return OptionVisitor._map_to_option(ctx, self._sub_option_mappings)
 
     @staticmethod
     def _map_to_option(
         ctx: ParserRuleContext, mappings: Dict[RefindOption, ContextWithVisitor]
-    ) -> Generator[Tuple[RefindOption, Any], None, None]:
+    ) -> Optional[Tuple[RefindOption, Any]]:
         for key, value in mappings.items():
             option_context = value.child_context_func(ctx)
 
             if option_context is not None:
                 visitor = value.visitor_func()
 
-                yield key, option_context.accept(visitor)
-                return
+                return key, option_context.accept(visitor)
+
+        return None
 
 
 class SubMenuVisitor(RefindConfigParserVisitor):
@@ -188,10 +192,14 @@ class SubMenuVisitor(RefindConfigParserVisitor):
         option_visitor = OptionVisitor()
         sub_options = defaultdict(list)
 
-        for key, value in chain.from_iterable(
-            context.accept(option_visitor) for context in sub_option_contexts
-        ):
-            sub_options[key].append(value)
+        for sub_option_context in sub_option_contexts:
+            sub_option_tuple = sub_option_context.accept(option_visitor)
+
+            if sub_option_tuple is not None:
+                key = checked_cast(RefindOption, sub_option_tuple[0])
+                value = sub_option_tuple[1]
+
+                sub_options[key].append(value)
 
         loader = only(always_iterable(sub_options.get(RefindOption.LOADER)))
         initrd = only(always_iterable(sub_options.get(RefindOption.INITRD)))

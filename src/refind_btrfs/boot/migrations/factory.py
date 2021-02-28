@@ -41,8 +41,8 @@ class Factory:
     @staticmethod
     def migration_strategy(
         argument: Any,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
@@ -57,14 +57,14 @@ class Factory:
     @staticmethod
     def _boot_stanza_overload(
         argument: BootStanza,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
     ) -> BaseMigrationStrategy:
         return BootStanzaMigrationStrategy(
-            argument, current_subvolume, replacement_subvolume, include_paths, is_latest
+            argument, source_subvolume, destination_subvolume, include_paths, is_latest
         )
 
     # pylint: disable=unused-argument
@@ -72,16 +72,16 @@ class Factory:
     @staticmethod
     def _sub_menu_overload(
         argument: SubMenu,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
         inherit_from_state: Optional[State] = None,
     ) -> BaseMigrationStrategy:
         return SubMenuMigrationStrategy(
             argument,
-            current_subvolume,
-            replacement_subvolume,
+            source_subvolume,
+            destination_subvolume,
             none_throws(inherit_from_state),
             include_paths,
             is_latest,

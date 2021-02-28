@@ -53,25 +53,25 @@ class Migration:
             raise RefindConfigError("Boot stanza is not matched with the partition!")
 
         filesystem = none_throws(partition.filesystem)
-        current_subvolume = none_throws(filesystem.subvolume)
+        source_subvolume = none_throws(filesystem.subvolume)
 
         self._boot_stanza = boot_stanza
-        self._current_subvolume = current_subvolume
+        self._source_subvolume = source_subvolume
         self._bootable_snapshots = list(bootable_snapshots)
 
     def migrate(self, include_paths: bool, include_sub_menus: bool) -> BootStanza:
         boot_stanza = self._boot_stanza
-        current_subvolume = self._current_subvolume
+        source_subvolume = self._source_subvolume
         bootable_snapshots = self._bootable_snapshots
         latest_migration_result: Optional[State] = None
         result_sub_menus: List[SubMenu] = []
 
-        for replacement_subvolume in bootable_snapshots:
-            is_latest = self._is_latest_snapshot(replacement_subvolume)
+        for destination_subvolume in bootable_snapshots:
+            is_latest = self._is_latest_snapshot(destination_subvolume)
             migration_strategy = Factory.migration_strategy(
                 boot_stanza,
-                current_subvolume,
-                replacement_subvolume,
+                source_subvolume,
+                destination_subvolume,
                 include_paths,
                 is_latest,
             )
@@ -94,8 +94,8 @@ class Migration:
 
             if include_sub_menus:
                 migrated_sub_menus = self._migrate_sub_menus(
-                    current_subvolume,
-                    replacement_subvolume,
+                    source_subvolume,
+                    destination_subvolume,
                     migration_result,
                     include_paths,
                 )
@@ -119,8 +119,8 @@ class Migration:
 
     def _migrate_sub_menus(
         self,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         boot_stanza_result: State,
         include_paths: bool,
     ) -> Generator[SubMenu, None, None]:
@@ -130,14 +130,14 @@ class Migration:
             return
 
         current_sub_menus = none_throws(boot_stanza.sub_menus)
-        is_latest = self._is_latest_snapshot(replacement_subvolume)
+        is_latest = self._is_latest_snapshot(destination_subvolume)
 
         for sub_menu in current_sub_menus:
             if sub_menu.can_be_used_for_bootable_snapshot():
                 migration_strategy = Factory.migration_strategy(
                     sub_menu,
-                    current_subvolume,
-                    replacement_subvolume,
+                    source_subvolume,
+                    destination_subvolume,
                     include_paths,
                     is_latest,
                     boot_stanza_result,

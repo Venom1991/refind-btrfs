@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 import fileinput
-import re
 from typing import Generator, TextIO
 
 from refind_btrfs.common import constants
@@ -37,7 +36,6 @@ from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import (
     default_if_none,
-    is_none_or_whitespace,
     none_throws,
     try_parse_int,
 )
@@ -64,41 +62,17 @@ class FstabCommand(DeviceCommand):
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         logger = self._logger
         fstab_file_path = none_throws(partition_table.fstab_file_path)
-        root = none_throws(partition_table.root)
-        filesystem = none_throws(root.filesystem)
 
         try:
             logger.info(f"Modifying the '{fstab_file_path}' file.")
 
             with fileinput.input(str(fstab_file_path), inplace=True) as fstab_file:
-                for line in fstab_file:
-                    if FstabCommand._is_line_matched_with_filesystem(line, filesystem):
-                        split_line = line.split()
-                        current_mount_options = split_line[
-                            FstabColumn.FS_MOUNT_OPTIONS.value
-                        ]
-                        pattern = re.compile(
-                            r"(?P<whitespace_before>\s+)"
-                            f"{current_mount_options}"
-                            r"(?P<whitespace_after>\s+)"
-                        )
-                        match = pattern.search(line)
+                for fstab_line in fstab_file:
+                    transformed_fstab_line = partition_table.transform_fstab_line(
+                        fstab_line
+                    )
 
-                        if not match:
-                            raise PartitionError(
-                                f"Could not find the root partition's expected "
-                                f"mount options in the '{fstab_file_path}' file!"
-                            )
-
-                        modified_mount_options = str(filesystem.mount_options)
-                        line = pattern.sub(
-                            r"\g<whitespace_before>"
-                            f"{modified_mount_options}"
-                            r"\g<whitespace_after>",
-                            line,
-                        )
-
-                    print(line, end=constants.EMPTY_STR)
+                    print(transformed_fstab_line, end=constants.EMPTY_STR)
         except OSError as e:
             logger.exception("fileinput.input() call failed!")
             raise PartitionError(
@@ -134,47 +108,33 @@ class FstabCommand(DeviceCommand):
             ) from e
 
     @staticmethod
-    def _is_line_matched_with_filesystem(line: str, filesystem: Filesystem) -> bool:
-        comment_pattern = re.compile(constants.COMMENT_PATTERN)
-
-        if is_none_or_whitespace(line) or comment_pattern.match(line):
-            return False
-
-        split_line = line.split()
-        fstab_mount_point = split_line[FstabColumn.FS_MOUNT_POINT.value]
-
-        return fstab_mount_point == filesystem.mount_point
-
-    @staticmethod
     def _map_to_partitions(
         fstab_file: TextIO,
     ) -> Generator[Partition, None, None]:
-        comment_pattern = re.compile(constants.COMMENT_PATTERN)
-
-        for line in fstab_file:
-            if is_none_or_whitespace(line) or comment_pattern.match(line):
-                continue
-
-            split_line = line.split()
-            fs_dump = try_parse_int(split_line[FstabColumn.FS_DUMP.value])
-            fs_fsck = try_parse_int(split_line[FstabColumn.FS_FSCK.value])
-            filesystem = (
-                Filesystem(
-                    constants.EMPTY_STR,
-                    constants.EMPTY_STR,
-                    split_line[FstabColumn.FS_TYPE.value],
-                    split_line[FstabColumn.FS_MOUNT_POINT.value],
+        for fstab_line in fstab_file:
+            if PartitionTable.is_valid_fstab_entry(fstab_line):
+                split_fstab_entry = fstab_line.split()
+                fs_dump = try_parse_int(split_fstab_entry[FstabColumn.FS_DUMP.value])
+                fs_fsck = try_parse_int(split_fstab_entry[FstabColumn.FS_FSCK.value])
+                filesystem = (
+                    Filesystem(
+                        constants.EMPTY_STR,
+                        constants.EMPTY_STR,
+                        split_fstab_entry[FstabColumn.FS_TYPE.value],
+                        split_fstab_entry[FstabColumn.FS_MOUNT_POINT.value],
+                    )
+                    .with_dump_and_fsck(
+                        default_if_none(fs_dump, 0),
+                        default_if_none(fs_fsck, 0),
+                    )
+                    .with_mount_options(
+                        split_fstab_entry[FstabColumn.FS_MOUNT_OPTIONS.value]
+                    )
                 )
-                .with_dump_and_fsck(
-                    default_if_none(fs_dump, 0),
-                    default_if_none(fs_fsck, 0),
-                )
-                .with_mount_options(split_line[FstabColumn.FS_MOUNT_OPTIONS.value])
-            )
-            partition = Partition(
-                constants.EMPTY_STR,
-                split_line[FstabColumn.DEVICE_NAME.value],
-                constants.EMPTY_STR,
-            ).with_filesystem(filesystem)
+                partition = Partition(
+                    constants.EMPTY_STR,
+                    split_fstab_entry[FstabColumn.DEVICE_NAME.value],
+                    constants.EMPTY_STR,
+                ).with_filesystem(filesystem)
 
-            yield partition
+                yield partition

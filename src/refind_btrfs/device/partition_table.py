@@ -23,20 +23,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import re
 from functools import cached_property
 from pathlib import Path
 from typing import Iterable, List, Optional
 
 from more_itertools import only
-from typeguard import typechecked
 
 from refind_btrfs.common import constants
-from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.subvolume import Subvolume
-from refind_btrfs.utility.helpers import has_items, none_throws
+from refind_btrfs.common.enums import FstabColumn
+from refind_btrfs.utility.helpers import has_items, is_none_or_whitespace, none_throws
+
+from .partition import Partition
+from .subvolume import Subvolume
 
 
-@typechecked
 class PartitionTable:
     def __init__(self, uuid: str, pt_type: str) -> None:
         self._uuid = uuid
@@ -81,16 +82,61 @@ class PartitionTable:
         return has_items(self.partitions)
 
     def migrate_from_to(
-        self, current_subvolume: Subvolume, replacement_subvolume: Subvolume
+        self, source_subvolume: Subvolume, destination_subvolume: Subvolume
     ) -> None:
         root = none_throws(self.root)
         filesystem = none_throws(root.filesystem)
         mount_options = none_throws(filesystem.mount_options)
-        replacement_filesystem_path = replacement_subvolume.filesystem_path
+        destination_filesystem_path = destination_subvolume.filesystem_path
 
-        mount_options.migrate_from_to(current_subvolume, replacement_subvolume)
+        mount_options.migrate_from_to(source_subvolume, destination_subvolume)
 
-        self._fstab_file_path = replacement_filesystem_path / constants.FSTAB_FILE
+        self._fstab_file_path = destination_filesystem_path / constants.FSTAB_FILE
+
+    def transform_fstab_line(self, fstab_line: str) -> str:
+        if PartitionTable.is_valid_fstab_entry(fstab_line):
+            root = none_throws(self.root)
+            filesystem = none_throws(root.filesystem)
+            root_mount_point = filesystem.mount_point
+            split_fstab_entry = fstab_line.split()
+            fstab_mount_point = split_fstab_entry[FstabColumn.FS_MOUNT_POINT.value]
+
+            if root_mount_point == fstab_mount_point:
+                fstab_mount_options = split_fstab_entry[
+                    FstabColumn.FS_MOUNT_OPTIONS.value
+                ]
+                pattern = re.compile(
+                    r"(?P<whitespace_before>\s+)"
+                    f"{fstab_mount_options}"
+                    r"(?P<whitespace_after>\s+)"
+                )
+                root_mount_options = str(filesystem.mount_options)
+
+                return pattern.sub(
+                    r"\g<whitespace_before>"
+                    f"{root_mount_options}"
+                    r"\g<whitespace_after>",
+                    fstab_line,
+                )
+
+        return fstab_line
+
+    @staticmethod
+    def is_valid_fstab_entry(value: Optional[str]) -> bool:
+        if is_none_or_whitespace(value):
+            return False
+
+        fstab_line = none_throws(value)
+        comment_pattern = re.compile(r"^\s*#.*")
+
+        if not comment_pattern.match(fstab_line):
+            split_fstab_entry = fstab_line.split()
+
+            return has_items(split_fstab_entry) and len(split_fstab_entry) == len(
+                FstabColumn
+            )
+
+        return False
 
     @property
     def uuid(self) -> str:

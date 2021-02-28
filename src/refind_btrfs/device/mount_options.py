@@ -24,11 +24,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import re
 from typing import Dict, List, Tuple
 
-from typeguard import typechecked
-
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import PartitionError
-from refind_btrfs.device.subvolume import Subvolume
 from refind_btrfs.utility.helpers import (
     checked_cast,
     has_items,
@@ -36,8 +33,9 @@ from refind_btrfs.utility.helpers import (
     try_parse_int,
 )
 
+from .subvolume import Subvolume
 
-@typechecked
+
 class MountOptions:
     def __init__(self, raw_mount_options: str) -> None:
         split_mount_options = [
@@ -119,12 +117,12 @@ class MountOptions:
         return subvol_matched or subvolid_matched
 
     def migrate_from_to(
-        self, current_subvolume: Subvolume, replacement_subvolume: Subvolume
+        self, source_subvolume: Subvolume, destination_subvolume: Subvolume
     ) -> None:
-        if not self.is_matched_with(current_subvolume):
+        if not self.is_matched_with(source_subvolume):
             raise PartitionError(
                 "The mount options are not matched with the "
-                "'current_mountable' parameter (by 'subvol' or 'subvolid')!"
+                "'source_subvolume' parameter (by 'subvol' or 'subvolid')!"
             )
 
         parameterized_options = self._parameterized_options
@@ -133,8 +131,8 @@ class MountOptions:
 
         if subvol_tuple is not None:
             subvol_value = subvol_tuple[1]
-            current_logical_path = current_subvolume.logical_path
-            replacement_logical_path = replacement_subvolume.logical_path
+            current_logical_path = source_subvolume.logical_path
+            destination_logical_path = destination_subvolume.logical_path
             subvol_pattern = re.compile(
                 rf"(?P<prefix>^{constants.DIR_SEPARATOR_PATTERN}?){current_logical_path}$"
             )
@@ -142,12 +140,12 @@ class MountOptions:
             parameterized_options[constants.SUBVOL_OPTION] = (
                 subvol_tuple[0],
                 subvol_pattern.sub(
-                    rf"\g<prefix>{replacement_logical_path}", subvol_value
+                    rf"\g<prefix>{destination_logical_path}", subvol_value
                 ),
             )
 
         if subvolid_tuple is not None:
-            num_id = replacement_subvolume.num_id
+            num_id = destination_subvolume.num_id
 
             parameterized_options[constants.SUBVOLID_OPTION] = (
                 subvolid_tuple[0],

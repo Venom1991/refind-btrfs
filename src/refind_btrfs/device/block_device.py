@@ -26,15 +26,13 @@ from __future__ import annotations
 import re
 from typing import Iterable, List, Optional, Union
 
-from typeguard import typechecked
-
 from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
-from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.partition_table import PartitionTable
 from refind_btrfs.utility.helpers import has_items, none_throws
 
+from .partition import Partition
+from .partition_table import PartitionTable
 
-@typechecked
+
 class BlockDevice:
     def __init__(self, name: str, d_type: str, major_minor: str) -> None:
         self._name = name

@@ -37,8 +37,8 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
     def __init__(
         self,
         sub_menu: SubMenu,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         inherit_from_state: State,
         include_paths: bool,
         is_latest: bool,
@@ -51,8 +51,8 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
                 sub_menu.boot_options,
                 sub_menu.add_boot_options,
             ),
-            current_subvolume,
-            replacement_subvolume,
+            source_subvolume,
+            destination_subvolume,
             include_paths,
             is_latest,
         )
@@ -64,38 +64,38 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
         is_latest = self._is_latest
         current_state = self._current_state
         inherit_from_state = self._inherit_from_state
-        replacement_loader_path = current_state.loader_path
-        replacement_initrd_path = current_state.initrd_path
-        replacement_boot_options: Optional[BootOptions] = None
-        replacement_add_boot_options = self.replacement_add_boot_options
+        destination_loader_path = current_state.loader_path
+        destination_initrd_path = current_state.initrd_path
+        destination_boot_options: Optional[BootOptions] = None
+        destination_add_boot_options = self.destination_add_boot_options
 
         if not is_latest:
             if include_paths:
-                replacement_loader_path = inherit_from_state.loader_path
-                replacement_initrd_path = inherit_from_state.initrd_path
+                destination_loader_path = inherit_from_state.loader_path
+                destination_initrd_path = inherit_from_state.initrd_path
 
-            replacement_boot_options = BootOptions.merge(
+            destination_boot_options = BootOptions.merge(
                 (
                     none_throws(inherit_from_state.boot_options),
-                    none_throws(replacement_add_boot_options),
+                    none_throws(destination_add_boot_options),
                 )
             )
-            replacement_add_boot_options = BootOptions(constants.EMPTY_STR)
+            destination_add_boot_options = BootOptions(constants.EMPTY_STR)
 
         if include_paths:
-            replacement_loader_path_candidate = self.replacement_loader_path
-            replacement_initrd_path_candidate = self.replacement_initrd_path
+            destination_loader_path_candidate = self.destination_loader_path
+            destination_initrd_path_candidate = self.destination_initrd_path
 
-            if not is_none_or_whitespace(replacement_loader_path_candidate):
-                replacement_loader_path = replacement_loader_path_candidate
+            if not is_none_or_whitespace(destination_loader_path_candidate):
+                destination_loader_path = destination_loader_path_candidate
 
-            if not is_none_or_whitespace(replacement_initrd_path_candidate):
-                replacement_initrd_path = replacement_initrd_path_candidate
+            if not is_none_or_whitespace(destination_initrd_path_candidate):
+                destination_initrd_path = destination_initrd_path_candidate
 
         return State(
-            self.replacement_name,
-            replacement_loader_path,
-            replacement_initrd_path,
-            replacement_boot_options,
-            replacement_add_boot_options,
+            self.destination_name,
+            destination_loader_path,
+            destination_initrd_path,
+            destination_boot_options,
+            destination_add_boot_options,
         )

@@ -34,8 +34,8 @@ class BootStanzaMigrationStrategy(BaseMigrationStrategy):
     def __init__(
         self,
         boot_stanza: BootStanza,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         include_paths: bool,
         is_latest: bool,
     ) -> None:
@@ -47,8 +47,8 @@ class BootStanzaMigrationStrategy(BaseMigrationStrategy):
                 boot_stanza.boot_options,
                 None,
             ),
-            current_subvolume,
-            replacement_subvolume,
+            source_subvolume,
+            destination_subvolume,
             include_paths,
             is_latest,
         )
@@ -56,25 +56,25 @@ class BootStanzaMigrationStrategy(BaseMigrationStrategy):
     def migrate(self) -> State:
         include_paths = self._include_paths
         is_latest = self._is_latest
-        replacement_loader_path = constants.EMPTY_STR
-        replacement_initrd_path = constants.EMPTY_STR
+        destination_loader_path = constants.EMPTY_STR
+        destination_initrd_path = constants.EMPTY_STR
 
         if is_latest:
             current_state = self._current_state
-            replacement_loader_path = none_throws(current_state.loader_path)
-            replacement_initrd_path = none_throws(current_state.initrd_path)
+            destination_loader_path = none_throws(current_state.loader_path)
+            destination_initrd_path = none_throws(current_state.initrd_path)
 
         if include_paths:
-            replacement_loader_path = none_throws(self.replacement_loader_path)
-            replacement_initrd_path_candidate = self.replacement_initrd_path
+            destination_loader_path = none_throws(self.destination_loader_path)
+            destination_initrd_path_candidate = self.destination_initrd_path
 
-            if not is_none_or_whitespace(replacement_initrd_path_candidate):
-                replacement_initrd_path = none_throws(replacement_initrd_path_candidate)
+            if not is_none_or_whitespace(destination_initrd_path_candidate):
+                destination_initrd_path = none_throws(destination_initrd_path_candidate)
 
         return State(
-            self.replacement_name,
-            replacement_loader_path,
-            replacement_initrd_path,
-            self.replacement_boot_options,
+            self.destination_name,
+            destination_loader_path,
+            destination_initrd_path,
+            self.destination_boot_options,
             None,
         )

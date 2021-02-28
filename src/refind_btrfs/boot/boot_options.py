@@ -117,29 +117,29 @@ class BootOptions:
 
     def migrate_from_to(
         self,
-        current_subvolume: Subvolume,
-        replacement_subvolume: Subvolume,
+        source_subvolume: Subvolume,
+        destination_subvolume: Subvolume,
         include_paths: bool,
     ) -> None:
         root_mount_options = self.root_mount_options
 
         if root_mount_options is not None:
-            root_mount_options.migrate_from_to(current_subvolume, replacement_subvolume)
+            root_mount_options.migrate_from_to(source_subvolume, destination_subvolume)
 
         if include_paths:
             initrd_options = self._initrd_options
 
             if has_items(initrd_options):
-                current_logical_path = current_subvolume.logical_path
-                replacement_logical_path = replacement_subvolume.logical_path
+                source_logical_path = source_subvolume.logical_path
+                destination_logical_path = destination_subvolume.logical_path
 
                 self._initrd_options = [
                     (
                         initrd_option[0],
                         replace_root_part_in(
                             initrd_option[1],
-                            current_logical_path,
-                            replacement_logical_path,
+                            source_logical_path,
+                            destination_logical_path,
                             (
                                 constants.FORWARD_SLASH,
                                 constants.BACKSLASH,

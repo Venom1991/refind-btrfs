@@ -26,10 +26,8 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import List, Iterable, NamedTuple, Optional, Set
+from typing import TYPE_CHECKING, Iterable, List, NamedTuple, Optional, Set
 from uuid import UUID
-
-from typeguard import typechecked
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
@@ -39,11 +37,12 @@ from refind_btrfs.utility.helpers import (
     discern_path_relation_of,
     has_items,
     is_none_or_whitespace,
-    replace_root_part_in,
     none_throws,
+    replace_root_part_in,
 )
 
-from refind_btrfs.device.partition_table import PartitionTable
+if TYPE_CHECKING:
+    from .partition_table import PartitionTable
 
 
 class NumIdRelation(NamedTuple):
@@ -56,7 +55,6 @@ class UuidRelation(NamedTuple):
     parent_uuid: UUID
 
 
-@typechecked
 class Subvolume:
     def __init__(
         self,
@@ -233,7 +231,7 @@ class Subvolume:
 
     def modify_partition_table_using(
         self,
-        current_subvolume: Subvolume,
+        source_subvolume: Subvolume,
         device_command_factory: BaseDeviceCommandFactory,
     ) -> None:
         self.initialize_partition_table_using(device_command_factory)
@@ -243,7 +241,7 @@ class Subvolume:
         if not static_partition_table.is_matched_with(self):
             static_device_command = device_command_factory.static_device_command()
 
-            static_partition_table.migrate_from_to(current_subvolume, self)
+            static_partition_table.migrate_from_to(source_subvolume, self)
             static_device_command.save_partition_table(static_partition_table)
 
     def check_static_partition_table(self, root_subvolume: Subvolume) -> None:

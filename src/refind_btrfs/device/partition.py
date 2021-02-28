@@ -27,10 +27,7 @@ from pathlib import Path
 from typing import List, Optional
 from uuid import UUID
 
-from typeguard import typechecked
-
 from refind_btrfs.common import constants
-from refind_btrfs.device.filesystem import Filesystem
 from refind_btrfs.utility.helpers import (
     find_all_matched_files_in,
     is_none_or_whitespace,
@@ -39,8 +36,9 @@ from refind_btrfs.utility.helpers import (
     try_parse_uuid,
 )
 
+from .filesystem import Filesystem
 
-@typechecked
+
 class Partition:
     def __init__(self, uuid: str, name: str, label: str) -> None:
         self._uuid = uuid
