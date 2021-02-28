@@ -33,11 +33,13 @@ from refind_btrfs.common.abc.commands import DeviceCommand
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.enums import LsblkColumn, LsblkJsonKey
 from refind_btrfs.common.exceptions import PartitionError
-from refind_btrfs.device.block_device import BlockDevice
-from refind_btrfs.device.filesystem import Filesystem
-from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.partition_table import PartitionTable
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import (
+    BlockDevice,
+    Filesystem,
+    Partition,
+    PartitionTable,
+    Subvolume,
+)
 from refind_btrfs.utility.helpers import (
     checked_cast,
     default_if_none,

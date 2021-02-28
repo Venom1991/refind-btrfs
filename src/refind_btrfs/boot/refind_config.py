@@ -32,8 +32,7 @@ from more_itertools import always_iterable
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Partition, Subvolume
 from refind_btrfs.utility.helpers import has_items, is_none_or_whitespace, none_throws
 
 from .boot_stanza import BootStanza

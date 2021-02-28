@@ -27,7 +27,7 @@ from copy import deepcopy
 from typing import Optional
 
 from refind_btrfs.common import constants
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import (
     is_none_or_whitespace,
     none_throws,

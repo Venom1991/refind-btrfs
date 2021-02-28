@@ -21,6 +21,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from .snapshot_observer import SnapshotObserver
 from .snapshot_event_handler import SnapshotEventHandler
+from .snapshot_observer import SnapshotObserver
 from .watchdog_runner import WatchdogRunner

@@ -54,7 +54,7 @@ from refind_btrfs.common.enums import (
     TopLevelConfigKey,
 )
 from refind_btrfs.common.exceptions import PackageConfigError
-from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
+from refind_btrfs.device import NumIdRelation, Subvolume, UuidRelation
 
 from .helpers import checked_cast, discern_path_relation_of, has_items, try_parse_uuid
 

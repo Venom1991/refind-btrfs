@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from functools import singledispatchmethod
 from typing import Any, Optional
 
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import none_throws
 
 from ..boot_stanza import BootStanza

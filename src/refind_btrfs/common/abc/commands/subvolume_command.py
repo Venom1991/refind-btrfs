@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Generator, Optional
 
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Subvolume
 
 
 class SubvolumeCommand(ABC):

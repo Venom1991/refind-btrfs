@@ -32,7 +32,7 @@ from more_itertools import last
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import GraphicsParameter, RefindOption
-from refind_btrfs.device.partition import Partition
+from refind_btrfs.device import Partition
 from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,

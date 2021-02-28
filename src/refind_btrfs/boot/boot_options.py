@@ -27,8 +27,7 @@ from typing import Iterable, List, Optional, Tuple
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.device.mount_options import MountOptions
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import MountOptions, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,

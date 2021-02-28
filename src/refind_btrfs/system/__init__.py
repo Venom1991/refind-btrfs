@@ -22,6 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from .command_factories import (
-    SystemDeviceCommandFactory,
     BtrfsUtilSubvolumeCommandFactory,
+    SystemDeviceCommandFactory,
 )

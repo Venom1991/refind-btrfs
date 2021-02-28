@@ -27,7 +27,7 @@ from typing import Generator, Iterable, List, NamedTuple, Set
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import find_all_directories_in, has_items
 
 

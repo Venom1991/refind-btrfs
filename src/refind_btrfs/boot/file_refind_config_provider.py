@@ -38,7 +38,7 @@ from refind_btrfs.common.abc.providers import (
 )
 from refind_btrfs.common.enums import RefindOption
 from refind_btrfs.common.exceptions import RefindConfigError, RefindSyntaxError
-from refind_btrfs.device.partition import Partition
+from refind_btrfs.device import Partition
 from refind_btrfs.utility.helpers import (
     checked_cast,
     has_items,

@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from refind_btrfs.boot import RefindConfig
-    from refind_btrfs.device.partition import Partition
+    from refind_btrfs.device import Partition
 
 
 class BaseRefindConfigProvider(ABC):

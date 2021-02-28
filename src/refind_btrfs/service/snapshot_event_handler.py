@@ -44,7 +44,7 @@ from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
 )
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine
 from refind_btrfs.utility.helpers import (
     checked_cast,

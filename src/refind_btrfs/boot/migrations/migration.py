@@ -27,8 +27,7 @@ from more_itertools import first
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Partition, Subvolume
 from refind_btrfs.utility.helpers import has_items, none_throws
 
 from ..boot_options import BootOptions

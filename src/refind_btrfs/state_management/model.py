@@ -50,9 +50,7 @@ from refind_btrfs.common.exceptions import (
     UnchangedConfiguration,
     UnsupportedConfiguration,
 )
-from refind_btrfs.device.block_device import BlockDevice
-from refind_btrfs.device.partition import Partition
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import BlockDevice, Partition, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
     item_count_suffix,

@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Optional
 
 from refind_btrfs.common import constants
-from refind_btrfs.device.subvolume import Subvolume
+from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import is_none_or_whitespace, none_throws
 
 from ..boot_options import BootOptions

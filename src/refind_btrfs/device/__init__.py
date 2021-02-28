@@ -20,3 +20,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
+
+from .block_device import BlockDevice
+from .filesystem import Filesystem
+from .mount_options import MountOptions
+from .partition import Partition
+from .partition_table import PartitionTable
+from .subvolume import NumIdRelation, Subvolume, UuidRelation

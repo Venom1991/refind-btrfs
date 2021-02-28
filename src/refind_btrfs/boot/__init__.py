@@ -21,5 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from .refind_config import RefindConfig
+from .boot_options import BootOptions
 from .boot_stanza import BootStanza
+from .refind_config import RefindConfig
+from .sub_menu import SubMenu

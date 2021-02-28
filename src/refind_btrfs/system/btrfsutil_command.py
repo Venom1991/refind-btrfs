@@ -32,7 +32,7 @@ from refind_btrfs.common.abc.commands import SubvolumeCommand
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.abc.providers import BasePackageConfigProvider
 from refind_btrfs.common.exceptions import SubvolumeError
-from refind_btrfs.device.subvolume import NumIdRelation, Subvolume, UuidRelation
+from refind_btrfs.device import NumIdRelation, Subvolume, UuidRelation
 from refind_btrfs.utility.helpers import (
     checked_cast,
     default_if_none,
