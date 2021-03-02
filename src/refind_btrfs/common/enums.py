@@ -167,11 +167,18 @@ class GraphicsParameter(Enum):
 
 
 @unique
+class BootFilePathSource(Enum):
+    BOOT_STANZA = 0
+    SUB_MENU = 1
+
+
+@unique
 class StateNames(AutoNameToLower):
     INITIAL = auto()
     INITIALIZE_BLOCK_DEVICES = auto()
     INITIALIZE_ROOT_SUBVOLUME = auto()
-    INITIALIZE_BOOT_STANZAS = auto()
-    INITIALIZE_PREPARATION_RESULT = auto()
+    INITIALIZE_MATCHED_BOOT_STANZAS = auto()
+    INITIALIZE_SNAPSHOT_PREPARATION_RESULT = auto()
+    INITIALIZE_BOOT_STANZA_PREPARATION_RESULTS = auto()
     PROCESS_CHANGES = auto()
     FINAL = auto()

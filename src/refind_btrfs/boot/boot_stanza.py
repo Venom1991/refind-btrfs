@@ -24,15 +24,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
+from collections import defaultdict
 from functools import cached_property
 from itertools import chain
-from typing import Generator, Iterable, List, Optional, Set
+from typing import DefaultDict, Generator, Iterable, List, Optional, Set, Tuple
 
-from more_itertools import last
+from more_itertools import always_iterable, last
 
-from refind_btrfs.common import constants
-from refind_btrfs.common.enums import GraphicsParameter, RefindOption
-from refind_btrfs.device import Partition
+from refind_btrfs.common import BootFilesCheckResult, constants
+from refind_btrfs.common.enums import (
+    BootFilePathSource,
+    GraphicsParameter,
+    RefindOption,
+)
+from refind_btrfs.common.exceptions import RefindConfigError
+from refind_btrfs.device import Partition, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
@@ -68,6 +74,7 @@ class BootStanza:
         self._boot_options = boot_options
         self._firmware_bootnum = firmware_bootnum
         self._is_disabled = is_disabled
+        self._boot_files_check_result: Optional[BootFilesCheckResult] = None
         self._sub_menus: Optional[List[SubMenu]] = None
 
     def __eq__(self, other: object) -> bool:
@@ -134,7 +141,7 @@ class BootStanza:
 
         firmware_bootnum = self.firmware_bootnum
 
-        if not firmware_bootnum is None:
+        if firmware_bootnum is not None:
             result.append(
                 f"{option_indent}{RefindOption.FIRMWARE_BOOTNUM.value} {firmware_bootnum:04x}"
             )
@@ -153,6 +160,37 @@ class BootStanza:
 
         return constants.NEWLINE.join(result)
 
+    def with_boot_files_check_result(
+        self, subvolume: Subvolume, include_sub_menus: bool
+    ) -> BootStanza:
+        normalized_name = self.normalized_name
+        all_boot_file_paths = self.all_boot_file_paths
+        logical_path = subvolume.logical_path
+        matched_boot_files: List[str] = []
+        unmatched_boot_files: List[str] = []
+        sources = [BootFilePathSource.BOOT_STANZA]
+
+        if include_sub_menus:
+            sources.append(BootFilePathSource.SUB_MENU)
+
+        for source in sources:
+            boot_file_paths = always_iterable(all_boot_file_paths.get(source))
+
+            for boot_file_path in boot_file_paths:
+                append_func = (
+                    matched_boot_files.append
+                    if logical_path in boot_file_path
+                    else unmatched_boot_files.append
+                )
+
+                append_func(boot_file_path)
+
+        self._boot_files_check_result = BootFilesCheckResult(
+            normalized_name, logical_path, matched_boot_files, unmatched_boot_files
+        )
+
+        return self
+
     def with_sub_menus(self, sub_menus: Iterable[SubMenu]) -> BootStanza:
         self._sub_menus = list(sub_menus)
 
@@ -160,7 +198,7 @@ class BootStanza:
 
     def is_matched_with(self, partition: Partition) -> bool:
         if self.can_be_used_for_bootable_snapshot():
-            normalized_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
+            normalized_volume = self.normalized_volume
             filesystem = none_throws(partition.filesystem)
             volume_comparers = [partition.uuid, partition.label, filesystem.label]
 
@@ -181,21 +219,47 @@ class BootStanza:
 
         return False
 
+    def has_unmatched_boot_files(self) -> bool:
+        boot_files_check_result = self.boot_files_check_result
+
+        if boot_files_check_result is not None:
+            return boot_files_check_result.has_unmatched_boot_files()
+
+        return False
+
     def has_sub_menus(self) -> bool:
         return has_items(self.sub_menus)
 
     def can_be_used_for_bootable_snapshot(self) -> bool:
+        volume = self.volume
         loader_path = self.loader_path
         initrd_path = self.initrd_path
         is_disabled = self.is_disabled
 
         return (
-            not is_none_or_whitespace(loader_path)
+            not is_none_or_whitespace(volume)
+            and not is_none_or_whitespace(loader_path)
             and not is_none_or_whitespace(initrd_path)
             and not is_disabled
         )
 
-    def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
+    def validate_boot_files_check_result(self) -> None:
+        if self.has_unmatched_boot_files():
+            boot_files_check_result = none_throws(self.boot_files_check_result)
+            boot_stanza_name = boot_files_check_result.required_by_boot_stanza_name
+            logical_path = boot_files_check_result.expected_logical_path
+            unmatched_boot_files = boot_files_check_result.unmatched_boot_files
+
+            raise RefindConfigError(
+                f"Detected boot files required by the '{boot_stanza_name}' boot "
+                f"stanza which are not matched with the '{logical_path}' subvolume: "
+                f"{constants.DEFAULT_ITEMS_SEPARATOR.join(unmatched_boot_files)}!"
+            )
+
+    def _get_all_boot_file_paths(
+        self,
+    ) -> Generator[Tuple[BootFilePathSource, str], None, None]:
+        source = BootFilePathSource.BOOT_STANZA
         is_disabled = self.is_disabled
 
         if not is_disabled:
@@ -204,12 +268,14 @@ class BootStanza:
             boot_options = self.boot_options
 
             if not is_none_or_whitespace(loader_path):
-                yield none_throws(loader_path)
+                yield (source, none_throws(loader_path))
 
             if not is_none_or_whitespace(initrd_path):
-                yield none_throws(initrd_path)
+                yield (source, none_throws(initrd_path))
 
-            yield from boot_options.initrd_options
+            yield from (
+                (source, initrd_option) for initrd_option in boot_options.initrd_options
+            )
 
             sub_menus = self.sub_menus
 
@@ -223,8 +289,21 @@ class BootStanza:
         return self._name
 
     @property
+    def normalized_name(self) -> str:
+        return self.name.strip(constants.DOUBLE_QUOTE)
+
+    @property
     def volume(self) -> Optional[str]:
         return self._volume
+
+    @property
+    def normalized_volume(self) -> Optional[str]:
+        volume = self.volume
+
+        if not is_none_or_whitespace(volume):
+            return none_throws(volume).strip(constants.DOUBLE_QUOTE)
+
+        return None
 
     @property
     def loader_path(self) -> Optional[str]:
@@ -259,13 +338,17 @@ class BootStanza:
         return self._is_disabled
 
     @property
+    def boot_files_check_result(self) -> Optional[BootFilesCheckResult]:
+        return self._boot_files_check_result
+
+    @property
     def sub_menus(self) -> Optional[List[SubMenu]]:
         return self._sub_menus
 
     @cached_property
     def file_name(self) -> str:
         if self.can_be_used_for_bootable_snapshot():
-            normalized_volume = none_throws(self.volume).strip(constants.DOUBLE_QUOTE)
+            normalized_volume = self.normalized_volume
             dir_separator_pattern = re.compile(constants.DIR_SEPARATOR_PATTERN)
             split_loader_path = dir_separator_pattern.split(
                 none_throws(self.loader_path)
@@ -278,8 +361,14 @@ class BootStanza:
         return constants.EMPTY_STR
 
     @cached_property
-    def all_boot_file_paths(self) -> Set[str]:
-        return set(
-            normalize_dir_separators_in(boot_file_path)
-            for boot_file_path in self._get_all_boot_file_paths()
-        )
+    def all_boot_file_paths(self) -> DefaultDict[BootFilePathSource, Set[str]]:
+        result = defaultdict(set)
+        all_boot_file_paths = self._get_all_boot_file_paths()
+
+        for boot_file_path_tuple in all_boot_file_paths:
+            key = boot_file_path_tuple[0]
+            value = normalize_dir_separators_in(boot_file_path_tuple[1])
+
+            result[key].add(value)
+
+        return result

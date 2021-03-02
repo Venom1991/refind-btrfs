@@ -75,10 +75,10 @@ class WatchdogRunner(BaseRunner):
                     str(directory)
                     for directory in sorted(package_config.directories_for_watch)
                 ]
-                separator = constants.COLUMN_SEPARATOR + constants.SPACE
 
                 logger.info(
-                    f"Scheduling watch for directories: {separator.join(directories_for_watch)}."
+                    "Scheduling watch for directories: "
+                    f"{constants.DEFAULT_ITEMS_SEPARATOR.join(directories_for_watch)}."
                 )
 
                 for directory in directories_for_watch:

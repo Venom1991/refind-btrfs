@@ -22,7 +22,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from collections import defaultdict
-from typing import Any, Callable, Dict, NamedTuple, Optional, Tuple
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    NamedTuple,
+    Optional,
+    Tuple,
+)
 
 from antlr4 import ParserRuleContext
 from more_itertools import always_iterable, only
@@ -49,19 +59,9 @@ class BootStanzaVisitor(RefindConfigParserVisitor):
     ) -> BootStanza:
         menu_entry_context = ctx.menu_entry()
         menu_entry = menu_entry_context.accept(MenuEntryVisitor())
-        main_option_contexts = ctx.main_option()
-        option_visitor = OptionVisitor()
-        main_options = defaultdict(list)
-
-        for main_option_context in main_option_contexts:
-            main_option_tuple = main_option_context.accept(option_visitor)
-
-            if main_option_tuple is not None:
-                key = checked_cast(RefindOption, main_option_tuple[0])
-                value = main_option_tuple[1]
-
-                main_options[key].append(value)
-
+        main_options = OptionVisitor.map_to_options_dict(
+            checked_cast(List[ParserRuleContext], ctx.main_option())
+        )
         volume = only(always_iterable(main_options.get(RefindOption.VOLUME)))
         loader = only(always_iterable(main_options.get(RefindOption.LOADER)))
         initrd = only(always_iterable(main_options.get(RefindOption.INITRD)))
@@ -159,18 +159,36 @@ class OptionVisitor(RefindConfigParserVisitor):
             ),
         }
 
+    @classmethod
+    def map_to_options_dict(
+        cls, option_contexts: Iterable[ParserRuleContext]
+    ) -> DefaultDict[RefindOption, List[Any]]:
+        option_visitor = cls()
+        result = defaultdict(list)
+
+        for option_context in option_contexts:
+            option_tuple = option_context.accept(option_visitor)
+
+            if option_tuple is not None:
+                key = checked_cast(RefindOption, option_tuple[0])
+                value = option_tuple[1]
+
+                result[key].append(value)
+
+        return result
+
     def visitMain_option(
         self, ctx: RefindConfigParser.Main_optionContext
     ) -> Optional[Tuple[RefindOption, Any]]:
-        return OptionVisitor._map_to_option(ctx, self._main_option_mappings)
+        return OptionVisitor._map_to_option_tuple(ctx, self._main_option_mappings)
 
     def visitSub_option(
         self, ctx: RefindConfigParser.Sub_optionContext
     ) -> Optional[Tuple[RefindOption, Any]]:
-        return OptionVisitor._map_to_option(ctx, self._sub_option_mappings)
+        return OptionVisitor._map_to_option_tuple(ctx, self._sub_option_mappings)
 
     @staticmethod
-    def _map_to_option(
+    def _map_to_option_tuple(
         ctx: ParserRuleContext, mappings: Dict[RefindOption, ContextWithVisitor]
     ) -> Optional[Tuple[RefindOption, Any]]:
         for key, value in mappings.items():
@@ -188,19 +206,9 @@ class SubMenuVisitor(RefindConfigParserVisitor):
     def visitSub_menu(self, ctx: RefindConfigParser.Sub_menuContext) -> SubMenu:
         menu_entry_context = ctx.menu_entry()
         menu_entry = menu_entry_context.accept(MenuEntryVisitor())
-        sub_option_contexts = ctx.sub_option()
-        option_visitor = OptionVisitor()
-        sub_options = defaultdict(list)
-
-        for sub_option_context in sub_option_contexts:
-            sub_option_tuple = sub_option_context.accept(option_visitor)
-
-            if sub_option_tuple is not None:
-                key = checked_cast(RefindOption, sub_option_tuple[0])
-                value = sub_option_tuple[1]
-
-                sub_options[key].append(value)
-
+        sub_options = OptionVisitor.map_to_options_dict(
+            checked_cast(List[ParserRuleContext], ctx.sub_option())
+        )
         loader = only(always_iterable(sub_options.get(RefindOption.LOADER)))
         initrd = only(always_iterable(sub_options.get(RefindOption.INITRD)))
         graphics = only(always_iterable(sub_options.get(RefindOption.GRAPHICS)))

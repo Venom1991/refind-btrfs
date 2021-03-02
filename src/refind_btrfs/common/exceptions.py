@@ -43,6 +43,9 @@ class RefindBtrfsError(Exception):
         else:
             self._message = constants.EMPTY_STR
 
+    def __str__(self) -> str:
+        return f"{self.error_type_name}: {self.formatted_message}"
+
     @property
     def formatted_message(self) -> str:
         return self._message
@@ -50,9 +53,6 @@ class RefindBtrfsError(Exception):
     @property
     def error_type_name(self) -> str:
         return type(self).__name__
-
-    def __str__(self) -> str:
-        return f"{self.error_type_name}: {self.formatted_message}"
 
 
 class PartitionError(RefindBtrfsError):

@@ -26,7 +26,7 @@ import os
 import re
 from inspect import ismethod
 from pathlib import Path
-from typing import Any, Generator, Optional, Sized, Tuple, Type, TypeVar, cast
+from typing import Any, Generator, List, Optional, Sized, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from more_itertools import first
@@ -187,7 +187,9 @@ def discern_distance_between(path_pair: Tuple[Path, Path]) -> Optional[int]:
 
 def normalize_dir_separators_in(
     path: str,
-    separator_replacement: Tuple[str, str] = constants.DEFAULT_DIR_SEPARATOR_PAIR,
+    separator_replacement: Tuple[
+        str, str
+    ] = constants.DEFAULT_DIR_SEPARATOR_REPLACEMENT,
 ) -> str:
     path_with_replaced_separators = path.replace(*separator_replacement)
     pattern = re.compile(rf"(?P<prefix>^({constants.DIR_SEPARATOR_PATTERN}){{2,}})")
@@ -206,7 +208,9 @@ def replace_root_part_in(
     full_path: str,
     current_root_part: str,
     replacement_root_part: str,
-    separator_replacement: Tuple[str, str] = constants.DEFAULT_DIR_SEPARATOR_PAIR,
+    separator_replacement: Tuple[
+        str, str
+    ] = constants.DEFAULT_DIR_SEPARATOR_REPLACEMENT,
 ) -> str:
     pattern = re.compile(
         rf"(?P<prefix>^{constants.DIR_SEPARATOR_PATTERN}?)"
@@ -221,6 +225,21 @@ def replace_root_part_in(
 
 
 _T = TypeVar("_T")
+
+
+def replace_item_in(
+    items_list: List[_T], current: _T, replacement: Optional[_T] = None
+) -> None:
+    if not has_items(items_list):
+        return
+
+    if current in items_list:
+        index = items_list.index(current)
+
+        if replacement is None:
+            replacement = current
+
+        items_list[index] = replacement
 
 
 def none_throws(value: Optional[_T], message: str = "Unexpected 'None'") -> _T:

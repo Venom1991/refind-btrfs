@@ -24,10 +24,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import groupby
-from typing import Callable, Collection, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional
 
 from injector import inject
-from more_itertools import only, take
+from more_itertools import only
 from typeguard import typechecked
 
 from refind_btrfs.boot import BootStanza, RefindConfig
@@ -47,6 +47,8 @@ from refind_btrfs.common.abc.providers import (
     BaseRefindConfigProvider,
 )
 from refind_btrfs.common.exceptions import (
+    RefindConfigError,
+    SubvolumeError,
     UnchangedConfiguration,
     UnsupportedConfiguration,
 )
@@ -56,6 +58,7 @@ from refind_btrfs.utility.helpers import (
     item_count_suffix,
     is_singleton,
     none_throws,
+    replace_item_in,
 )
 
 
@@ -69,7 +72,7 @@ class BlockDevices(NamedTuple):
         return cls(None, None, None)
 
 
-class PreparationResult(NamedTuple):
+class SnapshotPreparationResult(NamedTuple):
     snapshots_for_addition: List[Subvolume]
     snapshots_for_removal: List[Subvolume]
     current_boot_stanza_generation: BootStanzaGeneration
@@ -82,6 +85,25 @@ class PreparationResult(NamedTuple):
         ) or (
             self.current_boot_stanza_generation != self.previous_boot_stanza_generation
         )
+
+
+class BootStanzaPreparationResult(NamedTuple):
+    boot_stanza: BootStanza
+    matched_snapshots: List[Subvolume]
+    unmatched_snapshots: List[Subvolume]
+
+    def has_matched_snapshots(self) -> bool:
+        return has_items(self.matched_snapshots)
+
+    def has_unmatched_snapshots(self) -> bool:
+        return has_items(self.unmatched_snapshots)
+
+    def replace_matched_snapshot(
+        self, current_snapshot: Subvolume, replacement_snapshot: Subvolume
+    ) -> None:
+        matched_snapshots = self.matched_snapshots
+
+        replace_item_in(matched_snapshots, current_snapshot, replacement_snapshot)
 
 
 class ProcessingResult(NamedTuple):
@@ -112,8 +134,11 @@ class Model:
         self._refind_config_provider = refind_config_provider
         self._persistence_provider = persistence_provider
         self._block_devices: Optional[BlockDevices] = None
-        self._boot_stanzas: Optional[List[BootStanza]] = None
-        self._preparation_result: Optional[PreparationResult] = None
+        self._matched_boot_stanzas: Optional[List[BootStanza]] = None
+        self._snapshot_preparation_result: Optional[SnapshotPreparationResult] = None
+        self._boot_stanza_preparation_results: Optional[
+            List[BootStanzaPreparationResult]
+        ] = None
 
     def initialize_block_devices(self) -> None:
         device_command_factory = self._device_command_factory
@@ -150,22 +175,31 @@ class Model:
 
         filesystem.initialize_subvolume_using(subvolume_command_factory)
 
-    def initialize_boot_stanzas(self) -> None:
+    def initialize_matched_boot_stanzas(self) -> None:
         refind_config = self.refind_config
         root = self.root_partition
-        matched_boot_stanzas = list(refind_config.get_boot_stanzas_matched_with(root))
+        matched_boot_stanzas = refind_config.get_boot_stanzas_matched_with(root)
 
-        self._boot_stanzas = matched_boot_stanzas
+        if self._should_include_paths_during_generation():
+            subvolume = self.root_subvolume
 
-    def initialize_preparation_result(self) -> None:
+            self._matched_boot_stanzas = [
+                boot_stanza.with_boot_files_check_result(
+                    subvolume, self._should_include_sub_menus_during_generation()
+                )
+                for boot_stanza in matched_boot_stanzas
+            ]
+        else:
+            self._matched_boot_stanzas = list(matched_boot_stanzas)
+
+    def initialize_snapshot_preparation_result(self) -> None:
         persistence_provider = self._persistence_provider
         package_config = self.package_config
         subvolume = self.root_subvolume
         snapshot_manipulation = package_config.snapshot_manipulation
         previous_run_result = persistence_provider.get_previous_run_result()
-        selected_snapshots = take(
-            snapshot_manipulation.selection_count,
-            sorted(none_throws(subvolume.snapshots), reverse=True),
+        selected_snapshots = none_throws(
+            subvolume.select_snapshots(snapshot_manipulation.selection_count)
         )
         snapshots_union = snapshot_manipulation.cleanup_exclusion.union(
             selected_snapshots
@@ -191,17 +225,51 @@ class Model:
         current_boot_stanza_generation = package_config.boot_stanza_generation
         previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
 
-        self._preparation_result = PreparationResult(
+        self._snapshot_preparation_result = SnapshotPreparationResult(
             snapshots_for_addition,
             snapshots_for_removal,
             current_boot_stanza_generation,
             previous_boot_stanza_generation,
         )
 
+    def initialize_boot_stanza_preparation_results(self) -> None:
+        usable_boot_stanzas = self.usable_boot_stanzas
+        actual_bootable_snapshots = self.actual_bootable_snapshots
+        boot_stanza_preparation_results: List[BootStanzaPreparationResult] = []
+
+        for boot_stanza in usable_boot_stanzas:
+            matched_snapshots: List[Subvolume] = []
+            unmatched_snapshots: List[Subvolume] = []
+
+            if self._should_include_paths_during_generation():
+                checked_bootable_snapshots = (
+                    snapshot.with_boot_files_check_result(boot_stanza)
+                    for snapshot in actual_bootable_snapshots
+                )
+
+                for snapshot in checked_bootable_snapshots:
+                    append_func = (
+                        unmatched_snapshots.append
+                        if snapshot.has_unmatched_boot_files()
+                        else matched_snapshots.append
+                    )
+
+                    append_func(snapshot)
+            else:
+                matched_snapshots.extend(actual_bootable_snapshots)
+
+            boot_stanza_preparation_results.append(
+                BootStanzaPreparationResult(
+                    boot_stanza, matched_snapshots, unmatched_snapshots
+                )
+            )
+
+        self._boot_stanza_preparation_results = boot_stanza_preparation_results
+
     def process_changes(self) -> None:
         bootable_snapshots = self._process_snapshots()
 
-        self._process_boot_stanzas(bootable_snapshots)
+        self._process_boot_stanzas()
 
         persistence_provider = self._persistence_provider
         package_config = self.package_config
@@ -302,23 +370,23 @@ class Model:
 
     def check_boot_stanzas(self) -> bool:
         logger = self._logger
-        boot_stanzas = self.boot_stanzas
+        matched_boot_stanzas = self.matched_boot_stanzas
 
-        if not has_items(boot_stanzas):
+        if not has_items(matched_boot_stanzas):
             logger.error(
                 "Could not find a boot stanza matched with the root partition!"
             )
 
             return False
 
-        suffix = item_count_suffix(boot_stanzas)
+        suffix = item_count_suffix(matched_boot_stanzas)
 
         logger.info(
-            f"Found {len(boot_stanzas)} boot "
+            f"Found {len(matched_boot_stanzas)} boot "
             f"stanza{suffix} matched with the root partition."
         )
 
-        grouping_result = groupby(boot_stanzas)
+        grouping_result = groupby(matched_boot_stanzas)
 
         for key, grouper in grouping_result:
             grouped_boot_stanzas = list(grouper)
@@ -334,21 +402,33 @@ class Model:
 
                 return False
 
+        for boot_stanza in matched_boot_stanzas:
+            try:
+                boot_stanza.validate_boot_files_check_result()
+            except RefindConfigError as e:
+                logger.warning(e.formatted_message)
+
+        usable_boot_stanzas = self.usable_boot_stanzas
+
+        if not has_items(usable_boot_stanzas):
+            logger.error("None of the matched boot stanzas are usable!")
+
+            return False
+
         return True
 
-    def check_preparation_result(self) -> bool:
+    def check_snapshot_preparation_result(self) -> bool:
         logger = self._logger
-        preparation_result = self.preparation_result
+        snapshot_preparation_result = self.snapshot_preparation_result
 
-        if not preparation_result.has_changes():
+        if not snapshot_preparation_result.has_changes():
             raise UnchangedConfiguration("No changes were detected, aborting...")
 
-        snapshots_for_addition = preparation_result.snapshots_for_addition
-        snapshots_for_removal = preparation_result.snapshots_for_removal
+        snapshots_for_addition = snapshot_preparation_result.snapshots_for_addition
+        snapshots_for_removal = snapshot_preparation_result.snapshots_for_removal
 
         if has_items(snapshots_for_addition):
             subvolume = self.root_subvolume
-            boot_stanzas = self.boot_stanzas
             suffix = item_count_suffix(snapshots_for_addition)
 
             logger.info(
@@ -356,11 +436,15 @@ class Model:
             )
 
             for snapshot in snapshots_for_addition:
-                snapshot.check_static_partition_table(subvolume)
+                try:
+                    snapshot.validate_static_partition_table(subvolume)
+                except SubvolumeError as e:
+                    logger.warning(e.formatted_message)
 
-                if self._should_include_paths_during_generation():
-                    for boot_stanza in boot_stanzas:
-                        snapshot.check_boot_files_existence(subvolume, boot_stanza)
+            usable_snapshots_for_addition = self.usable_snapshots_for_addition
+
+            if not has_items(usable_snapshots_for_addition):
+                logger.warning("None of the snapshots for addition are usable!")
 
         if has_items(snapshots_for_removal):
             suffix = item_count_suffix(snapshots_for_removal)
@@ -371,6 +455,41 @@ class Model:
 
         return True
 
+    def check_boot_stanza_preparation_results(self) -> bool:
+        logger = self._logger
+        boot_stanza_preparation_results = self.boot_stanza_preparation_results
+
+        for result in boot_stanza_preparation_results:
+            if result.has_unmatched_snapshots():
+                unmatched_snapshots = result.unmatched_snapshots
+
+                for snapshot in unmatched_snapshots:
+                    try:
+                        snapshot.validate_boot_files_check_result()
+                    except SubvolumeError as e:
+                        logger.warning(e.formatted_message)
+
+            if not result.has_matched_snapshots():
+                boot_stanza = result.boot_stanza
+                normalized_name = boot_stanza.normalized_name
+
+                logger.warning(
+                    "None of the prepared snapshots are matched "
+                    f"with the '{normalized_name}' boot stanza!"
+                )
+
+        usable_boot_stanzas_with_snapshots = self.usable_boot_stanzas_with_snapshots
+
+        if not has_items(usable_boot_stanzas_with_snapshots):
+            logger.error(
+                "None of the matched boot stanzas can be "
+                "combined with any of the prepared snapshots!"
+            )
+
+            return False
+
+        return True
+
     def check_final_state(self) -> bool:
         return True
 
@@ -378,46 +497,52 @@ class Model:
 
     def _process_snapshots(self) -> List[Subvolume]:
         subvolume_command = self._subvolume_command_factory.subvolume_command()
-        persistence_provider = self._persistence_provider
-        preparation_result = self.preparation_result
-        previous_run_result = persistence_provider.get_previous_run_result()
-        bootable_snapshots = previous_run_result.bootable_snapshots
-        snapshots_for_addition = preparation_result.snapshots_for_addition
+        actual_bootable_snapshots = self.actual_bootable_snapshots
+        usable_snapshots_for_addition = self.usable_snapshots_for_addition
 
-        if has_items(snapshots_for_addition):
+        if has_items(usable_snapshots_for_addition):
             device_command_factory = self._device_command_factory
             subvolume = self.root_subvolume
+            boot_stanza_preparation_results = self.boot_stanza_preparation_results
+            usable_snapshots_union = set(
+                *self.usable_boot_stanzas_with_snapshots.values()
+            )
 
-            for addition in snapshots_for_addition:
-                bootable_snapshot = subvolume_command.get_bootable_snapshot_from(
-                    addition
-                )
+            for addition in usable_snapshots_for_addition:
+                if addition in usable_snapshots_union:
+                    bootable_snapshot = subvolume_command.get_bootable_snapshot_from(
+                        addition
+                    )
 
-                bootable_snapshot.modify_partition_table_using(
-                    subvolume, device_command_factory
-                )
+                    bootable_snapshot.modify_partition_table_using(
+                        subvolume, device_command_factory
+                    )
+                    replace_item_in(
+                        actual_bootable_snapshots, addition, bootable_snapshot
+                    )
 
-                if bootable_snapshot not in bootable_snapshots:
-                    bootable_snapshots.append(bootable_snapshot)
+                    for result in boot_stanza_preparation_results:
+                        result.replace_matched_snapshot(addition, bootable_snapshot)
+                else:
+                    actual_bootable_snapshots.remove(addition)
 
-        snapshots_for_removal = preparation_result.snapshots_for_removal
+        snapshot_preparation_result = self.snapshot_preparation_result
+        snapshots_for_removal = snapshot_preparation_result.snapshots_for_removal
 
         if has_items(snapshots_for_removal):
             for removal in snapshots_for_removal:
                 if removal.is_newly_created():
                     subvolume_command.delete_snapshot(removal)
 
-                if removal in bootable_snapshots:
-                    bootable_snapshots.remove(removal)
+        return actual_bootable_snapshots
 
-        return sorted(bootable_snapshots, reverse=True)
-
-    def _process_boot_stanzas(self, bootable_snapshots: Collection[Subvolume]) -> None:
+    def _process_boot_stanzas(self) -> None:
         refind_config = self.refind_config
         root = self.root_partition
+        usable_boot_stanzas_with_snapshots = self.usable_boot_stanzas_with_snapshots
         generated_refind_configs = refind_config.generate_new_from(
             root,
-            bootable_snapshots,
+            usable_boot_stanzas_with_snapshots,
             self._should_include_paths_during_generation(),
             self._should_include_sub_menus_during_generation(),
         )
@@ -451,7 +576,8 @@ class Model:
             self.check_block_devices.__name__,
             self.check_root_subvolume.__name__,
             self.check_boot_stanzas.__name__,
-            self.check_preparation_result.__name__,
+            self.check_snapshot_preparation_result.__name__,
+            self.check_boot_stanza_preparation_results.__name__,
             self.check_final_state.__name__,
         ]
 
@@ -500,9 +626,62 @@ class Model:
         return none_throws(self._block_devices).boot_device
 
     @property
-    def boot_stanzas(self) -> List[BootStanza]:
-        return none_throws(self._boot_stanzas)
+    def matched_boot_stanzas(self) -> List[BootStanza]:
+        return none_throws(self._matched_boot_stanzas)
 
     @property
-    def preparation_result(self) -> PreparationResult:
-        return none_throws(self._preparation_result)
+    def usable_boot_stanzas(self) -> List[BootStanza]:
+        matched_boot_stanzas = self.matched_boot_stanzas
+
+        return [
+            boot_stanza
+            for boot_stanza in matched_boot_stanzas
+            if not boot_stanza.has_unmatched_boot_files()
+        ]
+
+    @property
+    def snapshot_preparation_result(self) -> SnapshotPreparationResult:
+        return none_throws(self._snapshot_preparation_result)
+
+    @property
+    def usable_snapshots_for_addition(self) -> List[Subvolume]:
+        subvolume = self.root_subvolume
+        snapshot_preparation_result = self.snapshot_preparation_result
+        snapshots_for_addition = snapshot_preparation_result.snapshots_for_addition
+
+        return [
+            snapshot
+            for snapshot in snapshots_for_addition
+            if snapshot.is_static_partition_table_matched_with(subvolume)
+        ]
+
+    @property
+    def actual_bootable_snapshots(self) -> List[Subvolume]:
+        persistence_provider = self._persistence_provider
+        snapshot_preparation_result = self.snapshot_preparation_result
+        usable_snapshots_for_addition = self.usable_snapshots_for_addition
+        previous_run_result = persistence_provider.get_previous_run_result()
+        snapshots_for_removal = snapshot_preparation_result.snapshots_for_removal
+        bootable_snapshots = set(previous_run_result.bootable_snapshots)
+
+        if has_items(usable_snapshots_for_addition):
+            bootable_snapshots |= set(usable_snapshots_for_addition)
+
+        if has_items(snapshots_for_removal):
+            bootable_snapshots -= set(snapshots_for_removal)
+
+        return list(bootable_snapshots)
+
+    @property
+    def boot_stanza_preparation_results(self) -> List[BootStanzaPreparationResult]:
+        return none_throws(self._boot_stanza_preparation_results)
+
+    @property
+    def usable_boot_stanzas_with_snapshots(self) -> Dict[BootStanza, List[Subvolume]]:
+        boot_stanza_preparation_results = self.boot_stanza_preparation_results
+
+        return {
+            result.boot_stanza: result.matched_snapshots
+            for result in boot_stanza_preparation_results
+            if result.has_matched_snapshots()
+        }

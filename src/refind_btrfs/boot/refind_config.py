@@ -25,15 +25,19 @@ from __future__ import annotations
 
 from itertools import chain
 from pathlib import Path
-from typing import Collection, Generator, Iterable, List, Optional
+from typing import Collection, Dict, Generator, Iterable, List, Optional
 
 from more_itertools import always_iterable
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
-from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device import Partition, Subvolume
-from refind_btrfs.utility.helpers import has_items, is_none_or_whitespace, none_throws
+from refind_btrfs.utility.helpers import (
+    has_items,
+    is_none_or_whitespace,
+    none_throws,
+    replace_item_in,
+)
 
 from .boot_stanza import BootStanza
 from .migrations import Migration
@@ -99,47 +103,50 @@ class RefindConfig(BaseConfig):
     def generate_new_from(
         self,
         partition: Partition,
-        bootable_snapshots: Collection[Subvolume],
+        usable_boot_stanzas_with_snapshots: Dict[BootStanza, List[Subvolume]],
         include_paths: bool,
         include_sub_menus: bool,
     ) -> Generator[RefindConfig, None, None]:
-        matched_boot_stanzas = list(self.get_boot_stanzas_matched_with(partition))
-
-        if not has_items(matched_boot_stanzas):
-            raise RefindConfigError(
-                "rEFInd config does not contain any boot stanzas matched with the root partition!"
-            )
-
         file_path = self.file_path
+        boot_stanzas = none_throws(self.boot_stanzas)
         parent_directory = file_path.parent
         included_configs: List[RefindConfig] = []
 
         if self.has_included_configs():
             included_configs = none_throws(self.included_configs)
 
-        for boot_stanza in matched_boot_stanzas:
-            migration = Migration(boot_stanza, partition, bootable_snapshots)
-            migrated_boot_stanza = migration.migrate(include_paths, include_sub_menus)
-            boot_stanza_file_name = migrated_boot_stanza.file_name
+        for boot_stanza in boot_stanzas:
+            bootable_snapshots = usable_boot_stanzas_with_snapshots.get(boot_stanza)
 
-            if not is_none_or_whitespace(boot_stanza_file_name):
-                destination_directory = (
-                    parent_directory / constants.SNAPSHOT_STANZAS_DIR_NAME
+            if has_items(bootable_snapshots):
+                sorted_bootable_snapshots = sorted(
+                    none_throws(bootable_snapshots), reverse=True
                 )
-                boot_stanza_config_file_path = (
-                    destination_directory / boot_stanza_file_name
+                migration = Migration(
+                    boot_stanza, partition, none_throws(sorted_bootable_snapshots)
                 )
-                boot_stanza_config = RefindConfig(
-                    boot_stanza_config_file_path.resolve()
-                ).with_boot_stanzas(always_iterable(migrated_boot_stanza))
+                migrated_boot_stanza = migration.migrate(
+                    include_paths, include_sub_menus
+                )
+                boot_stanza_file_name = migrated_boot_stanza.file_name
 
-                if boot_stanza_config not in included_configs:
-                    included_configs.append(boot_stanza_config)
-                else:
-                    index = included_configs.index(boot_stanza_config)
-                    included_configs[index] = boot_stanza_config
+                if not is_none_or_whitespace(boot_stanza_file_name):
+                    destination_directory = (
+                        parent_directory / constants.SNAPSHOT_STANZAS_DIR_NAME
+                    )
+                    boot_stanza_config_file_path = (
+                        destination_directory / boot_stanza_file_name
+                    )
+                    boot_stanza_config = RefindConfig(
+                        boot_stanza_config_file_path.resolve()
+                    ).with_boot_stanzas(always_iterable(migrated_boot_stanza))
 
-                yield boot_stanza_config
+                    if boot_stanza_config not in included_configs:
+                        included_configs.append(boot_stanza_config)
+                    else:
+                        replace_item_in(included_configs, boot_stanza_config)
+
+                    yield boot_stanza_config
 
         self._included_configs = included_configs
 

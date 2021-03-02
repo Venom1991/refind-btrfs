@@ -29,7 +29,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, List, NamedTuple, Optional, Set
 from uuid import UUID
 
-from refind_btrfs.common import constants
+from more_itertools import take
+
+from refind_btrfs.common import BootFilesCheckResult, constants
 from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
 from refind_btrfs.common.enums import PathRelation
 from refind_btrfs.common.exceptions import SubvolumeError
@@ -42,6 +44,8 @@ from refind_btrfs.utility.helpers import (
 )
 
 if TYPE_CHECKING:
+    from refind_btrfs.boot import BootStanza
+
     from .partition_table import PartitionTable
 
 
@@ -76,6 +80,7 @@ class Subvolume:
         self._is_read_only = is_read_only
         self._created_from: Optional[Subvolume] = None
         self._static_partition_table: Optional[PartitionTable] = None
+        self._boot_files_check_result: Optional[BootFilesCheckResult] = None
         self._snapshots: Optional[Set[Subvolume]] = None
 
     def __eq__(self, other: object) -> bool:
@@ -102,6 +107,39 @@ class Subvolume:
             return attributes_for_comparison[0] < attributes_for_comparison[1]
 
         return False
+
+    def with_boot_files_check_result(self, boot_stanza: BootStanza) -> Subvolume:
+        self_filesystem_path_str = str(self.filesystem_path)
+        self_logical_path = self.logical_path
+        boot_stanza_check_result = none_throws(boot_stanza.boot_files_check_result)
+        boot_stanza_name = boot_stanza_check_result.required_by_boot_stanza_name
+        expected_logical_path = boot_stanza_check_result.expected_logical_path
+        required_file_paths = boot_stanza_check_result.matched_boot_files
+        matched_boot_files: List[str] = []
+        unmatched_boot_files: List[str] = []
+
+        for file_path in required_file_paths:
+            replaced_file_path = Path(
+                replace_root_part_in(
+                    file_path, expected_logical_path, self_filesystem_path_str
+                )
+            )
+            append_func = (
+                matched_boot_files.append
+                if replaced_file_path.exists()
+                else unmatched_boot_files.append
+            )
+
+            append_func(replaced_file_path.name)
+
+        self._boot_files_check_result = BootFilesCheckResult(
+            boot_stanza_name,
+            self_logical_path,
+            matched_boot_files,
+            unmatched_boot_files,
+        )
+
+        return self
 
     def with_snapshots(self, snapshots: Iterable[Subvolume]) -> Subvolume:
         self._snapshots = set(snapshots)
@@ -203,8 +241,24 @@ class Subvolume:
     def is_newly_created(self) -> bool:
         return self.created_from is not None
 
+    def is_static_partition_table_matched_with(self, subvolume: Subvolume) -> bool:
+        if self.has_static_partition_table():
+            static_partition_table = none_throws(self.static_partition_table)
+
+            return static_partition_table.is_matched_with(subvolume)
+
+        return False
+
     def has_static_partition_table(self) -> bool:
         return self.static_partition_table is not None
+
+    def has_unmatched_boot_files(self) -> bool:
+        boot_files_check_result = self.boot_files_check_result
+
+        if boot_files_check_result is not None:
+            return boot_files_check_result.has_unmatched_boot_files()
+
+        return False
 
     def has_snapshots(self) -> bool:
         return has_items(self.snapshots)
@@ -229,6 +283,14 @@ class Subvolume:
 
         return False
 
+    def select_snapshots(self, count: int) -> Optional[List[Subvolume]]:
+        if self.has_snapshots():
+            snapshots = none_throws(self.snapshots)
+
+            return take(count, sorted(snapshots, reverse=True))
+
+        return None
+
     def modify_partition_table_using(
         self,
         source_subvolume: Subvolume,
@@ -244,7 +306,7 @@ class Subvolume:
             static_partition_table.migrate_from_to(source_subvolume, self)
             static_device_command.save_partition_table(static_partition_table)
 
-    def check_static_partition_table(self, root_subvolume: Subvolume) -> None:
+    def validate_static_partition_table(self, subvolume: Subvolume) -> None:
         logical_path = self.logical_path
 
         if not self.has_static_partition_table():
@@ -262,43 +324,23 @@ class Subvolume:
                 "subvolume's static partition table!"
             )
 
-        if not static_partition_table.is_matched_with(root_subvolume):
+        if not static_partition_table.is_matched_with(subvolume):
             raise SubvolumeError(
                 f"The '{logical_path}' subvolume's static partition table is not "
                 "matched with the root subvolume (by 'subvol' or 'subvolid')!"
             )
 
-    def check_boot_files_existence(
-        self, root_subvolume: Subvolume, boot_stanza
-    ) -> None:
-        self_filesystem_path_str = str(self.filesystem_path)
-        self_logical_path = self.logical_path
-        root_logical_path = root_subvolume.logical_path
-        missing_boot_file_paths: List[str] = []
-        matched_boot_file_paths = (
-            file_path
-            for file_path in boot_stanza.all_boot_file_paths
-            if root_logical_path in file_path
-        )
-
-        for file_path in matched_boot_file_paths:
-            replaced_file_path = Path(
-                replace_root_part_in(
-                    file_path, root_logical_path, self_filesystem_path_str
-                )
-            )
-
-            if not replaced_file_path.exists():
-                missing_boot_file_paths.append(replaced_file_path.name)
-
-        if has_items(missing_boot_file_paths):
-            separator = constants.COLUMN_SEPARATOR + constants.SPACE
-            normalized_boot_stanza_name = boot_stanza.name.strip(constants.DOUBLE_QUOTE)
+    def validate_boot_files_check_result(self) -> None:
+        if self.has_unmatched_boot_files():
+            boot_files_check_result = none_throws(self.boot_files_check_result)
+            boot_stanza_name = boot_files_check_result.required_by_boot_stanza_name
+            logical_path = boot_files_check_result.expected_logical_path
+            unmatched_boot_files = boot_files_check_result.unmatched_boot_files
 
             raise SubvolumeError(
-                f"Found missing boot files in the '{self_logical_path}' snapshot "
-                f"required by the '{normalized_boot_stanza_name}' boot stanza: "
-                f"{separator.join(missing_boot_file_paths)}!"
+                f"Detected boot files required by the '{boot_stanza_name}' boot "
+                f"stanza which do not exist in the '{logical_path}' subvolume: "
+                f"{constants.DEFAULT_ITEMS_SEPARATOR.join(unmatched_boot_files)}!"
             )
 
     @property
@@ -344,6 +386,10 @@ class Subvolume:
     @property
     def static_partition_table(self) -> Optional[PartitionTable]:
         return self._static_partition_table
+
+    @property
+    def boot_files_check_result(self) -> Optional[BootFilesCheckResult]:
+        return self._boot_files_check_result
 
     @property
     def snapshots(self) -> Optional[Set[Subvolume]]:

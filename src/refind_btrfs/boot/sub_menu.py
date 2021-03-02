@@ -22,10 +22,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from functools import cached_property
-from typing import Generator, List, Optional, Set
+from typing import Generator, List, Optional, Set, Tuple
 
 from refind_btrfs.common import constants
-from refind_btrfs.common.enums import GraphicsParameter, RefindOption
+from refind_btrfs.common.enums import (
+    BootFilePathSource,
+    GraphicsParameter,
+    RefindOption,
+)
 from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import is_empty, is_none_or_whitespace, none_throws
 
@@ -126,7 +130,10 @@ class SubMenu:
             and not is_disabled
         )
 
-    def _get_all_boot_file_paths(self) -> Generator[str, None, None]:
+    def _get_all_boot_file_paths(
+        self,
+    ) -> Generator[Tuple[BootFilePathSource, str], None, None]:
+        source = BootFilePathSource.SUB_MENU
         is_disabled = self.is_disabled
 
         if not is_disabled:
@@ -136,15 +143,21 @@ class SubMenu:
             add_boot_options = self.add_boot_options
 
             if not is_none_or_whitespace(loader_path):
-                yield none_throws(loader_path)
+                yield (source, none_throws(loader_path))
 
             if not is_none_or_whitespace(initrd_path):
-                yield none_throws(initrd_path)
+                yield (source, none_throws(initrd_path))
 
             if not boot_options is None:
-                yield from boot_options.initrd_options
+                yield from (
+                    (source, initrd_option)
+                    for initrd_option in boot_options.initrd_options
+                )
 
-            yield from add_boot_options.initrd_options
+            yield from (
+                (source, initrd_option)
+                for initrd_option in add_boot_options.initrd_options
+            )
 
     @property
     def name(self) -> str:
@@ -175,5 +188,5 @@ class SubMenu:
         return self._is_disabled
 
     @cached_property
-    def all_boot_file_paths(self) -> Set[str]:
+    def all_boot_file_paths(self) -> Set[Tuple[BootFilePathSource, str]]:
         return set(self._get_all_boot_file_paths())

@@ -38,7 +38,7 @@ class BlockDevice:
         self._name = name
         self._d_type = d_type
 
-        major_minor_parsed = BlockDevice._try_parse_major_minor(major_minor)
+        major_minor_parsed = BlockDevice.try_parse_major_minor(major_minor)
 
         self._major_number = major_minor_parsed[0]
         self._minor_number = major_minor_parsed[1]
@@ -99,7 +99,7 @@ class BlockDevice:
         return self.boot is not None
 
     @staticmethod
-    def _try_parse_major_minor(value: str) -> Union[List[int], List[None]]:
+    def try_parse_major_minor(value: str) -> Union[List[int], List[None]]:
         match = re.fullmatch(r"\d+:\d+", value)
 
         if match:
