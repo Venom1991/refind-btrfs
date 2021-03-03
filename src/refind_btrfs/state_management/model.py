@@ -268,8 +268,6 @@ class Model:
             ProcessingResult(bootable_snapshots, current_boot_stanza_generation)
         )
 
-    # endregion
-
     def _process_snapshots(self) -> List[Subvolume]:
         subvolume_command = self._subvolume_command_factory.subvolume_command()
         actual_bootable_snapshots = self.actual_bootable_snapshots
@@ -346,16 +344,16 @@ class Model:
     @property
     def conditions(self) -> List[Callable[[], bool]]:
         conditions = self._conditions
-        always_true = lambda: True
+        always_true_func = lambda: True
 
         return [
-            always_true,
+            always_true_func,
             conditions.check_filtered_block_devices,
             conditions.check_root_subvolume,
             conditions.check_matched_boot_stanzas,
             conditions.check_prepared_snapshots,
             conditions.check_boot_stanzas_with_snapshots,
-            always_true,
+            always_true_func,
         ]
 
     @property

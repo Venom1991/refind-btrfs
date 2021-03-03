@@ -109,35 +109,37 @@ class Subvolume:
         return False
 
     def with_boot_files_check_result(self, boot_stanza: BootStanza) -> Subvolume:
-        self_filesystem_path_str = str(self.filesystem_path)
-        self_logical_path = self.logical_path
-        boot_stanza_check_result = none_throws(boot_stanza.boot_files_check_result)
-        boot_stanza_name = boot_stanza_check_result.required_by_boot_stanza_name
-        expected_logical_path = boot_stanza_check_result.expected_logical_path
-        required_file_paths = boot_stanza_check_result.matched_boot_files
-        matched_boot_files: List[str] = []
-        unmatched_boot_files: List[str] = []
+        boot_stanza_check_result = boot_stanza.boot_files_check_result
 
-        for file_path in required_file_paths:
-            replaced_file_path = Path(
-                replace_root_part_in(
-                    file_path, expected_logical_path, self_filesystem_path_str
+        if boot_stanza_check_result is not None:
+            self_filesystem_path_str = str(self.filesystem_path)
+            self_logical_path = self.logical_path
+            boot_stanza_name = boot_stanza_check_result.required_by_boot_stanza_name
+            expected_logical_path = boot_stanza_check_result.expected_logical_path
+            required_file_paths = boot_stanza_check_result.matched_boot_files
+            matched_boot_files: List[str] = []
+            unmatched_boot_files: List[str] = []
+
+            for file_path in required_file_paths:
+                replaced_file_path = Path(
+                    replace_root_part_in(
+                        file_path, expected_logical_path, self_filesystem_path_str
+                    )
                 )
-            )
-            append_func = (
-                matched_boot_files.append
-                if replaced_file_path.exists()
-                else unmatched_boot_files.append
-            )
+                append_func = (
+                    matched_boot_files.append
+                    if replaced_file_path.exists()
+                    else unmatched_boot_files.append
+                )
 
-            append_func(replaced_file_path.name)
+                append_func(replaced_file_path.name)
 
-        self._boot_files_check_result = BootFilesCheckResult(
-            boot_stanza_name,
-            self_logical_path,
-            matched_boot_files,
-            unmatched_boot_files,
-        )
+            self._boot_files_check_result = BootFilesCheckResult(
+                boot_stanza_name,
+                self_logical_path,
+                matched_boot_files,
+                unmatched_boot_files,
+            )
 
         return self
 
