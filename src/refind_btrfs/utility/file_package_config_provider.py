@@ -165,14 +165,14 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
             if path_relation == PathRelation.FIRST_NESTED_IN_SECOND:
                 raise PackageConfigError(
-                    f"The output directory '{output_directory}' is nested in "
-                    f"the search directory '{search_directory}'!"
+                    f"The '{output_directory}' output directory is nested in "
+                    f"the '{search_directory}' search directory!"
                 )
 
             if path_relation == PathRelation.SECOND_NESTED_IN_FIRST:
                 raise PackageConfigError(
-                    f"The search directory '{search_directory}' is nested in "
-                    f"the output directory '{output_directory}'!"
+                    f"The '{search_directory}' search directory is nested in "
+                    f"the '{output_directory}' output directory!"
                 )
 
         if boot_stanza_generation_key not in toml_document:

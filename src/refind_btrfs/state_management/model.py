@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+from itertools import chain
 from typing import Callable, Dict, List, NamedTuple, Optional
 
 from injector import inject
@@ -269,20 +270,21 @@ class Model:
         )
 
     def _process_snapshots(self) -> List[Subvolume]:
-        subvolume_command = self._subvolume_command_factory.subvolume_command()
+        subvolume_command_factory = self._subvolume_command_factory
         actual_bootable_snapshots = self.actual_bootable_snapshots
         usable_snapshots_for_addition = self.usable_snapshots_for_addition
+        subvolume_command = subvolume_command_factory.subvolume_command()
 
         if has_items(usable_snapshots_for_addition):
             device_command_factory = self._device_command_factory
             subvolume = self.root_subvolume
             boot_stanzas_with_snapshots = self.boot_stanzas_with_snapshots
-            usable_snapshots_union = set(
-                *self.usable_boot_stanzas_with_snapshots.values()
+            all_usable_snapshots = set(
+                chain.from_iterable(self.usable_boot_stanzas_with_snapshots.values())
             )
 
             for addition in usable_snapshots_for_addition:
-                if addition in usable_snapshots_union:
+                if addition in all_usable_snapshots:
                     bootable_snapshot = subvolume_command.get_bootable_snapshot_from(
                         addition
                     )

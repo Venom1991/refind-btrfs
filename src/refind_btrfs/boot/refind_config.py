@@ -103,7 +103,7 @@ class RefindConfig(BaseConfig):
     def generate_new_from(
         self,
         partition: Partition,
-        usable_boot_stanzas_with_snapshots: Dict[BootStanza, List[Subvolume]],
+        boot_stanzas_with_snapshots: Dict[BootStanza, List[Subvolume]],
         include_paths: bool,
         include_sub_menus: bool,
     ) -> Generator[RefindConfig, None, None]:
@@ -116,15 +116,13 @@ class RefindConfig(BaseConfig):
             included_configs = none_throws(self.included_configs)
 
         for boot_stanza in boot_stanzas:
-            bootable_snapshots = usable_boot_stanzas_with_snapshots.get(boot_stanza)
+            bootable_snapshots = boot_stanzas_with_snapshots.get(boot_stanza)
 
             if has_items(bootable_snapshots):
                 sorted_bootable_snapshots = sorted(
                     none_throws(bootable_snapshots), reverse=True
                 )
-                migration = Migration(
-                    boot_stanza, partition, none_throws(sorted_bootable_snapshots)
-                )
+                migration = Migration(boot_stanza, partition, sorted_bootable_snapshots)
                 migrated_boot_stanza = migration.migrate(
                     include_paths, include_sub_menus
                 )
