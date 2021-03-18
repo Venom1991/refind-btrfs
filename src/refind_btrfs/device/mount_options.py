@@ -131,10 +131,10 @@ class MountOptions:
 
         if subvol_tuple is not None:
             subvol_value = subvol_tuple[1]
-            current_logical_path = source_subvolume.logical_path
+            source_logical_path = source_subvolume.logical_path
             destination_logical_path = destination_subvolume.logical_path
             subvol_pattern = re.compile(
-                rf"(?P<prefix>^{constants.DIR_SEPARATOR_PATTERN}?){current_logical_path}$"
+                rf"(?P<prefix>^{constants.DIR_SEPARATOR_PATTERN}?){source_logical_path}$"
             )
 
             parameterized_options[constants.SUBVOL_OPTION] = (

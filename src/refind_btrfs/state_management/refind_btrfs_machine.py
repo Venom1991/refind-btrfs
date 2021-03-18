@@ -54,7 +54,7 @@ class RefindBtrfsMachine(Machine):
 
         if not has_items(states) or is_singleton(states):
             raise ValueError(
-                "The 'states' parameter must be initialized and contain at least two items!"
+                "The 'states' collection must be initialized and contain at least two items!"
             )
 
         initial = checked_cast(State, first(states))
@@ -62,7 +62,7 @@ class RefindBtrfsMachine(Machine):
 
         if initial.name != expected_initial_name:
             raise ValueError(
-                "The first item of the 'states' parameter must "
+                "The first item of the 'states' collection must "
                 f"be a state named '{expected_initial_name}'!"
             )
 
@@ -71,7 +71,7 @@ class RefindBtrfsMachine(Machine):
 
         if final.name != expected_final_name:
             raise ValueError(
-                "The last item of the 'states' parameter must "
+                "The last item of the 'states' collection must "
                 f"be a state named '{expected_final_name}'!"
             )
 

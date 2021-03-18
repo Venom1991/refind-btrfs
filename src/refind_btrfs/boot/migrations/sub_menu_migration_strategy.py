@@ -45,7 +45,7 @@ class SubMenuMigrationStrategy(BaseMigrationStrategy):
     ) -> None:
         super().__init__(
             State(
-                sub_menu.name,
+                sub_menu.normalized_name,
                 sub_menu.loader_path,
                 sub_menu.initrd_path,
                 sub_menu.boot_options,

@@ -41,7 +41,7 @@ class BootStanzaMigrationStrategy(BaseMigrationStrategy):
     ) -> None:
         super().__init__(
             State(
-                boot_stanza.name,
+                boot_stanza.normalized_name,
                 boot_stanza.loader_path,
                 boot_stanza.initrd_path,
                 boot_stanza.boot_options,

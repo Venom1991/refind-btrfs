@@ -107,7 +107,7 @@ menuentry "Arch Linux - Stable" {
     | /.snapshots/4/snapshot | 13-12-2020 04:00:00 | 501          |
     | /.snapshots/5/snapshot | 14-12-2020 05:00:00 | 502          |
 
-* refind-btrfs.conf file changed such that the "count" option is set to 3 instead of the default 5
+* refind-btrfs.conf file changed such that the "selection_count" option is set to 3 instead of the default 5
 
 When run, this tool should select the latest three snapshots (3, 4 and 5 from the list) and create new, writable ones from these in the directory configured by the "destination_dir" option where each snapshot is named by formatting the time of creation ("YYYY-mm-dd_HH-MM-SS") of the snapshot it was created from, adding a "rwsnap" prefix to it and also adding the original snapshot's subvolume ID as a suffix. In the rare case when different snapshots have identical timestamps their monotonic numerical IDs are there to ensure uniqueness.
 

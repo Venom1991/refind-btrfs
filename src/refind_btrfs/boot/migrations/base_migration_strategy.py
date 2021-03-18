@@ -62,23 +62,19 @@ class BaseMigrationStrategy(ABC):
         destination_subvolume = self._destination_subvolume
 
         if not destination_subvolume.is_named():
-            raise ValueError(
-                "The destination subvolume's '_name' attribute must be initialized beforehand!"
-            )
+            raise ValueError("The 'destination_subvolume' instance must be named!")
 
-        subvolume_name_pattern = re.compile(rf"\({constants.SUBVOLUME_NAME_PATTERN}\)")
-        normalized_current_name = self._current_state.name.strip(constants.DOUBLE_QUOTE)
+        current_name = self._current_state.name
         destination_subvolume_name = none_throws(destination_subvolume.name)
-        match = subvolume_name_pattern.search(normalized_current_name)
+        subvolume_name_pattern = re.compile(rf"\({constants.SUBVOLUME_NAME_PATTERN}\)")
+        match = subvolume_name_pattern.search(current_name)
 
         if match:
             destination_name = subvolume_name_pattern.sub(
-                f"({destination_subvolume_name})", normalized_current_name
+                f"({destination_subvolume_name})", current_name
             )
         else:
-            destination_name = (
-                f"{normalized_current_name} ({destination_subvolume_name})"
-            )
+            destination_name = f"{current_name} ({destination_subvolume_name})"
 
         return f"{constants.DOUBLE_QUOTE}{destination_name}{constants.DOUBLE_QUOTE}"
 

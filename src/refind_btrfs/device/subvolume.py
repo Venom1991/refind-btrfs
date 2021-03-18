@@ -168,7 +168,7 @@ class Subvolume:
 
     def as_located_in(self, parent_directory: Path) -> Subvolume:
         if not self.is_named():
-            raise ValueError("The '_name' attribute must be initialized beforehand!")
+            raise ValueError("The '_name' attribute must be initialized!")
 
         name = none_throws(self.name)
 

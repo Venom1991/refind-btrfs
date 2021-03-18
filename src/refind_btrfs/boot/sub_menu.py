@@ -164,6 +164,10 @@ class SubMenu:
         return self._name
 
     @property
+    def normalized_name(self) -> str:
+        return self.name.strip(constants.DOUBLE_QUOTE)
+
+    @property
     def loader_path(self) -> Optional[str]:
         return self._loader_path
 
