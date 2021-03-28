@@ -123,7 +123,7 @@ The most recent snapshot's fstab file should (after being modified) contain a ro
 ```
 UUID=95250e8a-5870-45df-a7b3-3b3ee8873c16 / btrfs rw,noatime,compress-force=zstd:2,ssd,space_cache=v2,commit=15,subvolid=503,subvol=/@/root/.refind-btrfs/rwsnap_2020-12-14_05-00-00_ID502 0 0
 ```
-I'm assuming here that the next available subvolume ID was 503 (an increment of one) which implies that the writable snapshot was created immediately after the original snapshot was taken but that doesn't necessarily has to be the case and its specific value doesn't ultimately matter that much as long as it directly corresponds to the newly created snapshot which it absolutely should (otherwise, mounting it as / would fail due to the mismatch).
+I'm assuming here that the next available subvolume ID was 503 (an increment of one) which implies that the writable snapshot was created immediately after the original snapshot was taken but that doesn't necessarily have to be the case and its specific value doesn't ultimately matter that much as long as it directly corresponds to the newly created snapshot which it absolutely should (otherwise, mounting it as / would fail due to the mismatch).
 
 With this setup the newly created snapshot ended up being nested under the root subvolume but you can of course make your own adjustments as you see fit. This tool will only create the destination directory in case it doesn't exist. It wont do anything other than that.  
 I've personally created another subvolume named @rw-snapshots directly under the default filesystem subvolume (ID 5) and mounted it at /root/.refind-btrfs. In my case the logical path of rwsnap_2020-12-14_05-00-00_ID502 would be /@rw-snapshots/rwsnap_2020-12-14_05-00-00_ID502.
