@@ -76,8 +76,8 @@ def main() -> int:
     try:
         check_access_rights()
 
-        runnable = injector.get(BaseRunner)
-        exit_code = runnable.run()
+        runner = injector.get(BaseRunner)
+        exit_code = runner.run()
     except PackageConfigError as e:
         exit_code = constants.EX_NOT_OK
         logger.error(e.formatted_message)

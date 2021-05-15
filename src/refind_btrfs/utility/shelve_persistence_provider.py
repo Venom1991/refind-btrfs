@@ -44,9 +44,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
             if db_key in local_db:
                 package_config = checked_cast(PackageConfig, local_db[db_key])
 
-                if not package_config.has_been_modified(
-                    constants.MAIN_PACKAGE_CONFIG_FILE
-                ):
+                if not package_config.has_been_modified(constants.PACKAGE_CONFIG_FILE):
                     return package_config
 
         return None

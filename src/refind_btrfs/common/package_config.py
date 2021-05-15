@@ -82,7 +82,7 @@ class PackageConfig(BaseConfig):
         snapshot_manipulation: SnapshotManipulation,
         boot_stanza_generation: BootStanzaGeneration,
     ) -> None:
-        super().__init__(constants.MAIN_PACKAGE_CONFIG_FILE)
+        super().__init__(constants.PACKAGE_CONFIG_FILE)
 
         self._exit_if_root_is_snapshot = exit_if_root_is_snapshot
         self._snapshot_searches = list(snapshot_searches)
