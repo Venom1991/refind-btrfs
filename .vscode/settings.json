@@ -6,8 +6,6 @@
         "mode": "external",
         "visitors": true
     },
-    "code-runner.clearPreviousOutput": true,
-    "code-runner.runInTerminal": true,
     "cSpell.words": [
         "Bootnum",
         "Btrfs",
@@ -60,12 +58,15 @@
         "tomlkit",
         "vfat"
     ],
+    "code-runner.clearPreviousOutput": true,
+    "code-runner.runInTerminal": true,
     "python.analysis.completeFunctionParens": true,
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.extraPaths": [
         "src/refind_btrfs"
     ],
     "python.analysis.memory.keepLibraryAst": true,
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.envFile": "${workspaceFolder}/.env",
     "python.formatting.provider": "black",
     "python.languageServer": "Pylance",
