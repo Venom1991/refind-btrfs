@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from itertools import chain
 from pathlib import Path
 from typing import Collection, Dict, Generator, Iterable, List, Optional
@@ -108,12 +109,21 @@ class RefindConfig(BaseConfig):
         include_sub_menus: bool,
     ) -> Generator[RefindConfig, None, None]:
         file_path = self.file_path
-        boot_stanzas = none_throws(self.boot_stanzas)
+        boot_stanzas = deepcopy(none_throws(self.boot_stanzas))
         parent_directory = file_path.parent
-        included_configs: List[RefindConfig] = []
+        included_configs: List[RefindConfig] = (
+            none_throws(self.included_configs) if self.has_included_configs() else []
+        )
 
-        if self.has_included_configs():
-            included_configs = none_throws(self.included_configs)
+        boot_stanzas.extend(
+            chain.from_iterable(
+                (
+                    none_throws(included_config.boot_stanzas)
+                    for included_config in included_configs
+                    if included_config.has_boot_stanzas()
+                )
+            )
+        )
 
         for boot_stanza in boot_stanzas:
             bootable_snapshots = boot_stanzas_with_snapshots.get(boot_stanza)
@@ -147,6 +157,9 @@ class RefindConfig(BaseConfig):
                     yield boot_stanza_config
 
         self._included_configs = included_configs
+
+    def has_boot_stanzas(self) -> bool:
+        return has_items(self.boot_stanzas)
 
     def has_included_configs(self) -> bool:
         return has_items(self.included_configs)
