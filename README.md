@@ -38,9 +38,9 @@ The following conditions (some are probably superfluous at this point) must be s
 * Btrfs formatted filesystem with a subvolume mounted as /
 * at least one snapshot of the root subvolume
 * rEFInd installation present on the ESP
-* at least one manual boot stanza (found in rEFInd's main config file or in any of the additional config files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example):
-  * the "volume" field is matched with the root partition (either by filesystem label, partition label or partition GUID)
-  * the "options" field (defined as a part of the boot stanza's main section or as a part of any of its sub-menus) contains a "rootflags" option which in turn defines a "subvol" suboption which is matched with the root subvolume's logical path and/or a "subvolid" suboption which is matched with the root subvolume's ID
+* at least one manual boot stanza (found in rEFInd's main config file or in any of the additional config files included within it) defined such that (see the [ArchWiki](https://wiki.archlinux.org/index.php/REFInd#Manual_boot_stanza) for an example) its own "options" field or any such field belonging to at least one of its sub-menus contains definitions of the following boot loader options:
+  * the "root" option must be matched with the root partition (by PARTUUID or PARTLABEL), its filesystem (by UUID or LABEL) or with a block device (by name) which itself represents the root partition
+  * the "rootflags" option must define a "subvol" suboption which is matched with the root subvolume's logical path and/or a "subvolid" suboption which is matched with the root subvolume's ID
 
 ## Installation
 This tool is currently available only in the [AUR](https://aur.archlinux.org/packages/refind-btrfs/) which means that [Arch Linux](https://www.archlinux.org/) users (as well as users of derivative distributions, I imagine) can easily install it.

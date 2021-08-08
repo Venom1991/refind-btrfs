@@ -53,6 +53,7 @@ setuptools.setup(
         "injector",
         "more-itertools",
         "pid",
+        "semantic-version",
         "systemd-python",
         "tomlkit",
         "transitions",
