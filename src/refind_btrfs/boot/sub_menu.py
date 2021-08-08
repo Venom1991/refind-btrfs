@@ -30,7 +30,7 @@ from refind_btrfs.common.enums import (
     GraphicsParameter,
     RefindOption,
 )
-from refind_btrfs.device import Subvolume
+from refind_btrfs.device import BlockDevice
 from refind_btrfs.utility.helpers import is_empty, is_none_or_whitespace, none_throws
 
 from .boot_options import BootOptions
@@ -108,11 +108,11 @@ class SubMenu:
 
         return constants.NEWLINE.join(result)
 
-    def is_matched_with(self, subvolume: Subvolume) -> bool:
+    def is_matched_with(self, block_device: BlockDevice) -> bool:
         boot_options = self.boot_options
 
         return (
-            boot_options.is_matched_with(subvolume)
+            boot_options.is_matched_with(block_device)
             if boot_options is not None
             else False
         )

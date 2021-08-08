@@ -25,9 +25,11 @@ from __future__ import annotations
 
 from typing import Iterable, List, Optional, Tuple
 
+from more_itertools import last
+
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.device import MountOptions, Subvolume
+from refind_btrfs.device import BlockDevice, MountOptions, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
@@ -38,6 +40,7 @@ from refind_btrfs.utility.helpers import (
 
 class BootOptions:
     def __init__(self, raw_options: Optional[str]) -> None:
+        root_location: Optional[Tuple[int, str]] = None
         root_mount_options: Optional[Tuple[int, MountOptions]] = None
         initrd_options: List[Tuple[int, str]] = []
         other_options: List[Tuple[int, str]] = []
@@ -49,7 +52,21 @@ class BootOptions:
 
             for position, option in enumerate(split_options):
                 if not is_none_or_whitespace(option):
-                    if option.startswith(constants.ROOTFLAGS_PREFIX):
+                    if option.startswith(constants.ROOT_PREFIX):
+                        normalized_option = option.removeprefix(constants.ROOT_PREFIX)
+
+                        if root_location is not None:
+                            root_option = constants.ROOT_PREFIX.rstrip(
+                                constants.PARAMETERIZED_OPTION_SEPARATOR
+                            )
+
+                            raise RefindConfigError(
+                                f"The '{root_option}' boot option "
+                                f"cannot be defined multiple times!"
+                            )
+
+                        root_location = (position, normalized_option)
+                    elif option.startswith(constants.ROOTFLAGS_PREFIX):
                         normalized_option = option.removeprefix(
                             constants.ROOTFLAGS_PREFIX
                         )
@@ -72,18 +89,24 @@ class BootOptions:
                     else:
                         other_options.append((position, option))
 
+        self._root_location = root_location
         self._root_mount_options = root_mount_options
         self._initrd_options = initrd_options
         self._other_options = other_options
 
     def __str__(self) -> str:
+        root_location = self._root_location
         root_mount_options = self._root_mount_options
         initrd_options = self._initrd_options
         other_options = self._other_options
         result: List[str] = [constants.EMPTY_STR] * (
             sum((len(initrd_options), len(other_options)))
+            + (1 if root_location is not None else 0)
             + (1 if root_mount_options is not None else 0)
         )
+
+        if root_location is not None:
+            result[root_location[0]] = constants.ROOT_PREFIX + root_location[1]
 
         if root_mount_options is not None:
             result[root_mount_options[0]] = constants.ROOTFLAGS_PREFIX + str(
@@ -105,14 +128,39 @@ class BootOptions:
 
         return constants.EMPTY_STR
 
-    def is_matched_with(self, subvolume: Subvolume) -> bool:
-        root_mount_options = self.root_mount_options
+    def is_matched_with(self, block_device: BlockDevice) -> bool:
+        if block_device.has_root():
+            root_location = self.root_location
 
-        return (
-            root_mount_options.is_matched_with(subvolume)
-            if root_mount_options is not None
-            else False
-        )
+            if root_location is not None:
+                root_partition = none_throws(block_device.root)
+                filesystem = none_throws(root_partition.filesystem)
+                normalized_root_location = last(
+                    root_location.strip(constants.DOUBLE_QUOTE).split(
+                        constants.PARAMETERIZED_OPTION_SEPARATOR
+                    )
+                )
+                root_location_comparers = [
+                    root_partition.label,
+                    root_partition.uuid,
+                    filesystem.label,
+                    filesystem.uuid,
+                ]
+
+                if (
+                    normalized_root_location in root_location_comparers
+                    or block_device.is_matched_with(normalized_root_location)
+                ):
+                    root_mount_options = self.root_mount_options
+                    subvolume = none_throws(filesystem.subvolume)
+
+                    return (
+                        root_mount_options.is_matched_with(subvolume)
+                        if root_mount_options is not None
+                        else False
+                    )
+
+        return False
 
     def migrate_from_to(
         self,
@@ -156,6 +204,15 @@ class BootOptions:
         ]
 
         return cls(constants.SPACE.join(all_boot_options_str).strip())
+
+    @property
+    def root_location(self) -> Optional[str]:
+        root_location = self._root_location
+
+        if root_location is not None:
+            return root_location[1]
+
+        return None
 
     @property
     def root_mount_options(self) -> Optional[MountOptions]:

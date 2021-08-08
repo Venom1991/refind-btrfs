@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from copy import deepcopy
+from copy import copy
 from itertools import chain
 from pathlib import Path
 from typing import Collection, Dict, Generator, Iterable, List, Optional
@@ -32,7 +32,7 @@ from more_itertools import always_iterable
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
-from refind_btrfs.device import Partition, Subvolume
+from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
@@ -64,7 +64,7 @@ class RefindConfig(BaseConfig):
         return self
 
     def get_boot_stanzas_matched_with(
-        self, partition: Partition
+        self, block_device: BlockDevice
     ) -> Generator[BootStanza, None, None]:
         boot_stanzas = self.boot_stanzas
         included_configs = self.included_configs
@@ -73,12 +73,12 @@ class RefindConfig(BaseConfig):
             yield from (
                 boot_stanza
                 for boot_stanza in none_throws(boot_stanzas)
-                if boot_stanza.is_matched_with(partition)
+                if boot_stanza.is_matched_with(block_device)
             )
 
         if has_items(included_configs):
             yield from chain.from_iterable(
-                config.get_boot_stanzas_matched_with(partition)
+                config.get_boot_stanzas_matched_with(block_device)
                 for config in none_throws(included_configs)
             )
 
@@ -103,13 +103,13 @@ class RefindConfig(BaseConfig):
 
     def generate_new_from(
         self,
-        partition: Partition,
+        block_device: BlockDevice,
         boot_stanzas_with_snapshots: Dict[BootStanza, List[Subvolume]],
         include_paths: bool,
         include_sub_menus: bool,
     ) -> Generator[RefindConfig, None, None]:
         file_path = self.file_path
-        boot_stanzas = deepcopy(none_throws(self.boot_stanzas))
+        boot_stanzas = copy(none_throws(self.boot_stanzas))
         parent_directory = file_path.parent
         included_configs: List[RefindConfig] = (
             none_throws(self.included_configs) if self.has_included_configs() else []
@@ -132,7 +132,9 @@ class RefindConfig(BaseConfig):
                 sorted_bootable_snapshots = sorted(
                     none_throws(bootable_snapshots), reverse=True
                 )
-                migration = Migration(boot_stanza, partition, sorted_bootable_snapshots)
+                migration = Migration(
+                    boot_stanza, block_device, sorted_bootable_snapshots
+                )
                 migrated_boot_stanza = migration.migrate(
                     include_paths, include_sub_menus
                 )

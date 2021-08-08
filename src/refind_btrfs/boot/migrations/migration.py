@@ -27,7 +27,7 @@ from more_itertools import first
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.device import Partition, Subvolume
+from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import has_items, none_throws
 
 from ..boot_options import BootOptions
@@ -41,17 +41,18 @@ class Migration:
     def __init__(
         self,
         boot_stanza: BootStanza,
-        partition: Partition,
+        block_device: BlockDevice,
         bootable_snapshots: Collection[Subvolume],
     ) -> None:
         assert has_items(
             bootable_snapshots
         ), "Parameter 'bootable_snapshots' must contain at least one item!"
 
-        if not boot_stanza.is_matched_with(partition):
+        if not boot_stanza.is_matched_with(block_device):
             raise RefindConfigError("Boot stanza is not matched with the partition!")
 
-        filesystem = none_throws(partition.filesystem)
+        root_partition = none_throws(block_device.root)
+        filesystem = none_throws(root_partition.filesystem)
         source_subvolume = none_throws(filesystem.subvolume)
 
         self._boot_stanza = boot_stanza

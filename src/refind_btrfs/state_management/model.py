@@ -159,16 +159,16 @@ class Model:
 
     def initialize_root_subvolume(self) -> None:
         subvolume_command_factory = self._subvolume_command_factory
-        root = self.root_partition
-        filesystem = none_throws(root.filesystem)
+        root_partition = self.root_partition
+        filesystem = none_throws(root_partition.filesystem)
 
         filesystem.initialize_subvolume_using(subvolume_command_factory)
 
     def initialize_matched_boot_stanzas(self) -> None:
         refind_config = self.refind_config
-        root = self.root_partition
         include_paths = self._should_include_paths_during_generation()
-        matched_boot_stanzas = refind_config.get_boot_stanzas_matched_with(root)
+        root_device = none_throws(self.root_device)
+        matched_boot_stanzas = refind_config.get_boot_stanzas_matched_with(root_device)
 
         if include_paths:
             subvolume = self.root_subvolume
@@ -313,12 +313,15 @@ class Model:
 
     def _process_boot_stanzas(self) -> None:
         refind_config = self.refind_config
-        root = self.root_partition
+        root_device = none_throws(self.root_device)
         usable_boot_stanzas_with_snapshots = self.usable_boot_stanzas_with_snapshots
         include_paths = self._should_include_paths_during_generation()
         include_sub_menus = self._should_include_sub_menus_during_generation()
         generated_refind_configs = refind_config.generate_new_from(
-            root, usable_boot_stanzas_with_snapshots, include_paths, include_sub_menus
+            root_device,
+            usable_boot_stanzas_with_snapshots,
+            include_paths,
+            include_sub_menus,
         )
 
         refind_config_provider = self._refind_config_provider
@@ -393,8 +396,8 @@ class Model:
 
     @property
     def root_subvolume(self) -> Subvolume:
-        root = self.root_partition
-        filesystem = none_throws(root.filesystem)
+        root_partition = self.root_partition
+        filesystem = none_throws(root_partition.filesystem)
 
         return none_throws(filesystem.subvolume)
 

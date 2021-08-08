@@ -38,7 +38,7 @@ from refind_btrfs.common.enums import (
     RefindOption,
 )
 from refind_btrfs.common.exceptions import RefindConfigError
-from refind_btrfs.device import Partition, Subvolume
+from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
     is_none_or_whitespace,
@@ -196,26 +196,20 @@ class BootStanza:
 
         return self
 
-    def is_matched_with(self, partition: Partition) -> bool:
+    def is_matched_with(self, block_device: BlockDevice) -> bool:
         if self.can_be_used_for_bootable_snapshot():
-            normalized_volume = self.normalized_volume
-            filesystem = none_throws(partition.filesystem)
-            volume_comparers = [partition.uuid, partition.label, filesystem.label]
+            boot_options = self.boot_options
 
-            if normalized_volume in volume_comparers:
-                boot_options = self.boot_options
-                subvolume = none_throws(filesystem.subvolume)
+            if boot_options.is_matched_with(block_device):
+                return True
+            else:
+                sub_menus = self.sub_menus
 
-                if boot_options.is_matched_with(subvolume):
-                    return True
-                else:
-                    sub_menus = self.sub_menus
-
-                    if has_items(sub_menus):
-                        return any(
-                            sub_menu.is_matched_with(subvolume)
-                            for sub_menu in none_throws(sub_menus)
-                        )
+                if has_items(sub_menus):
+                    return any(
+                        sub_menu.is_matched_with(block_device)
+                        for sub_menu in none_throws(sub_menus)
+                    )
 
         return False
 

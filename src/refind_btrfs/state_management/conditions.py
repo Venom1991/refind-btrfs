@@ -74,10 +74,10 @@ class Conditions:
 
             return False
 
-        root = model.root_partition
-        root_filesystem = none_throws(root.filesystem)
+        root_partition = model.root_partition
+        root_filesystem = none_throws(root_partition.filesystem)
 
-        logger.info(f"Found the root partition on '{root.name}'.")
+        logger.info(f"Found the root partition on '{root_partition.name}'.")
 
         btrfs_type = constants.BTRFS_TYPE
 
@@ -98,8 +98,8 @@ class Conditions:
     def check_root_subvolume(self) -> bool:
         logger = self._logger
         model = self._model
-        root = model.root_partition
-        filesystem = none_throws(root.filesystem)
+        root_partition = model.root_partition
+        filesystem = none_throws(root_partition.filesystem)
 
         if not filesystem.has_subvolume():
             logger.error("The root partition is not mounted as a subvolume!")
