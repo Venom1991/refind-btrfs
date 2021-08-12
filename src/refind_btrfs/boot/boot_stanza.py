@@ -82,12 +82,21 @@ class BootStanza:
             return True
 
         if isinstance(other, BootStanza):
-            return self.volume == other.volume and self.loader_path == other.loader_path
+            self_boot_options = self.boot_options
+            other_boot_options = other.boot_options
+
+            return (
+                self.volume == other.volume
+                and self.loader_path == other.loader_path
+                and str(self_boot_options) == str(other_boot_options)
+            )
 
         return False
 
     def __hash__(self):
-        return hash((self.volume, self.loader_path))
+        boot_options = self.boot_options
+
+        return hash((self.volume, self.loader_path, str(boot_options)))
 
     def __str__(self) -> str:
         result: List[str] = []
