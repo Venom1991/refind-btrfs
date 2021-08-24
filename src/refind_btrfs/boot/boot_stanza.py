@@ -304,7 +304,10 @@ class BootStanza:
         volume = self.volume
 
         if not is_none_or_whitespace(volume):
-            return none_throws(volume).strip(constants.DOUBLE_QUOTE)
+            whitespace_pattern = re.compile(constants.WHITESPACE_PATTERN)
+            stripped_volume = none_throws(volume).strip(constants.DOUBLE_QUOTE)
+
+            return whitespace_pattern.sub("_", stripped_volume)
 
         return None
 
