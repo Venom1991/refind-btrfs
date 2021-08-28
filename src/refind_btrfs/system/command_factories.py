@@ -39,11 +39,16 @@ from .lsblk_command import LsblkCommand
 
 class SystemDeviceCommandFactory(BaseDeviceCommandFactory):
     @inject
-    def __init__(self, logger_factory: BaseLoggerFactory) -> None:
+    def __init__(
+        self,
+        logger_factory: BaseLoggerFactory,
+        package_config_provider: BasePackageConfigProvider,
+    ) -> None:
         self._logger_factory = logger_factory
+        self._package_config_provider = package_config_provider
 
     def physical_device_command(self) -> DeviceCommand:
-        return LsblkCommand(self._logger_factory)
+        return LsblkCommand(self._logger_factory, self._package_config_provider)
 
     def live_device_command(self) -> DeviceCommand:
         return FindmntCommand(self._logger_factory)

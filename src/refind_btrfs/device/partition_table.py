@@ -27,6 +27,7 @@ import re
 from functools import cached_property
 from pathlib import Path
 from typing import Iterable, List, Optional
+from uuid import UUID
 
 from more_itertools import only
 
@@ -42,6 +43,7 @@ class PartitionTable:
     def __init__(self, uuid: str, pt_type: str) -> None:
         self._uuid = uuid
         self._pt_type = pt_type
+        self._esp_uuid = constants.EMPTY_UUID
         self._fstab_file_path: Optional[Path] = None
         self._partitions: Optional[List[Partition]] = None
 
@@ -56,6 +58,11 @@ class PartitionTable:
 
     def __hash__(self) -> int:
         return hash(self.uuid)
+
+    def with_esp_uuid(self, esp_uuid: UUID) -> PartitionTable:
+        self._esp_uuid = esp_uuid
+
+        return self
 
     def with_fstab_file_path(self, fstab_file_path: Path) -> PartitionTable:
         self._fstab_file_path = fstab_file_path
@@ -147,6 +154,10 @@ class PartitionTable:
         return self._pt_type
 
     @property
+    def esp_uuid(self) -> UUID:
+        return self._esp_uuid
+
+    @property
     def fstab_file_path(self) -> Optional[Path]:
         return self._fstab_file_path
 
@@ -160,7 +171,7 @@ class PartitionTable:
             return only(
                 partition
                 for partition in none_throws(self.partitions)
-                if partition.is_esp()
+                if partition.is_esp(self.esp_uuid)
             )
 
         return None

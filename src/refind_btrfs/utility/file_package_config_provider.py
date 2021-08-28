@@ -108,12 +108,28 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
     @staticmethod
     def _read_config_from(toml_document: TOMLDocument):
+        esp_uuid_key: str = TopLevelConfigKey.ESP_UUID.value
         exit_if_root_is_snapshot_key: str = (
             TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
         )
         snapshot_searches_key: str = TopLevelConfigKey.SNAPSHOT_SEARCH.value
         snapshot_manipulation_key: str = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
         boot_stanza_generation_key: str = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
+
+        if esp_uuid_key not in toml_document:
+            raise PackageConfigError(f"Missing option '{esp_uuid_key}'!")
+
+        esp_uuid_value = toml_document[esp_uuid_key]
+
+        if not isinstance(esp_uuid_value, str):
+            raise PackageConfigError(f"The '{esp_uuid_key}' option must be a string!")
+        else:
+            esp_uuid = try_parse_uuid(esp_uuid_value)
+
+            if esp_uuid is None:
+                raise PackageConfigError(
+                    f"Could not parse '{esp_uuid_value}' as an UUID!"
+                )
 
         if exit_if_root_is_snapshot_key not in toml_document:
             raise PackageConfigError(
@@ -187,6 +203,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         )
 
         return PackageConfig(
+            esp_uuid,
             exit_if_root_is_snapshot,
             snapshot_searches,
             snapshot_manipulation,

@@ -20,7 +20,7 @@ pid==3.0.4
 platformdirs==2.2.0
 pylint==2.10.2
 pyparsing==2.4.7
-regex==2021.8.21
+regex==2021.8.28
 semantic-version==2.8.5
 six==1.16.0
 systemd-python==234

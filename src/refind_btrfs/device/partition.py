@@ -71,15 +71,22 @@ class Partition:
 
         return self
 
-    def is_esp(self) -> bool:
+    def is_esp(self, uuid: UUID) -> bool:
         filesystem = self.filesystem
 
         if filesystem is not None:
-            return (
-                (
-                    self.part_type_code == constants.ESP_PART_CODE
-                    or self.part_type_uuid == constants.ESP_PART_UUID
+            if uuid == constants.EMPTY_UUID:
+                is_matched = (
+                    self.part_type_code == constants.ESP_PART_TYPE_CODE
+                    or self.part_type_uuid == constants.ESP_PART_TYPE_UUID
                 )
+            else:
+                parsed_uuid = try_parse_uuid(self.uuid)
+
+                is_matched = uuid == parsed_uuid
+
+            return (
+                is_matched
                 and filesystem.is_mounted()
                 and filesystem.is_of_type(constants.ESP_FS_TYPE)
             )

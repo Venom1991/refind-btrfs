@@ -4,6 +4,14 @@
 
 # TOML syntax
 
+# esp_uuid = <string>
+## Explicitly defined ESP's Part-UUID which can be used in case the ESP itself
+## cannot be automatically located on the system (for whatever reason).
+## This option is, by default, defined as an empty UUID which means that it is
+## ignored.
+
+esp_uuid = "00000000-0000-0000-0000-000000000000"
+
 # exit_if_root_is_snapshot = <bool>
 ## Whether to issue a warning and prematurely exit in case the root partition
 ## is already mounted as a snapshot.

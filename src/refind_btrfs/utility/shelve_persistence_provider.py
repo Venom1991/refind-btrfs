@@ -38,14 +38,13 @@ from refind_btrfs.utility.helpers import checked_cast
 
 class ShelvePersistenceProvider(BasePersistenceProvider):
     def __init__(self) -> None:
+        version_suffix = constants.DB_ITEM_VERSION_SUFFIX
+
         self._db_filename = str(constants.DB_FILE)
         self._current_versions = {
-            f"{LocalDbKey.PACKAGE_CONFIG.value}_"
-            f"{constants.DB_ITEM_VERSION_SUFFIX}": Version("1.0.0"),
-            f"{LocalDbKey.REFIND_CONFIGS.value}_"
-            f"{constants.DB_ITEM_VERSION_SUFFIX}": Version("1.0.0"),
-            f"{LocalDbKey.PROCESSING_RESULT.value}_"
-            f"{constants.DB_ITEM_VERSION_SUFFIX}": Version("1.0.0"),
+            f"{LocalDbKey.PACKAGE_CONFIG.value}_{version_suffix}": Version("1.1.0"),
+            f"{LocalDbKey.REFIND_CONFIGS.value}_{version_suffix}": Version("1.0.0"),
+            f"{LocalDbKey.PROCESSING_RESULT.value}_{version_suffix}": Version("1.0.0"),
         }
 
     def get_package_config(self) -> Optional[PackageConfig]:

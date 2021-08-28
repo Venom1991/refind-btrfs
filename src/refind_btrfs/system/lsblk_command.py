@@ -28,9 +28,10 @@ from typing import Any, Generator, Iterable
 
 from more_itertools import always_iterable, one
 
-from refind_btrfs.common import constants
+from refind_btrfs.common import PackageConfig, constants
 from refind_btrfs.common.abc.commands import DeviceCommand
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
+from refind_btrfs.common.abc.providers import BasePackageConfigProvider
 from refind_btrfs.common.enums import LsblkColumn, LsblkJsonKey
 from refind_btrfs.common.exceptions import PartitionError
 from refind_btrfs.device import (
@@ -48,8 +49,13 @@ from refind_btrfs.utility.helpers import (
 
 
 class LsblkCommand(DeviceCommand):
-    def __init__(self, logger_factory: BaseLoggerFactory) -> None:
+    def __init__(
+        self,
+        logger_factory: BaseLoggerFactory,
+        package_config_provider: BasePackageConfigProvider,
+    ) -> None:
         self._logger = logger_factory.logger(__name__)
+        self._package_config_provider = package_config_provider
 
     def get_block_devices(self) -> Generator[BlockDevice, None, None]:
         logger = self._logger
@@ -151,12 +157,15 @@ class LsblkCommand(DeviceCommand):
                 LsblkColumn.PTABLE_TYPE,
             ]
         ]
+        esp_uuid = self.package_config.esp_uuid
         lsblk_partitions = always_iterable(
             lsblk_blockdevice.get(LsblkJsonKey.CHILDREN.value)
         )
 
-        return PartitionTable(*lsblk_partition_table_columns).with_partitions(
-            LsblkCommand._map_to_partitions(lsblk_partitions)
+        return (
+            PartitionTable(*lsblk_partition_table_columns)
+            .with_esp_uuid(esp_uuid)
+            .with_partitions(LsblkCommand._map_to_partitions(lsblk_partitions))
         )
 
     def _subvolume_partition_table(self, subvolume: Subvolume) -> PartitionTable:
@@ -233,3 +242,9 @@ class LsblkCommand(DeviceCommand):
             )
 
             yield from LsblkCommand._map_to_partitions(lsblk_nested_partitions)
+
+    @property
+    def package_config(self) -> PackageConfig:
+        package_config_provider = self._package_config_provider
+
+        return package_config_provider.get_config()

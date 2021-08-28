@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from functools import cached_property
 from pathlib import Path
 from typing import Generator, Iterable, List, NamedTuple, Set
+from uuid import UUID
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
@@ -77,6 +78,7 @@ class BootStanzaGeneration(NamedTuple):
 class PackageConfig(BaseConfig):
     def __init__(
         self,
+        esp_uuid: UUID,
         exit_if_root_is_snapshot: bool,
         snapshot_searches: Iterable[SnapshotSearch],
         snapshot_manipulation: SnapshotManipulation,
@@ -84,6 +86,7 @@ class PackageConfig(BaseConfig):
     ) -> None:
         super().__init__(constants.PACKAGE_CONFIG_FILE)
 
+        self._esp_uuid = esp_uuid
         self._exit_if_root_is_snapshot = exit_if_root_is_snapshot
         self._snapshot_searches = list(snapshot_searches)
         self._snapshot_manipulation = snapshot_manipulation
@@ -98,6 +101,10 @@ class PackageConfig(BaseConfig):
                 max_depth = snapshot_search.max_depth - 1
 
                 yield from find_all_directories_in(directory, max_depth)
+
+    @property
+    def esp_uuid(self) -> UUID:
+        return self._esp_uuid
 
     @property
     def exit_if_root_is_snapshot(self) -> bool:

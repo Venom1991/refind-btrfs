@@ -68,6 +68,8 @@ In case you've opted to use the provided systemd service and wish to change the 
 
 The default configuration is meant to enable seamless integration with Snapper simply because I'm using it but the tool itself doesn't depend on it and ought to function with different setups. Also, by default the tool is configured for creating new writable snapshots intended for booting instead of in-place modification of the found snapshots' read-only flags as I believe this is the safer (or perhaps even saner) choice.
 
+If you're having trouble with the ESP being automatically located, the "esp_uuid" option could prove be useful. If an actual UUID is provided (not the default, empty one), this value will be used to compare partition UUIDs (returned by lsblk) instead of comparing their types with hardcoded GPT UUID or MBR ID values.
+
 It is imperative that you don't just blindly try to boot into a given snapshot (simply because no errors were reported) before verifying the generated manual boot stanza, either by inspecting the file contents in which it was saved or by viewing the boot loader [options](https://www.rodsbooks.com/refind/using.html#boot_options) using rEFInd and also not before verifying the chosen snapshot's fstab file.
 
 ## Example
