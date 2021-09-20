@@ -36,6 +36,7 @@ from watchdog.events import (
     FileSystemEventHandler,
 )
 
+from refind_btrfs.common import ConfigurableMixin
 from refind_btrfs.common.abc.factories import (
     BaseLoggerFactory,
     BaseSubvolumeCommandFactory,
@@ -53,7 +54,7 @@ from refind_btrfs.utility.helpers import (
 )
 
 
-class SnapshotEventHandler(FileSystemEventHandler):
+class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
     @inject
     def __init__(
         self,
@@ -63,9 +64,10 @@ class SnapshotEventHandler(FileSystemEventHandler):
         persistence_provider: BasePersistenceProvider,
         machine: RefindBtrfsMachine,
     ) -> None:
+        super().__init__(package_config_provider)
+
         self._logger = logger_factory.logger(__name__)
         self._subvolume_command_factory = subvolume_command_factory
-        self._package_config_provider = package_config_provider
         self._persistence_provider = persistence_provider
         self._machine = machine
         self._deleted_snapshots: Set[Subvolume] = set()
@@ -106,9 +108,7 @@ class SnapshotEventHandler(FileSystemEventHandler):
                 machine.run()
 
     def _is_snapshot_created(self, created_directory: Path) -> bool:
-        package_config_provider = self._package_config_provider
-        package_config = package_config_provider.get_config()
-        snapshot_searches = package_config.snapshot_searches
+        snapshot_searches = self.package_config.snapshot_searches
         parents = created_directory.parents
 
         for snapshot_search in snapshot_searches:
@@ -140,14 +140,18 @@ class SnapshotEventHandler(FileSystemEventHandler):
             )
 
             if deleted_snapshot is not None:
-                deleted_snapshots = self._deleted_snapshots
-                deletion_lock = self._deletion_lock
+                snapshot_manipulation = self.package_config.snapshot_manipulation
+                cleanup_exclusion = snapshot_manipulation.cleanup_exclusion
 
-                with deletion_lock:
-                    if not deleted_snapshot in deleted_snapshots:
-                        deleted_snapshots.add(deleted_snapshot)
+                if deleted_snapshot not in cleanup_exclusion:
+                    deleted_snapshots = self._deleted_snapshots
+                    deletion_lock = self._deletion_lock
 
-                        return True
+                    with deletion_lock:
+                        if deleted_snapshot not in deleted_snapshots:
+                            deleted_snapshots.add(deleted_snapshot)
+
+                            return True
 
         return False
 

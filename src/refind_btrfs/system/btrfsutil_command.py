@@ -27,7 +27,7 @@ from typing import Generator, List, Optional, Set
 
 import btrfsutil
 
-from refind_btrfs.common import PackageConfig, constants
+from refind_btrfs.common import ConfigurableMixin, constants
 from refind_btrfs.common.abc.commands import SubvolumeCommand
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.abc.providers import BasePackageConfigProvider
@@ -41,14 +41,15 @@ from refind_btrfs.utility.helpers import (
 )
 
 
-class BtrfsUtilCommand(SubvolumeCommand):
+class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
     def __init__(
         self,
         logger_factory: BaseLoggerFactory,
         package_config_provider: BasePackageConfigProvider,
     ) -> None:
+        super().__init__(package_config_provider)
+
         self._logger = logger_factory.logger(__name__)
-        self._package_config_provider = package_config_provider
         self._searched_directories: Set[Path] = set()
 
     def get_subvolume_from(self, filesystem_path: Path) -> Optional[Subvolume]:
@@ -302,9 +303,3 @@ class BtrfsUtilCommand(SubvolumeCommand):
         writable_snapshot = self.get_subvolume_from(snapshot_directory)
 
         return none_throws(writable_snapshot).as_newly_created_from(source)
-
-    @property
-    def package_config(self) -> PackageConfig:
-        package_config_provider = self._package_config_provider
-
-        return package_config_provider.get_config()

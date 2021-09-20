@@ -48,7 +48,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
         }
 
     def get_package_config(self) -> Optional[PackageConfig]:
-        db_key: str = LocalDbKey.PACKAGE_CONFIG.value
+        db_key = LocalDbKey.PACKAGE_CONFIG.value
 
         with shelve.open(self._db_filename) as local_db:
             item = self._get_item(db_key, local_db)
@@ -62,13 +62,13 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
         return None
 
     def save_package_config(self, value: PackageConfig) -> None:
-        db_key: str = LocalDbKey.PACKAGE_CONFIG.value
+        db_key = LocalDbKey.PACKAGE_CONFIG.value
 
         with shelve.open(self._db_filename) as local_db:
             self._save_item(value, db_key, local_db)
 
     def get_refind_config(self, file_path: Path) -> Optional[RefindConfig]:
-        db_key: str = LocalDbKey.REFIND_CONFIGS.value
+        db_key = LocalDbKey.REFIND_CONFIGS.value
 
         with shelve.open(self._db_filename) as local_db:
             item = self._get_item(db_key, local_db)
@@ -88,7 +88,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
         return None
 
     def save_refind_config(self, value: RefindConfig) -> None:
-        db_key: str = LocalDbKey.REFIND_CONFIGS.value
+        db_key = LocalDbKey.REFIND_CONFIGS.value
 
         with shelve.open(self._db_filename) as local_db:
             item = self._get_item(db_key, local_db)
@@ -105,7 +105,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
             self._save_item(all_refind_configs, db_key, local_db)
 
     def get_previous_run_result(self) -> ProcessingResult:
-        db_key: str = LocalDbKey.PROCESSING_RESULT.value
+        db_key = LocalDbKey.PROCESSING_RESULT.value
 
         with shelve.open(self._db_filename) as local_db:
             item = self._get_item(db_key, local_db)
@@ -116,7 +116,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
         return ProcessingResult.none()
 
     def save_current_run_result(self, value: ProcessingResult) -> None:
-        db_key: str = LocalDbKey.PROCESSING_RESULT.value
+        db_key = LocalDbKey.PROCESSING_RESULT.value
 
         with shelve.open(self._db_filename) as local_db:
             self._save_item(value, db_key, local_db)

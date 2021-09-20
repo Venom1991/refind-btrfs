@@ -112,9 +112,9 @@ class Conditions:
         logger.info(f"Found subvolume '{logical_path}' mounted as the root partition.")
 
         if subvolume.is_snapshot():
-            package_config = model.package_config
+            exit_if_root_is_snapshot = model.package_config.exit_if_root_is_snapshot
 
-            if package_config.exit_if_root_is_snapshot:
+            if exit_if_root_is_snapshot:
                 parent_uuid = subvolume.parent_uuid
 
                 raise UnsupportedConfiguration(

@@ -30,7 +30,7 @@ from refind_btrfs.common import constants
 class LevelAwareFormatter(Formatter):
     def format(self, record: LogRecord) -> str:
         levelno = record.levelno
-        fmt: str = constants.EMPTY_STR
+        fmt = constants.EMPTY_STR
 
         if levelno == logging.INFO:
             fmt = "%(message)s"

@@ -108,13 +108,11 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
     @staticmethod
     def _read_config_from(toml_document: TOMLDocument):
-        esp_uuid_key: str = TopLevelConfigKey.ESP_UUID.value
-        exit_if_root_is_snapshot_key: str = (
-            TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
-        )
-        snapshot_searches_key: str = TopLevelConfigKey.SNAPSHOT_SEARCH.value
-        snapshot_manipulation_key: str = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
-        boot_stanza_generation_key: str = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
+        esp_uuid_key = TopLevelConfigKey.ESP_UUID.value
+        exit_if_root_is_snapshot_key = TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
+        snapshot_searches_key = TopLevelConfigKey.SNAPSHOT_SEARCH.value
+        snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
+        boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
 
         if esp_uuid_key not in toml_document:
             raise PackageConfigError(f"Missing option '{esp_uuid_key}'!")
@@ -214,9 +212,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     def _map_to_snapshot_searches(
         snapshot_searches_value: AoT,
     ) -> Generator[SnapshotSearch, None, None]:
-        directory_key: str = SnapshotSearchConfigKey.DIRECTORY.value
-        max_depth_key: str = SnapshotSearchConfigKey.MAX_DEPTH.value
-        is_nested_key: str = SnapshotSearchConfigKey.IS_NESTED.value
+        directory_key = SnapshotSearchConfigKey.DIRECTORY.value
+        max_depth_key = SnapshotSearchConfigKey.MAX_DEPTH.value
+        is_nested_key = SnapshotSearchConfigKey.IS_NESTED.value
         all_keys = [directory_key, max_depth_key, is_nested_key]
 
         for value in snapshot_searches_value:
@@ -272,16 +270,14 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     def _map_to_snapshot_manipulation(
         snapshot_manipulation_value: Table,
     ) -> SnapshotManipulation:
-        selection_count_key: str = SnapshotManipulationConfigKey.SELECTION_COUNT.value
-        modify_read_only_flag_key: str = (
+        selection_count_key = SnapshotManipulationConfigKey.SELECTION_COUNT.value
+        modify_read_only_flag_key = (
             SnapshotManipulationConfigKey.MODIFY_READ_ONLY_FLAG.value
         )
-        destination_directory_key: str = (
+        destination_directory_key = (
             SnapshotManipulationConfigKey.DESTINATION_DIRECTORY.value
         )
-        cleanup_exclusion_key: str = (
-            SnapshotManipulationConfigKey.CLEANUP_EXCLUSION.value
-        )
+        cleanup_exclusion_key = SnapshotManipulationConfigKey.CLEANUP_EXCLUSION.value
         all_keys = [
             selection_count_key,
             modify_read_only_flag_key,
@@ -385,11 +381,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     def _map_to_boot_stanza_generation(
         boot_stanza_generation_value: Table,
     ) -> BootStanzaGeneration:
-        refind_config_key: str = BootStanzaGenerationConfigKey.REFIND_CONFIG.value
-        include_paths_key: str = BootStanzaGenerationConfigKey.INCLUDE_PATHS.value
-        include_sub_menus_key: str = (
-            BootStanzaGenerationConfigKey.INCLUDE_SUB_MENUS.value
-        )
+        refind_config_key = BootStanzaGenerationConfigKey.REFIND_CONFIG.value
+        include_paths_key = BootStanzaGenerationConfigKey.INCLUDE_PATHS.value
+        include_sub_menus_key = BootStanzaGenerationConfigKey.INCLUDE_SUB_MENUS.value
         all_keys = [refind_config_key, include_paths_key, include_sub_menus_key]
 
         for key in all_keys:

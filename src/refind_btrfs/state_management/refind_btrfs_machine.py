@@ -58,7 +58,7 @@ class RefindBtrfsMachine(Machine):
             )
 
         initial = checked_cast(State, first(states))
-        expected_initial_name: str = StateNames.INITIAL.value
+        expected_initial_name = StateNames.INITIAL.value
 
         if initial.name != expected_initial_name:
             raise ValueError(
@@ -67,7 +67,7 @@ class RefindBtrfsMachine(Machine):
             )
 
         final = checked_cast(State, last(states))
-        expected_final_name: str = StateNames.FINAL.value
+        expected_final_name = StateNames.FINAL.value
 
         if final.name != expected_final_name:
             raise ValueError(

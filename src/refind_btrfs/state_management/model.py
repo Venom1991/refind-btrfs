@@ -30,7 +30,7 @@ from injector import inject
 from more_itertools import only
 
 from refind_btrfs.boot import BootStanza, RefindConfig
-from refind_btrfs.common import BootStanzaGeneration, PackageConfig
+from refind_btrfs.common import BootStanzaGeneration, ConfigurableMixin
 from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
@@ -105,7 +105,7 @@ class ProcessingResult(NamedTuple):
 # endregion
 
 
-class Model:
+class Model(ConfigurableMixin):
     @inject
     def __init__(
         self,
@@ -116,9 +116,10 @@ class Model:
         refind_config_provider: BaseRefindConfigProvider,
         persistence_provider: BasePersistenceProvider,
     ) -> None:
+        super().__init__(package_config_provider)
+
         self._device_command_factory = device_command_factory
         self._subvolume_command_factory = subvolume_command_factory
-        self._package_config_provider = package_config_provider
         self._refind_config_provider = refind_config_provider
         self._persistence_provider = persistence_provider
         self._conditions = Conditions(logger_factory, self)
@@ -262,8 +263,7 @@ class Model:
         self._process_boot_stanzas()
 
         persistence_provider = self._persistence_provider
-        package_config = self.package_config
-        current_boot_stanza_generation = package_config.boot_stanza_generation
+        current_boot_stanza_generation = self.package_config.boot_stanza_generation
 
         persistence_provider.save_current_run_result(
             ProcessingResult(bootable_snapshots, current_boot_stanza_generation)
@@ -332,8 +332,7 @@ class Model:
         refind_config_provider.append_to_config(refind_config)
 
     def _should_include_paths_during_generation(self) -> bool:
-        package_config = self.package_config
-        boot_stanza_generation = package_config.boot_stanza_generation
+        boot_stanza_generation = self.package_config.boot_stanza_generation
 
         if boot_stanza_generation.include_paths:
             return self.boot_device is None
@@ -341,8 +340,7 @@ class Model:
         return False
 
     def _should_include_sub_menus_during_generation(self) -> bool:
-        package_config = self.package_config
-        boot_stanza_generation = package_config.boot_stanza_generation
+        boot_stanza_generation = self.package_config.boot_stanza_generation
 
         return boot_stanza_generation.include_sub_menus
 
@@ -360,12 +358,6 @@ class Model:
             conditions.check_boot_stanzas_with_snapshots,
             always_true_func,
         ]
-
-    @property
-    def package_config(self) -> PackageConfig:
-        package_config_provider = self._package_config_provider
-
-        return package_config_provider.get_config()
 
     @property
     def refind_config(self) -> RefindConfig:

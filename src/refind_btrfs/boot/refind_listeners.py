@@ -27,5 +27,6 @@ from refind_btrfs.common.exceptions import RefindSyntaxError
 
 
 class RefindErrorListener(ErrorListener):
+    # pylint: disable=unused-argument
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         raise RefindSyntaxError(line, column, msg)

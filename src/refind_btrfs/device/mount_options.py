@@ -96,8 +96,8 @@ class MountOptions:
         parameterized_options = self._parameterized_options
         subvol_tuple = parameterized_options.get(constants.SUBVOL_OPTION)
         subvolid_tuple = parameterized_options.get(constants.SUBVOLID_OPTION)
-        subvol_matched: bool = False
-        subvolid_matched: bool = False
+        subvol_matched = False
+        subvolid_matched = False
 
         if subvol_tuple is not None:
             subvol_value = subvol_tuple[1]

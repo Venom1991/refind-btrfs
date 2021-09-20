@@ -171,7 +171,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                         f"Could not read from the '{config_file_path.name}' file!"
                     ) from e
                 else:
-                    include_option: str = RefindOption.INCLUDE.value
+                    include_option = RefindOption.INCLUDE.value
                     suffix = item_count_suffix(included_configs_for_appending)
 
                     try:

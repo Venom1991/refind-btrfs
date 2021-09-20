@@ -21,12 +21,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from .boot_files_check_result import BootFilesCheckResult
-from .checkable_observer import CheckableObserver
-from .configurable_mixin import ConfigurableMixin
-from .package_config import (
-    BootStanzaGeneration,
-    PackageConfig,
-    SnapshotManipulation,
-    SnapshotSearch,
-)
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from refind_btrfs.common.abc.providers import BasePackageConfigProvider
+
+if TYPE_CHECKING:
+    from refind_btrfs.common import PackageConfig
+
+
+class ConfigurableMixin:
+    def __init__(self, package_config_provider: BasePackageConfigProvider) -> None:
+        self._package_config_provider = package_config_provider
+
+    @property
+    def package_config(self) -> PackageConfig:
+        package_config_provider = self._package_config_provider
+
+        return package_config_provider.get_config()
