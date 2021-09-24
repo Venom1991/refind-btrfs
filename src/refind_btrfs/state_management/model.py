@@ -62,15 +62,10 @@ class BlockDevices(NamedTuple):
 class PreparedSnapshots(NamedTuple):
     snapshots_for_addition: List[Subvolume]
     snapshots_for_removal: List[Subvolume]
-    current_boot_stanza_generation: BootStanzaGeneration
-    previous_boot_stanza_generation: Optional[BootStanzaGeneration]
 
     def has_changes(self) -> bool:
-        return (
-            has_items(self.snapshots_for_addition)
-            or has_items(self.snapshots_for_removal)
-        ) or (
-            self.current_boot_stanza_generation != self.previous_boot_stanza_generation
+        return has_items(self.snapshots_for_addition) or has_items(
+            self.snapshots_for_removal
         )
 
 
@@ -212,14 +207,8 @@ class Model(ConfigurableMixin):
             for snapshot in snapshots_for_addition:
                 snapshot.initialize_partition_table_using(device_command_factory)
 
-        current_boot_stanza_generation = package_config.boot_stanza_generation
-        previous_boot_stanza_generation = previous_run_result.boot_stanza_generation
-
         self._prepared_snapshots = PreparedSnapshots(
-            snapshots_for_addition,
-            snapshots_for_removal,
-            current_boot_stanza_generation,
-            previous_boot_stanza_generation,
+            snapshots_for_addition, snapshots_for_removal
         )
 
     def combine_boot_stanzas_with_snapshots(self) -> None:

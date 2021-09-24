@@ -98,8 +98,15 @@ class PathRelation(Enum):
 
 
 @unique
+class ConfigInitializationType(Enum):
+    PARSED = 0
+    PERSISTED = 1
+
+
+@unique
 class TopLevelConfigKey(Enum):
     EXIT_IF_ROOT_IS_SNAPSHOT = "exit_if_root_is_snapshot"
+    EXIT_IF_NO_CHANGES_ARE_DETECTED = "exit_if_no_changes_are_detected"
     ESP_UUID = "esp_uuid"
     SNAPSHOT_SEARCH = "snapshot-search"
     SNAPSHOT_MANIPULATION = "snapshot-manipulation"

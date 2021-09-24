@@ -20,6 +20,20 @@ esp_uuid = "00000000-0000-0000-0000-000000000000"
 
 exit_if_root_is_snapshot = true
 
+# exit_if_no_changes_are_detected = <bool>
+## Whether to issue a warning and prematurely exit in case no changes were
+## detected by comparing the preparation results of the current run with those
+## of the previous run (if it exists).
+## Changes are considered to be detected in case any of the following
+## conditions are satisfied:
+##      • this configuration file was modified
+##      • rEFInd's configuration file (main or included) was modified
+##      • at least one snapshot was found (either for addition or removal)
+## The time of last modification (st_mtime) is used to detect file changes
+## instead of comparing their contents.
+
+exit_if_no_changes_are_detected = true
+
 # [[snapshot-search]]
 ## Array of objects used to configure the behavior of searching for snapshots.
 ## The directory (or directories) listed in this array (including nested

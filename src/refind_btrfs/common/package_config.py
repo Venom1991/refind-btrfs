@@ -62,24 +62,13 @@ class BootStanzaGeneration(NamedTuple):
     include_paths: bool
     include_sub_menus: bool
 
-    def __eq__(self, other: object) -> bool:
-        if self is other:
-            return True
-
-        if isinstance(other, BootStanzaGeneration):
-            return (
-                self.include_paths == other.include_paths
-                and self.include_sub_menus == other.include_sub_menus
-            )
-
-        return False
-
 
 class PackageConfig(BaseConfig):
     def __init__(
         self,
         esp_uuid: UUID,
         exit_if_root_is_snapshot: bool,
+        exit_if_no_changes_are_detected: bool,
         snapshot_searches: Iterable[SnapshotSearch],
         snapshot_manipulation: SnapshotManipulation,
         boot_stanza_generation: BootStanzaGeneration,
@@ -88,6 +77,7 @@ class PackageConfig(BaseConfig):
 
         self._esp_uuid = esp_uuid
         self._exit_if_root_is_snapshot = exit_if_root_is_snapshot
+        self._exit_if_no_changes_are_detected = exit_if_no_changes_are_detected
         self._snapshot_searches = list(snapshot_searches)
         self._snapshot_manipulation = snapshot_manipulation
         self._boot_stanza_generation = boot_stanza_generation
@@ -109,6 +99,10 @@ class PackageConfig(BaseConfig):
     @property
     def exit_if_root_is_snapshot(self) -> bool:
         return self._exit_if_root_is_snapshot
+
+    @property
+    def exit_if_no_changes_are_detected(self) -> bool:
+        return self._exit_if_no_changes_are_detected
 
     @property
     def snapshot_searches(self) -> List[SnapshotSearch]:

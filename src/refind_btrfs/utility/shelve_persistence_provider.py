@@ -56,7 +56,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
             if item is not None:
                 package_config = checked_cast(PackageConfig, item)
 
-                if not package_config.has_been_modified(constants.PACKAGE_CONFIG_FILE):
+                if not package_config.is_modified(constants.PACKAGE_CONFIG_FILE):
                     return package_config
 
         return None
@@ -78,7 +78,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
                 refind_config = all_refind_configs.get(file_path)
 
                 if refind_config is not None:
-                    if refind_config.has_been_modified(file_path):
+                    if refind_config.is_modified(file_path):
                         del all_refind_configs[file_path]
 
                         self._save_item(all_refind_configs, db_key, local_db)

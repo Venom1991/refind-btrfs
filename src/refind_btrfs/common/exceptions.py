@@ -72,7 +72,7 @@ class RefindConfigError(RefindBtrfsError):
 
 
 class RefindSyntaxError(RefindBtrfsError):
-    def __init__(self, line, column, message) -> None:
+    def __init__(self, line: int, column: int, message: str) -> None:
         super().__init__(message)
 
         self._line = line
@@ -85,9 +85,9 @@ class RefindSyntaxError(RefindBtrfsError):
         )
 
 
-class UnsupportedConfiguration(RefindBtrfsError):
+class RootIsSnapshotError(RefindBtrfsError):
     pass
 
 
-class UnchangedConfiguration(RefindBtrfsError):
+class NoChangesDetectedError(RefindBtrfsError):
     pass

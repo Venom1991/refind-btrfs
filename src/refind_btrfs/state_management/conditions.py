@@ -28,11 +28,12 @@ from typing import TYPE_CHECKING
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
+from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.common.exceptions import (
+    NoChangesDetectedError,
     RefindConfigError,
+    RootIsSnapshotError,
     SubvolumeError,
-    UnchangedConfiguration,
-    UnsupportedConfiguration,
 )
 from refind_btrfs.utility.helpers import (
     has_items,
@@ -112,12 +113,12 @@ class Conditions:
         logger.info(f"Found subvolume '{logical_path}' mounted as the root partition.")
 
         if subvolume.is_snapshot():
-            exit_if_root_is_snapshot = model.package_config.exit_if_root_is_snapshot
+            package_config = model.package_config
 
-            if exit_if_root_is_snapshot:
+            if package_config.exit_if_root_is_snapshot:
                 parent_uuid = subvolume.parent_uuid
 
-                raise UnsupportedConfiguration(
+                raise RootIsSnapshotError(
                     f"Subvolume '{logical_path}' is itself a snapshot "
                     f"(parent UUID - '{parent_uuid}'), exiting..."
                 )
@@ -190,10 +191,6 @@ class Conditions:
         logger = self._logger
         model = self._model
         prepared_snapshots = model.prepared_snapshots
-
-        if not prepared_snapshots.has_changes():
-            raise UnchangedConfiguration("No changes were detected, aborting...")
-
         snapshots_for_addition = prepared_snapshots.snapshots_for_addition
         snapshots_for_removal = prepared_snapshots.snapshots_for_removal
 
@@ -258,5 +255,23 @@ class Conditions:
             )
 
             return False
+
+        package_config = model.package_config
+
+        if package_config.exit_if_no_changes_are_detected:
+            refind_config = model.refind_config
+            prepared_snapshots = model.prepared_snapshots
+            has_changes = (
+                package_config.is_of_initialization_type(
+                    ConfigInitializationType.PARSED
+                )
+                or refind_config.is_of_initialization_type(
+                    ConfigInitializationType.PARSED
+                )
+                or prepared_snapshots.has_changes()
+            )
+
+            if not has_changes:
+                raise NoChangesDetectedError("No changes were detected, aborting...")
 
         return True

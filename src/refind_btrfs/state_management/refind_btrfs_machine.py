@@ -30,10 +30,10 @@ from transitions import Machine, State
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.enums import StateNames
 from refind_btrfs.common.exceptions import (
+    NoChangesDetectedError,
     PartitionError,
     RefindConfigError,
     SubvolumeError,
-    UnchangedConfiguration,
 )
 from refind_btrfs.utility.helpers import checked_cast, has_items, is_singleton
 
@@ -102,7 +102,7 @@ class RefindBtrfsMachine(Machine):
             while model.next_state():
                 if model.is_final():
                     return True
-        except UnchangedConfiguration as e:
+        except NoChangesDetectedError as e:
             logger.warning(e.formatted_message)
             return True
         except (

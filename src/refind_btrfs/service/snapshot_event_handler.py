@@ -45,6 +45,7 @@ from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
 )
+from refind_btrfs.common.exceptions import SubvolumeError
 from refind_btrfs.device import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine
 from refind_btrfs.utility.helpers import (
@@ -86,7 +87,7 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
             if self._is_snapshot_created(created_directory):
                 machine = self._machine
 
-                logger.info(f"The '{created_directory}' directory has been created.")
+                logger.info(f"The '{created_directory}' snapshot has been created.")
 
                 machine.run()
 
@@ -100,12 +101,15 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
             logger = self._logger
             deleted_directory = Path(dir_deleted_event.src_path)
 
-            if self._is_snapshot_deleted(deleted_directory):
-                machine = self._machine
+            try:
+                if self._is_snapshot_deleted(deleted_directory):
+                    machine = self._machine
 
-                logger.info(f"The '{deleted_directory}' directory has been deleted.")
+                    logger.info(f"The '{deleted_directory}' snapshot has been deleted.")
 
-                machine.run()
+                    machine.run()
+            except SubvolumeError as e:
+                logger.warning(e.formatted_message)
 
     def _is_snapshot_created(self, created_directory: Path) -> bool:
         snapshot_searches = self.package_config.snapshot_searches
@@ -140,18 +144,25 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
             )
 
             if deleted_snapshot is not None:
-                snapshot_manipulation = self.package_config.snapshot_manipulation
-                cleanup_exclusion = snapshot_manipulation.cleanup_exclusion
+                deleted_snapshots = self._deleted_snapshots
+                deletion_lock = self._deletion_lock
 
-                if deleted_snapshot not in cleanup_exclusion:
-                    deleted_snapshots = self._deleted_snapshots
-                    deletion_lock = self._deletion_lock
+                with deletion_lock:
+                    if deleted_snapshot not in deleted_snapshots:
+                        snapshot_manipulation = (
+                            self.package_config.snapshot_manipulation
+                        )
+                        cleanup_exclusion = snapshot_manipulation.cleanup_exclusion
 
-                    with deletion_lock:
-                        if deleted_snapshot not in deleted_snapshots:
-                            deleted_snapshots.add(deleted_snapshot)
+                        deleted_snapshots.add(deleted_snapshot)
 
-                            return True
+                        if deleted_snapshot in cleanup_exclusion:
+                            raise SubvolumeError(
+                                f"The deleted snapshot ('{deleted_directory}') "
+                                "is explicitly excluded from cleanup!"
+                            )
+
+                        return True
 
         return False
 

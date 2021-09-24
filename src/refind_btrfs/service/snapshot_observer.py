@@ -27,7 +27,7 @@ from injector import inject
 
 from refind_btrfs.common import CheckableObserver, constants
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
-from refind_btrfs.common.exceptions import UnsupportedConfiguration
+from refind_btrfs.common.exceptions import RootIsSnapshotError
 
 
 class SnapshotObserver(CheckableObserver):
@@ -45,7 +45,7 @@ class SnapshotObserver(CheckableObserver):
                 self.dispatch_events(self.event_queue, self.timeout)
             except queue.Empty:
                 continue
-            except UnsupportedConfiguration as e:
+            except RootIsSnapshotError as e:
                 logger.warning(e.formatted_message)
                 self._exception = e
                 self.stop()

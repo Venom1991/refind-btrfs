@@ -32,6 +32,7 @@ from more_itertools import always_iterable
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
+from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import (
     has_items,
@@ -66,20 +67,17 @@ class RefindConfig(BaseConfig):
     def get_boot_stanzas_matched_with(
         self, block_device: BlockDevice
     ) -> Generator[BootStanza, None, None]:
-        boot_stanzas = self.boot_stanzas
-        included_configs = self.included_configs
-
-        if has_items(boot_stanzas):
+        if self.has_boot_stanzas():
             yield from (
                 boot_stanza
-                for boot_stanza in none_throws(boot_stanzas)
+                for boot_stanza in none_throws(self.boot_stanzas)
                 if boot_stanza.is_matched_with(block_device)
             )
 
-        if has_items(included_configs):
+        if self.has_included_configs():
             yield from chain.from_iterable(
                 config.get_boot_stanzas_matched_with(block_device)
-                for config in none_throws(included_configs)
+                for config in none_throws(self.included_configs)
             )
 
     def get_included_configs_difference_from(
@@ -165,6 +163,32 @@ class RefindConfig(BaseConfig):
 
     def has_included_configs(self) -> bool:
         return has_items(self.included_configs)
+
+    def is_of_initialization_type(
+        self, initialization_type: ConfigInitializationType
+    ) -> bool:
+        if super().is_of_initialization_type(initialization_type):
+            return True
+
+        if self.has_included_configs():
+            nongenerated_included_configs = (
+                included_config
+                for included_config in none_throws(self.included_configs)
+                if not included_config.is_generated()
+            )
+
+            return any(
+                included_config.is_of_initialization_type(initialization_type)
+                for included_config in nongenerated_included_configs
+            )
+
+        return False
+
+    def is_generated(self) -> bool:
+        file_path = self.file_path
+        parent_directory = file_path.parent
+
+        return parent_directory.name == constants.SNAPSHOT_STANZAS_DIR_NAME
 
     @property
     def boot_stanzas(self) -> Optional[List[BootStanza]]:

@@ -36,7 +36,7 @@ from refind_btrfs.common.abc.providers import (
     BasePersistenceProvider,
     BaseRefindConfigProvider,
 )
-from refind_btrfs.common.enums import RefindOption
+from refind_btrfs.common.enums import ConfigInitializationType, RefindOption
 from refind_btrfs.common.exceptions import RefindConfigError, RefindSyntaxError
 from refind_btrfs.device import Partition
 from refind_btrfs.utility.helpers import (
@@ -68,6 +68,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         self._logger = logger_factory.logger(__name__)
         self._package_config_provider = package_config_provider
         self._persistence_provider = persistence_provider
+        self._refind_configs: Dict[Path, RefindConfig] = {}
 
     def get_config(self, partition: Partition) -> RefindConfig:
         logger = self._logger
@@ -96,9 +97,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                     f"Found multiple '{refind_config_file}' files (at most one is expected)!"
                 )
 
-            config_file_path = checked_cast(
-                Path, one(none_throws(refind_config_search_result))
-            ).resolve()
+            config_file_path = one(none_throws(refind_config_search_result)).resolve()
 
             FileRefindConfigProvider.all_config_file_paths[partition] = config_file_path
 
@@ -222,62 +221,80 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
             persistence_provider.save_refind_config(config)
 
     def _read_config_from(self, config_file_path: Path) -> RefindConfig:
-        logger = self._logger
         persistence_provider = self._persistence_provider
-        refind_config = persistence_provider.get_refind_config(config_file_path)
+        persisted_refind_config = persistence_provider.get_refind_config(
+            config_file_path
+        )
+        current_refind_config = self._refind_configs.get(config_file_path)
 
-        if refind_config is not None:
-            if refind_config.has_included_configs():
-                current_included_configs = none_throws(refind_config.included_configs)
+        if persisted_refind_config is None:
+            logger = self._logger
+
+            logger.info(f"Analyzing the '{config_file_path.name}' file.")
+
+            try:
+                input_stream = FileStream(str(config_file_path), encoding="utf-8")
+                lexer = RefindConfigLexer(input_stream)
+                token_stream = CommonTokenStream(lexer)
+                parser = RefindConfigParser(token_stream)
+                error_listener = RefindErrorListener()
+
+                parser.removeErrorListeners()
+                parser.addErrorListener(error_listener)
+
+                refind_context = parser.refind()
+            except RefindSyntaxError as e:
+                logger.exception(
+                    f"Error while parsing the '{config_file_path.name}' file!"
+                )
+                raise RefindConfigError(
+                    "Could not load rEFInd configuration from file!"
+                ) from e
+            else:
+                config_option_contexts = checked_cast(
+                    List[RefindConfigParser.Config_optionContext],
+                    refind_context.config_option(),
+                )
+                boot_stanzas = FileRefindConfigProvider._map_to_boot_stanzas(
+                    config_option_contexts
+                )
+                includes = FileRefindConfigProvider._map_to_includes(
+                    config_option_contexts
+                )
+                included_configs = self._read_included_configs_from(
+                    config_file_path.parent, includes
+                )
+
+                current_refind_config = (
+                    RefindConfig(config_file_path)
+                    .with_boot_stanzas(boot_stanzas)
+                    .with_included_configs(included_configs)
+                    .with_initialization_type(
+                        ConfigInitializationType.PARSED, RefindConfig
+                    )
+                )
+
+                persistence_provider.save_refind_config(current_refind_config)
+        elif current_refind_config is None:
+            current_refind_config = persisted_refind_config.with_initialization_type(
+                ConfigInitializationType.PERSISTED, RefindConfig
+            )
+
+            if current_refind_config.has_included_configs():
+                current_included_configs = none_throws(
+                    current_refind_config.included_configs
+                )
                 actual_included_configs = [
                     self._read_config_from(included_config.file_path)
                     for included_config in current_included_configs
                 ]
+                current_refind_config = current_refind_config.with_included_configs(
+                    actual_included_configs
+                )
 
-                return refind_config.with_included_configs(actual_included_configs)
+        self._refind_configs[config_file_path] = current_refind_config
 
-            return refind_config
-
-        logger.info(f"Analyzing the '{config_file_path.name}' file.")
-
-        try:
-            input_stream = FileStream(str(config_file_path), encoding="utf-8")
-            lexer = RefindConfigLexer(input_stream)
-            token_stream = CommonTokenStream(lexer)
-            parser = RefindConfigParser(token_stream)
-            error_listener = RefindErrorListener()
-
-            parser.removeErrorListeners()
-            parser.addErrorListener(error_listener)
-
-            refind_context = parser.refind()
-        except RefindSyntaxError as e:
-            logger.exception(f"Error while parsing the '{config_file_path.name}' file!")
-            raise RefindConfigError(
-                "Could not load rEFInd configuration from file!"
-            ) from e
-        else:
-            config_option_contexts = checked_cast(
-                List[RefindConfigParser.Config_optionContext],
-                refind_context.config_option(),
-            )
-            boot_stanzas = FileRefindConfigProvider._map_to_boot_stanzas(
-                config_option_contexts
-            )
-            includes = FileRefindConfigProvider._map_to_includes(config_option_contexts)
-            included_configs = self._read_included_configs_from(
-                config_file_path.parent, includes
-            )
-
-            refind_config = (
-                RefindConfig(config_file_path)
-                .with_boot_stanzas(boot_stanzas)
-                .with_included_configs(included_configs)
-            )
-
-            persistence_provider.save_refind_config(refind_config)
-
-            return refind_config
+        return current_refind_config
 
     def _read_included_configs_from(
         self, root_directory: Path, includes: Iterable[str]
