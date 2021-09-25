@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from functools import cached_property
-from typing import Generator, List, Optional, Set, Tuple
+from typing import Iterator, Optional, Set
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import (
@@ -58,7 +58,7 @@ class SubMenu:
     def __str__(self) -> str:
         main_indent = constants.TAB
         option_indent = main_indent * 2
-        result: List[str] = []
+        result: list[str] = []
 
         name = self.name
 
@@ -132,7 +132,7 @@ class SubMenu:
 
     def _get_all_boot_file_paths(
         self,
-    ) -> Generator[Tuple[BootFilePathSource, str], None, None]:
+    ) -> Iterator[tuple[BootFilePathSource, str]]:
         source = BootFilePathSource.SUB_MENU
         is_disabled = self.is_disabled
 
@@ -192,5 +192,5 @@ class SubMenu:
         return self._is_disabled
 
     @cached_property
-    def all_boot_file_paths(self) -> Set[Tuple[BootFilePathSource, str]]:
+    def all_boot_file_paths(self) -> Set[tuple[BootFilePathSource, str]]:
         return set(self._get_all_boot_file_paths())

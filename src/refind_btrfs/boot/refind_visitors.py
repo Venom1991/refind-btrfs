@@ -22,17 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from collections import defaultdict
-from typing import (
-    Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    Iterable,
-    List,
-    NamedTuple,
-    Optional,
-    Tuple,
-)
+from typing import Any, Callable, DefaultDict, Iterable, NamedTuple, Optional
 
 from antlr4 import ParserRuleContext
 from more_itertools import always_iterable, only
@@ -60,7 +50,7 @@ class BootStanzaVisitor(RefindConfigParserVisitor):
         menu_entry_context = ctx.menu_entry()
         menu_entry = menu_entry_context.accept(MenuEntryVisitor())
         main_options = OptionVisitor.map_to_options_dict(
-            checked_cast(List[ParserRuleContext], ctx.main_option())
+            checked_cast(list[ParserRuleContext], ctx.main_option())
         )
         volume = only(always_iterable(main_options.get(RefindOption.VOLUME)))
         loader = only(always_iterable(main_options.get(RefindOption.LOADER)))
@@ -162,7 +152,7 @@ class OptionVisitor(RefindConfigParserVisitor):
     @classmethod
     def map_to_options_dict(
         cls, option_contexts: Iterable[ParserRuleContext]
-    ) -> DefaultDict[RefindOption, List[Any]]:
+    ) -> DefaultDict[RefindOption, list[Any]]:
         option_visitor = cls()
         result = defaultdict(list)
 
@@ -179,18 +169,18 @@ class OptionVisitor(RefindConfigParserVisitor):
 
     def visitMain_option(
         self, ctx: RefindConfigParser.Main_optionContext
-    ) -> Optional[Tuple[RefindOption, Any]]:
+    ) -> Optional[tuple[RefindOption, Any]]:
         return OptionVisitor._map_to_option_tuple(ctx, self._main_option_mappings)
 
     def visitSub_option(
         self, ctx: RefindConfigParser.Sub_optionContext
-    ) -> Optional[Tuple[RefindOption, Any]]:
+    ) -> Optional[tuple[RefindOption, Any]]:
         return OptionVisitor._map_to_option_tuple(ctx, self._sub_option_mappings)
 
     @staticmethod
     def _map_to_option_tuple(
-        ctx: ParserRuleContext, mappings: Dict[RefindOption, ContextWithVisitor]
-    ) -> Optional[Tuple[RefindOption, Any]]:
+        ctx: ParserRuleContext, mappings: dict[RefindOption, ContextWithVisitor]
+    ) -> Optional[tuple[RefindOption, Any]]:
         for key, value in mappings.items():
             option_context = value.child_context_func(ctx)
 
@@ -207,7 +197,7 @@ class SubMenuVisitor(RefindConfigParserVisitor):
         menu_entry_context = ctx.menu_entry()
         menu_entry = menu_entry_context.accept(MenuEntryVisitor())
         sub_options = OptionVisitor.map_to_options_dict(
-            checked_cast(List[ParserRuleContext], ctx.sub_option())
+            checked_cast(list[ParserRuleContext], ctx.sub_option())
         )
         loader = only(always_iterable(sub_options.get(RefindOption.LOADER)))
         initrd = only(always_iterable(sub_options.get(RefindOption.INITRD)))

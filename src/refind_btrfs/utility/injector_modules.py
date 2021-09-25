@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import Generator
+from typing import Iterator
 
 from injector import Binder, Module, SingletonScope, multiprovider
 from transitions.core import State
@@ -77,7 +77,7 @@ class CommonModule(Module):
     def provide_states(self, model: Model) -> States:
         return list(self._get_all_states_for(model))
 
-    def _get_all_states_for(self, model: Model) -> Generator[State, None, None]:
+    def _get_all_states_for(self, model: Model) -> Iterator[State]:
         for state_name in StateNames:
             value: str = state_name.value
             arguments = [value]

@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, Optional, Union
 
 from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
 from refind_btrfs.utility.helpers import has_items, none_throws
@@ -44,7 +44,7 @@ class BlockDevice:
         self._minor_number = major_minor_parsed[1]
         self._physical_partition_table: Optional[PartitionTable] = None
         self._live_partition_table: Optional[PartitionTable] = None
-        self._dependencies: Optional[List[BlockDevice]] = None
+        self._dependencies: Optional[list[BlockDevice]] = None
 
     def with_dependencies(self, dependencies: Iterable[BlockDevice]) -> BlockDevice:
         self._dependencies = list(dependencies)
@@ -99,7 +99,7 @@ class BlockDevice:
         return self.boot is not None
 
     @staticmethod
-    def try_parse_major_minor(value: str) -> Union[List[int], List[None]]:
+    def try_parse_major_minor(value: str) -> Union[list[int], list[None]]:
         match = re.fullmatch(r"\d+:\d+", value)
 
         if match:
@@ -136,7 +136,7 @@ class BlockDevice:
         return self._live_partition_table
 
     @property
-    def dependencies(self) -> Optional[List[BlockDevice]]:
+    def dependencies(self) -> Optional[list[BlockDevice]]:
         return self._dependencies
 
     @property

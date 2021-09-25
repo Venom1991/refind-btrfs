@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generator, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Callable, Iterator, Optional, Type, TypeVar, cast
 from uuid import UUID
 
 from injector import inject
@@ -233,7 +233,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     @staticmethod
     def _map_to_snapshot_searches(
         snapshot_search_values: AoT, default_snapshot_search: SnapshotSearch
-    ) -> Generator[SnapshotSearch, None, None]:
+    ) -> Iterator[SnapshotSearch]:
         max_depth_key = SnapshotSearchConfigKey.MAX_DEPTH.value
 
         for snapshot_search_value in snapshot_search_values.body:
@@ -336,7 +336,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                 default_snapshot_manipulation,
             ),
         )
-        uuids: List[UUID] = []
+        uuids: list[UUID] = []
 
         if has_items(cleanup_exclusion):
             for item in cleanup_exclusion:
@@ -412,7 +412,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         source_type: Type[TSourceValue],
         default_config: object,
         value_conversion: Optional[
-            Tuple[Type[TDestinationValue], Optional[Callable[[TSourceValue], Any]]]
+            tuple[Type[TDestinationValue], Optional[Callable[[TSourceValue], Any]]]
         ] = None,
     ) -> Any:
         if key in container:

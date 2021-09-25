@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, Optional
 
 from more_itertools import last
 
@@ -40,10 +40,10 @@ from refind_btrfs.utility.helpers import (
 
 class BootOptions:
     def __init__(self, raw_options: Optional[str]) -> None:
-        root_location: Optional[Tuple[int, str]] = None
-        root_mount_options: Optional[Tuple[int, MountOptions]] = None
-        initrd_options: List[Tuple[int, str]] = []
-        other_options: List[Tuple[int, str]] = []
+        root_location: Optional[tuple[int, str]] = None
+        root_mount_options: Optional[tuple[int, MountOptions]] = None
+        initrd_options: list[tuple[int, str]] = []
+        other_options: list[tuple[int, str]] = []
 
         if not is_none_or_whitespace(raw_options):
             split_options = (
@@ -99,7 +99,7 @@ class BootOptions:
         root_mount_options = self._root_mount_options
         initrd_options = self._initrd_options
         other_options = self._other_options
-        result: List[str] = [constants.EMPTY_STR] * (
+        result: list[str] = [constants.EMPTY_STR] * (
             sum((len(initrd_options), len(other_options)))
             + (1 if root_location is not None else 0)
             + (1 if root_mount_options is not None else 0)
@@ -224,9 +224,9 @@ class BootOptions:
         return None
 
     @property
-    def initrd_options(self) -> List[str]:
+    def initrd_options(self) -> list[str]:
         return [initrd_option[1] for initrd_option in self._initrd_options]
 
     @property
-    def other_options(self) -> List[str]:
+    def other_options(self) -> list[str]:
         return [other_option[1] for other_option in self._other_options]

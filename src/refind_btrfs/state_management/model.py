@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import chain
-from typing import Callable, Dict, List, NamedTuple, Optional
+from typing import Callable, NamedTuple, Optional
 
 from injector import inject
 from more_itertools import only
@@ -60,8 +60,8 @@ class BlockDevices(NamedTuple):
 
 
 class PreparedSnapshots(NamedTuple):
-    snapshots_for_addition: List[Subvolume]
-    snapshots_for_removal: List[Subvolume]
+    snapshots_for_addition: list[Subvolume]
+    snapshots_for_removal: list[Subvolume]
 
     def has_changes(self) -> bool:
         return has_items(self.snapshots_for_addition) or has_items(
@@ -71,8 +71,8 @@ class PreparedSnapshots(NamedTuple):
 
 class BootStanzaWithSnapshots(NamedTuple):
     boot_stanza: BootStanza
-    matched_snapshots: List[Subvolume]
-    unmatched_snapshots: List[Subvolume]
+    matched_snapshots: list[Subvolume]
+    unmatched_snapshots: list[Subvolume]
 
     def has_matched_snapshots(self) -> bool:
         return has_items(self.matched_snapshots)
@@ -89,7 +89,7 @@ class BootStanzaWithSnapshots(NamedTuple):
 
 
 class ProcessingResult(NamedTuple):
-    bootable_snapshots: List[Subvolume]
+    bootable_snapshots: list[Subvolume]
     boot_stanza_generation: Optional[BootStanzaGeneration]
 
     @classmethod
@@ -119,10 +119,10 @@ class Model(ConfigurableMixin):
         self._persistence_provider = persistence_provider
         self._conditions = Conditions(logger_factory, self)
         self._filtered_block_devices: Optional[BlockDevices] = None
-        self._matched_boot_stanzas: Optional[List[BootStanza]] = None
+        self._matched_boot_stanzas: Optional[list[BootStanza]] = None
         self._prepared_snapshots: Optional[PreparedSnapshots] = None
         self._boot_stanzas_with_snapshots: Optional[
-            List[BootStanzaWithSnapshots]
+            list[BootStanzaWithSnapshots]
         ] = None
 
     def initialize_block_devices(self) -> None:
@@ -215,11 +215,11 @@ class Model(ConfigurableMixin):
         usable_boot_stanzas = self.usable_boot_stanzas
         actual_bootable_snapshots = self.actual_bootable_snapshots
         include_paths = self._should_include_paths_during_generation()
-        boot_stanza_preparation_results: List[BootStanzaWithSnapshots] = []
+        boot_stanza_preparation_results: list[BootStanzaWithSnapshots] = []
 
         for boot_stanza in usable_boot_stanzas:
-            matched_snapshots: List[Subvolume] = []
-            unmatched_snapshots: List[Subvolume] = []
+            matched_snapshots: list[Subvolume] = []
+            unmatched_snapshots: list[Subvolume] = []
 
             if include_paths:
                 checked_bootable_snapshots = (
@@ -258,7 +258,7 @@ class Model(ConfigurableMixin):
             ProcessingResult(bootable_snapshots, current_boot_stanza_generation)
         )
 
-    def _process_snapshots(self) -> List[Subvolume]:
+    def _process_snapshots(self) -> list[Subvolume]:
         subvolume_command_factory = self._subvolume_command_factory
         actual_bootable_snapshots = self.actual_bootable_snapshots
         usable_snapshots_for_addition = self.usable_snapshots_for_addition
@@ -334,7 +334,7 @@ class Model(ConfigurableMixin):
         return boot_stanza_generation.include_sub_menus
 
     @property
-    def conditions(self) -> List[Callable[[], bool]]:
+    def conditions(self) -> list[Callable[[], bool]]:
         conditions = self._conditions
         always_true_func = lambda: True
 
@@ -387,11 +387,11 @@ class Model(ConfigurableMixin):
         return none_throws(self._filtered_block_devices).boot_device
 
     @property
-    def matched_boot_stanzas(self) -> List[BootStanza]:
+    def matched_boot_stanzas(self) -> list[BootStanza]:
         return none_throws(self._matched_boot_stanzas)
 
     @property
-    def usable_boot_stanzas(self) -> List[BootStanza]:
+    def usable_boot_stanzas(self) -> list[BootStanza]:
         matched_boot_stanzas = self.matched_boot_stanzas
 
         return [
@@ -405,7 +405,7 @@ class Model(ConfigurableMixin):
         return none_throws(self._prepared_snapshots)
 
     @property
-    def usable_snapshots_for_addition(self) -> List[Subvolume]:
+    def usable_snapshots_for_addition(self) -> list[Subvolume]:
         subvolume = self.root_subvolume
         prepared_snapshots = self.prepared_snapshots
         snapshots_for_addition = prepared_snapshots.snapshots_for_addition
@@ -417,7 +417,7 @@ class Model(ConfigurableMixin):
         ]
 
     @property
-    def actual_bootable_snapshots(self) -> List[Subvolume]:
+    def actual_bootable_snapshots(self) -> list[Subvolume]:
         persistence_provider = self._persistence_provider
         prepared_snapshots = self.prepared_snapshots
         usable_snapshots_for_addition = self.usable_snapshots_for_addition
@@ -434,11 +434,11 @@ class Model(ConfigurableMixin):
         return list(bootable_snapshots)
 
     @property
-    def boot_stanzas_with_snapshots(self) -> List[BootStanzaWithSnapshots]:
+    def boot_stanzas_with_snapshots(self) -> list[BootStanzaWithSnapshots]:
         return none_throws(self._boot_stanzas_with_snapshots)
 
     @property
-    def usable_boot_stanzas_with_snapshots(self) -> Dict[BootStanza, List[Subvolume]]:
+    def usable_boot_stanzas_with_snapshots(self) -> dict[BootStanza, list[Subvolume]]:
         boot_stanzas_with_snapshots = self.boot_stanzas_with_snapshots
 
         return {

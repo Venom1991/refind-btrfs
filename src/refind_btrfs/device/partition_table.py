@@ -26,7 +26,7 @@ from __future__ import annotations
 import re
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 from uuid import UUID
 
 from more_itertools import only
@@ -45,7 +45,7 @@ class PartitionTable:
         self._pt_type = pt_type
         self._esp_uuid = constants.EMPTY_UUID
         self._fstab_file_path: Optional[Path] = None
-        self._partitions: Optional[List[Partition]] = None
+        self._partitions: Optional[list[Partition]] = None
 
     def __eq__(self, other: object) -> bool:
         if self is other:
@@ -162,7 +162,7 @@ class PartitionTable:
         return self._fstab_file_path
 
     @property
-    def partitions(self) -> Optional[List[Partition]]:
+    def partitions(self) -> Optional[list[Partition]]:
         return self._partitions
 
     @cached_property

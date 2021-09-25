@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 import re
-from typing import Dict, List, Tuple
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.exceptions import PartitionError
@@ -42,8 +41,8 @@ class MountOptions:
             option.strip()
             for option in raw_mount_options.split(constants.COLUMN_SEPARATOR)
         ]
-        simple_options: List[Tuple[int, str]] = []
-        parameterized_options: Dict[str, Tuple[int, str]] = {}
+        simple_options: list[tuple[int, str]] = []
+        parameterized_options: dict[str, tuple[int, str]] = {}
         parameterized_option_prefix_pattern = re.compile(
             constants.PARAMETERIZED_OPTION_PREFIX_PATTERN
         )
@@ -73,7 +72,7 @@ class MountOptions:
     def __str__(self) -> str:
         simple_options = self._simple_options
         parameterized_options = self._parameterized_options
-        result: List[str] = [constants.EMPTY_STR] * sum(
+        result: list[str] = [constants.EMPTY_STR] * sum(
             (len(simple_options), len(parameterized_options))
         )
 
@@ -153,11 +152,11 @@ class MountOptions:
             )
 
     @property
-    def simple_options(self) -> List[str]:
+    def simple_options(self) -> list[str]:
         return [simple_option[1] for simple_option in self._simple_options]
 
     @property
-    def parameterized_options(self) -> Dict[str, str]:
+    def parameterized_options(self) -> dict[str, str]:
         return {
             option_name: option_value[1]
             for option_name, option_value in self._parameterized_options.items()

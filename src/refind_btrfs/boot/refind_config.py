@@ -26,7 +26,7 @@ from __future__ import annotations
 from copy import copy
 from itertools import chain
 from pathlib import Path
-from typing import Collection, Dict, Generator, Iterable, List, Optional
+from typing import Collection, Iterable, Iterator, Optional
 
 from more_itertools import always_iterable
 
@@ -49,8 +49,8 @@ class RefindConfig(BaseConfig):
     def __init__(self, file_path: Path) -> None:
         super().__init__(file_path)
 
-        self._boot_stanzas: Optional[List[BootStanza]] = None
-        self._included_configs: Optional[List[RefindConfig]] = None
+        self._boot_stanzas: Optional[list[BootStanza]] = None
+        self._included_configs: Optional[list[RefindConfig]] = None
 
     def with_boot_stanzas(self, boot_stanzas: Iterable[BootStanza]) -> RefindConfig:
         self._boot_stanzas = list(boot_stanzas)
@@ -66,7 +66,7 @@ class RefindConfig(BaseConfig):
 
     def get_boot_stanzas_matched_with(
         self, block_device: BlockDevice
-    ) -> Generator[BootStanza, None, None]:
+    ) -> Iterator[BootStanza]:
         if self.has_boot_stanzas():
             yield from (
                 boot_stanza
@@ -102,14 +102,14 @@ class RefindConfig(BaseConfig):
     def generate_new_from(
         self,
         block_device: BlockDevice,
-        boot_stanzas_with_snapshots: Dict[BootStanza, List[Subvolume]],
+        boot_stanzas_with_snapshots: dict[BootStanza, list[Subvolume]],
         include_paths: bool,
         include_sub_menus: bool,
-    ) -> Generator[RefindConfig, None, None]:
+    ) -> Iterator[RefindConfig]:
         file_path = self.file_path
         boot_stanzas = copy(none_throws(self.boot_stanzas))
         parent_directory = file_path.parent
-        included_configs: List[RefindConfig] = (
+        included_configs: list[RefindConfig] = (
             none_throws(self.included_configs) if self.has_included_configs() else []
         )
 
@@ -191,9 +191,9 @@ class RefindConfig(BaseConfig):
         return parent_directory.name == constants.SNAPSHOT_STANZAS_DIR_NAME
 
     @property
-    def boot_stanzas(self) -> Optional[List[BootStanza]]:
+    def boot_stanzas(self) -> Optional[list[BootStanza]]:
         return self._boot_stanzas
 
     @property
-    def included_configs(self) -> Optional[List[RefindConfig]]:
+    def included_configs(self) -> Optional[list[RefindConfig]]:
         return self._included_configs

@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import subprocess
 from subprocess import CalledProcessError
-from typing import Any, Generator, Iterable
+from typing import Any, Iterable, Iterator
 
 from more_itertools import always_iterable
 
@@ -51,7 +51,7 @@ class FindmntCommand(DeviceCommand):
     def __init__(self, logger_factory: BaseLoggerFactory) -> None:
         self._logger = logger_factory.logger(__name__)
 
-    def get_block_devices(self) -> Generator[BlockDevice, None, None]:
+    def get_block_devices(self) -> Iterator[BlockDevice]:
         raise NotImplementedError(
             f"Class '{FindmntCommand.__name__}' does not implement the "
             f"'{DeviceCommand.get_block_devices.__name__}' method!"
@@ -132,7 +132,7 @@ class FindmntCommand(DeviceCommand):
     @staticmethod
     def _map_to_partitions(
         findmnt_partitions: Iterable[Any],
-    ) -> Generator[Partition, None, None]:
+    ) -> Iterator[Partition]:
         for findmnt_partition in findmnt_partitions:
             findmnt_part_columns = [
                 default_if_none(

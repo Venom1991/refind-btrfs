@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 import fileinput
-from typing import Generator, TextIO
+from typing import Iterator, TextIO
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc.commands import DeviceCommand
@@ -47,7 +47,7 @@ class FstabCommand(DeviceCommand):
     def __init__(self, logger_factory: BaseLoggerFactory) -> None:
         self._logger = logger_factory.logger(__name__)
 
-    def get_block_devices(self) -> Generator[BlockDevice, None, None]:
+    def get_block_devices(self) -> Iterator[BlockDevice]:
         raise NotImplementedError(
             f"Class '{FstabCommand.__name__}' does not implement the "
             f"'{DeviceCommand.get_block_devices.__name__}' method!"
@@ -112,7 +112,7 @@ class FstabCommand(DeviceCommand):
     @staticmethod
     def _map_to_partitions(
         fstab_file: TextIO,
-    ) -> Generator[Partition, None, None]:
+    ) -> Iterator[Partition]:
         for fstab_line in fstab_file:
             if PartitionTable.is_valid_fstab_entry(fstab_line):
                 split_fstab_entry = fstab_line.split()

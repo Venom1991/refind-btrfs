@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import subprocess
 from subprocess import CalledProcessError
-from typing import Any, Generator, Iterable
+from typing import Any, Iterable, Iterator
 
 from more_itertools import always_iterable, one
 
@@ -58,7 +58,7 @@ class LsblkCommand(DeviceCommand, ConfigurableMixin):
 
         self._logger = logger_factory.logger(__name__)
 
-    def get_block_devices(self) -> Generator[BlockDevice, None, None]:
+    def get_block_devices(self) -> Iterator[BlockDevice]:
         logger = self._logger
         lsblk_columns = [
             LsblkColumn.DEVICE_NAME,
@@ -178,7 +178,7 @@ class LsblkCommand(DeviceCommand, ConfigurableMixin):
     @staticmethod
     def _map_to_block_devices(
         lsblk_blockdevices: Iterable[Any],
-    ) -> Generator[BlockDevice, None, None]:
+    ) -> Iterator[BlockDevice]:
         for lsblk_blockdevice in lsblk_blockdevices:
             lsblk_blockdevice_columns = [
                 default_if_none(
@@ -203,7 +203,7 @@ class LsblkCommand(DeviceCommand, ConfigurableMixin):
     @staticmethod
     def _map_to_partitions(
         lsblk_partitions: Iterable[Any],
-    ) -> Generator[Partition, None, None]:
+    ) -> Iterator[Partition]:
         for lsblk_partition in lsblk_partitions:
             lsblk_part_columns = [
                 default_if_none(

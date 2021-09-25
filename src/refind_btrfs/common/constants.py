@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from pathlib import Path
-from typing import Tuple
 from uuid import UUID
 
 PACKAGE_NAME = "refind-btrfs"
@@ -76,7 +75,7 @@ EMPTY_HEX_UUID = "00000000-0000-0000-0000-000000000000"
 EMPTY_UUID = UUID(hex=EMPTY_HEX_UUID)
 EMPTY_PATH = Path(".")
 DEFAULT_ITEMS_SEPARATOR = COLUMN_SEPARATOR + SPACE
-DEFAULT_DIR_SEPARATOR_REPLACEMENT: Tuple[str, str] = (BACKSLASH, FORWARD_SLASH)
+DEFAULT_DIR_SEPARATOR_REPLACEMENT: tuple[str, str] = (BACKSLASH, FORWARD_SLASH)
 
 WHITESPACE_PATTERN = r"\s+"
 INCLUDE_OPTION_PATTERN = r"^include .+$"

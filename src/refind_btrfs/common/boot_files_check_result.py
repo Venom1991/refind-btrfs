@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 
-from typing import List, NamedTuple
+from typing import NamedTuple
 
 from refind_btrfs.utility.helpers import has_items
 
@@ -30,8 +30,8 @@ from refind_btrfs.utility.helpers import has_items
 class BootFilesCheckResult(NamedTuple):
     required_by_boot_stanza_name: str
     expected_logical_path: str
-    matched_boot_files: List[str]
-    unmatched_boot_files: List[str]
+    matched_boot_files: list[str]
+    unmatched_boot_files: list[str]
 
     def has_unmatched_boot_files(self) -> bool:
         return has_items(self.unmatched_boot_files)

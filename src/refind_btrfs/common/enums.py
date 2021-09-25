@@ -22,14 +22,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from enum import Enum, auto, unique
-from typing import Any, List
+from typing import Any
 
 
 class AutoNameToLower(Enum):
     # pylint: disable=arguments-differ, unused-argument
     @staticmethod
     def _generate_next_value_(
-        name: str, start: int, count: int, last_values: List[Any]
+        name: str, start: int, count: int, last_values: list[Any]
     ) -> Any:
         return name.lower()
 

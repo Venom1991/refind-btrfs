@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from typing import Collection, Generator, List, Optional
+from typing import Collection, Iterator, Optional
 
 from more_itertools import first
 
@@ -64,7 +64,7 @@ class Migration:
         source_subvolume = self._source_subvolume
         bootable_snapshots = self._bootable_snapshots
         latest_migration_result: Optional[State] = None
-        result_sub_menus: List[SubMenu] = []
+        result_sub_menus: list[SubMenu] = []
 
         for destination_subvolume in bootable_snapshots:
             is_latest = self._is_latest_snapshot(destination_subvolume)
@@ -123,7 +123,7 @@ class Migration:
         destination_subvolume: Subvolume,
         boot_stanza_result: State,
         include_paths: bool,
-    ) -> Generator[SubMenu, None, None]:
+    ) -> Iterator[SubMenu]:
         boot_stanza = self._boot_stanza
 
         if not boot_stanza.has_sub_menus():

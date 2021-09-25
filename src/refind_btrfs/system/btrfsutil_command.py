@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, List, Optional, Set
+from typing import Iterator, Optional, Set
 
 import btrfsutil
 
@@ -102,7 +102,7 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
 
         return None
 
-    def get_snapshots_for(self, parent: Subvolume) -> Generator[Subvolume, None, None]:
+    def get_snapshots_for(self, parent: Subvolume) -> Iterator[Subvolume]:
         self._searched_directories.clear()
 
         snapshot_searches = self.package_config.snapshot_searches
@@ -166,7 +166,7 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
                 root_dir_str = str(constants.ROOT_DIR)
                 num_id = snapshot.num_id
                 deleted_subvolumes = checked_cast(
-                    List[int], btrfsutil.deleted_subvolumes(root_dir_str)
+                    list[int], btrfsutil.deleted_subvolumes(root_dir_str)
                 )
 
                 if num_id not in deleted_subvolumes:
@@ -192,7 +192,7 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
         directory: Path,
         max_depth: int,
         current_depth: int = 0,
-    ) -> Generator[Subvolume, None, None]:
+    ) -> Iterator[Subvolume]:
         if current_depth > max_depth:
             return
 

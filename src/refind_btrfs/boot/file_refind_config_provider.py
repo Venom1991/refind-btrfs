@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import re
 from pathlib import Path
-from typing import Dict, Generator, Iterable, List
+from typing import Iterable, Iterator
 
 from antlr4 import CommonTokenStream, FileStream
 from injector import inject
@@ -56,7 +56,7 @@ from .refind_visitors import BootStanzaVisitor, IncludeVisitor
 
 
 class FileRefindConfigProvider(BaseRefindConfigProvider):
-    all_config_file_paths: Dict[Partition, Path] = {}
+    all_config_file_paths: dict[Partition, Path] = {}
 
     @inject
     def __init__(
@@ -68,7 +68,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         self._logger = logger_factory.logger(__name__)
         self._package_config_provider = package_config_provider
         self._persistence_provider = persistence_provider
-        self._refind_configs: Dict[Path, RefindConfig] = {}
+        self._refind_configs: dict[Path, RefindConfig] = {}
 
     def get_config(self, partition: Partition) -> RefindConfig:
         logger = self._logger
@@ -127,7 +127,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 )
 
                 with config_file_path.open("w") as config_file:
-                    lines_for_writing: List[str] = []
+                    lines_for_writing: list[str] = []
 
                     lines_for_writing.append(
                         constants.NEWLINE.join(
@@ -180,7 +180,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                         )
 
                         with config_file_path.open("a") as config_file:
-                            lines_for_appending: List[str] = []
+                            lines_for_appending: list[str] = []
                             should_prepend_newline = False
 
                             if not is_none_or_whitespace(last_line):
@@ -252,7 +252,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 ) from e
             else:
                 config_option_contexts = checked_cast(
-                    List[RefindConfigParser.Config_optionContext],
+                    list[RefindConfigParser.Config_optionContext],
                     refind_context.config_option(),
                 )
                 boot_stanzas = FileRefindConfigProvider._map_to_boot_stanzas(
@@ -298,7 +298,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
     def _read_included_configs_from(
         self, root_directory: Path, includes: Iterable[str]
-    ) -> Generator[RefindConfig, None, None]:
+    ) -> Iterator[RefindConfig]:
         logger = self._logger
 
         for include in includes:
@@ -313,8 +313,8 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
     @staticmethod
     def _map_to_boot_stanzas(
-        config_option_contexts: List[RefindConfigParser.Config_optionContext],
-    ) -> Generator[BootStanza, None, None]:
+        config_option_contexts: list[RefindConfigParser.Config_optionContext],
+    ) -> Iterator[BootStanza]:
         if has_items(config_option_contexts):
             boot_stanza_visitor = BootStanzaVisitor()
 
@@ -328,8 +328,8 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
 
     @staticmethod
     def _map_to_includes(
-        config_option_contexts: List[RefindConfigParser.Config_optionContext],
-    ) -> Generator[str, None, None]:
+        config_option_contexts: list[RefindConfigParser.Config_optionContext],
+    ) -> Iterator[str]:
         if has_items(config_option_contexts):
             include_visitor = IncludeVisitor()
 

@@ -23,14 +23,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
 from functools import singledispatchmethod
-from typing import Any, Generator
+from typing import Any, Iterator
 
 from refind_btrfs.device import BlockDevice, PartitionTable, Subvolume
 
 
 class DeviceCommand(ABC):
     @abstractmethod
-    def get_block_devices(self) -> Generator[BlockDevice, None, None]:
+    def get_block_devices(self) -> Iterator[BlockDevice]:
         pass
 
     @singledispatchmethod

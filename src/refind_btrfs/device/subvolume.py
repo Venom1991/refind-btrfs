@@ -26,7 +26,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, List, NamedTuple, Optional, Set
+from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
 from uuid import UUID
 
 from more_itertools import take
@@ -117,8 +117,8 @@ class Subvolume:
             boot_stanza_name = boot_stanza_check_result.required_by_boot_stanza_name
             expected_logical_path = boot_stanza_check_result.expected_logical_path
             required_file_paths = boot_stanza_check_result.matched_boot_files
-            matched_boot_files: List[str] = []
-            unmatched_boot_files: List[str] = []
+            matched_boot_files: list[str] = []
+            unmatched_boot_files: list[str] = []
 
             for file_path in required_file_paths:
                 replaced_file_path = Path(
@@ -233,7 +233,7 @@ class Subvolume:
             filesystem_path = self.filesystem_path
 
         path_relation = discern_path_relation_of((parent_directory, filesystem_path))
-        expected_results: List[PathRelation] = [
+        expected_results: list[PathRelation] = [
             PathRelation.SAME,
             PathRelation.SECOND_NESTED_IN_FIRST,
         ]
@@ -285,7 +285,7 @@ class Subvolume:
 
         return False
 
-    def select_snapshots(self, count: int) -> Optional[List[Subvolume]]:
+    def select_snapshots(self, count: int) -> Optional[list[Subvolume]]:
         if self.has_snapshots():
             snapshots = none_throws(self.snapshots)
 

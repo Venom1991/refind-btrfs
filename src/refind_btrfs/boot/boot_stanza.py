@@ -27,7 +27,7 @@ import re
 from collections import defaultdict
 from functools import cached_property
 from itertools import chain
-from typing import DefaultDict, Generator, Iterable, List, Optional, Set, Tuple
+from typing import DefaultDict, Iterable, Iterator, Optional, Set
 
 from more_itertools import always_iterable, last
 
@@ -75,7 +75,7 @@ class BootStanza:
         self._firmware_bootnum = firmware_bootnum
         self._is_disabled = is_disabled
         self._boot_files_check_result: Optional[BootFilesCheckResult] = None
-        self._sub_menus: Optional[List[SubMenu]] = None
+        self._sub_menus: Optional[list[SubMenu]] = None
 
     def __eq__(self, other: object) -> bool:
         if self is other:
@@ -99,7 +99,7 @@ class BootStanza:
         return hash((self.volume, self.loader_path, str(boot_options)))
 
     def __str__(self) -> str:
-        result: List[str] = []
+        result: list[str] = []
         main_indent = constants.EMPTY_STR
         option_indent = constants.TAB
 
@@ -175,8 +175,8 @@ class BootStanza:
         normalized_name = self.normalized_name
         all_boot_file_paths = self.all_boot_file_paths
         logical_path = subvolume.logical_path
-        matched_boot_files: List[str] = []
-        unmatched_boot_files: List[str] = []
+        matched_boot_files: list[str] = []
+        unmatched_boot_files: list[str] = []
         sources = [BootFilePathSource.BOOT_STANZA]
 
         if include_sub_menus:
@@ -261,7 +261,7 @@ class BootStanza:
 
     def _get_all_boot_file_paths(
         self,
-    ) -> Generator[Tuple[BootFilePathSource, str], None, None]:
+    ) -> Iterator[tuple[BootFilePathSource, str]]:
         source = BootFilePathSource.BOOT_STANZA
         is_disabled = self.is_disabled
 
@@ -348,7 +348,7 @@ class BootStanza:
         return self._boot_files_check_result
 
     @property
-    def sub_menus(self) -> Optional[List[SubMenu]]:
+    def sub_menus(self) -> Optional[list[SubMenu]]:
         return self._sub_menus
 
     @cached_property

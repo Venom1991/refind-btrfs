@@ -26,7 +26,7 @@ import os
 import re
 from inspect import ismethod
 from pathlib import Path
-from typing import Any, Generator, List, Optional, Sized, Tuple, Type, TypeVar, cast
+from typing import Any, Iterator, Optional, Sized, Type, TypeVar, cast
 from uuid import UUID
 
 from more_itertools import first
@@ -105,9 +105,7 @@ def item_count_suffix(value: Sized) -> str:
     return constants.EMPTY_STR if is_singleton(value) else "s"
 
 
-def find_all_matched_files_in(
-    root_directory: Path, file_name: str
-) -> Generator[Path, None, None]:
+def find_all_matched_files_in(root_directory: Path, file_name: str) -> Iterator[Path]:
     if root_directory.exists() and root_directory.is_dir():
         children = root_directory.iterdir()
 
@@ -121,7 +119,7 @@ def find_all_matched_files_in(
 
 def find_all_directories_in(
     root_directory: Path, max_depth: int, current_depth: int = 0
-) -> Generator[Path, None, None]:
+) -> Iterator[Path]:
     if current_depth > max_depth:
         return
 
@@ -136,7 +134,7 @@ def find_all_directories_in(
             )
 
 
-def discern_path_relation_of(path_pair: Tuple[Path, Path]) -> PathRelation:
+def discern_path_relation_of(path_pair: tuple[Path, Path]) -> PathRelation:
     first_resolved = path_pair[0].resolve()
     second_resolved = path_pair[1].resolve()
 
@@ -156,7 +154,7 @@ def discern_path_relation_of(path_pair: Tuple[Path, Path]) -> PathRelation:
     return PathRelation.UNRELATED
 
 
-def discern_distance_between(path_pair: Tuple[Path, Path]) -> Optional[int]:
+def discern_distance_between(path_pair: tuple[Path, Path]) -> Optional[int]:
     path_relation = discern_path_relation_of(path_pair)
 
     if path_relation != PathRelation.UNRELATED:
@@ -189,7 +187,7 @@ def discern_distance_between(path_pair: Tuple[Path, Path]) -> Optional[int]:
 
 def normalize_dir_separators_in(
     path: str,
-    separator_replacement: Tuple[
+    separator_replacement: tuple[
         str, str
     ] = constants.DEFAULT_DIR_SEPARATOR_REPLACEMENT,
 ) -> str:
@@ -210,7 +208,7 @@ def replace_root_part_in(
     full_path: str,
     current_root_part: str,
     replacement_root_part: str,
-    separator_replacement: Tuple[
+    separator_replacement: tuple[
         str, str
     ] = constants.DEFAULT_DIR_SEPARATOR_REPLACEMENT,
 ) -> str:
@@ -227,7 +225,7 @@ def replace_root_part_in(
 
 
 def replace_item_in(
-    items_list: List[TParam], current: TParam, replacement: Optional[TParam] = None
+    items_list: list[TParam], current: TParam, replacement: Optional[TParam] = None
 ) -> None:
     if not has_items(items_list):
         return

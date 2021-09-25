@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Iterator, Optional
 
 from refind_btrfs.device import Subvolume
 
@@ -32,7 +32,7 @@ class SubvolumeCommand(ABC):
         pass
 
     @abstractmethod
-    def get_snapshots_for(self, parent: Subvolume) -> Generator[Subvolume, None, None]:
+    def get_snapshots_for(self, parent: Subvolume) -> Iterator[Subvolume]:
         pass
 
     @abstractmethod

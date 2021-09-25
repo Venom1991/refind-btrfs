@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import shelve
 from pathlib import Path
 from shelve import Shelf
-from typing import Any, Dict, Optional, TypeVar, cast
+from typing import Any, Optional, TypeVar, cast
 
 from semantic_version import Version
 
@@ -76,7 +76,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
             item = self._get_item(db_key, local_db)
 
             if item is not None:
-                all_refind_configs = checked_cast(Dict[Path, RefindConfig], item)
+                all_refind_configs = checked_cast(dict[Path, RefindConfig], item)
                 refind_config = all_refind_configs.get(file_path)
 
                 if refind_config is not None:
@@ -94,10 +94,10 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
 
         with shelve.open(self._db_filename) as local_db:
             item = self._get_item(db_key, local_db)
-            all_refind_configs: Optional[Dict[Path, RefindConfig]] = None
+            all_refind_configs: Optional[dict[Path, RefindConfig]] = None
 
             if item is not None:
-                all_refind_configs = checked_cast(Dict[Path, RefindConfig], item)
+                all_refind_configs = checked_cast(dict[Path, RefindConfig], item)
             else:
                 all_refind_configs = {}
 

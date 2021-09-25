@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from functools import cached_property
 from pathlib import Path
-from typing import Generator, Iterable, List, NamedTuple, Set
+from typing import Iterable, Iterator, NamedTuple, Set
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -82,7 +82,7 @@ class PackageConfig(BaseConfig):
         self._snapshot_manipulation = snapshot_manipulation
         self._boot_stanza_generation = boot_stanza_generation
 
-    def _get_directories_for_watch(self) -> Generator[Path, None, None]:
+    def _get_directories_for_watch(self) -> Iterator[Path]:
         snapshot_searches = self.snapshot_searches
 
         if has_items(snapshot_searches):
@@ -105,7 +105,7 @@ class PackageConfig(BaseConfig):
         return self._exit_if_no_changes_are_detected
 
     @property
-    def snapshot_searches(self) -> List[SnapshotSearch]:
+    def snapshot_searches(self) -> list[SnapshotSearch]:
         return self._snapshot_searches
 
     @property

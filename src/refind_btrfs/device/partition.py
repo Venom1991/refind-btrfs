@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -113,7 +113,7 @@ class Partition:
 
         return False
 
-    def search_paths_for(self, file_name: str) -> Optional[List[Path]]:
+    def search_paths_for(self, file_name: str) -> Optional[list[Path]]:
         if is_none_or_whitespace(file_name):
             raise ValueError("The 'file_name' parameter must be initialized!")
 

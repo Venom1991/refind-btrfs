@@ -26,7 +26,7 @@ from __future__ import annotations
 from abc import ABC
 from os import stat_result
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Optional, Type, TypeVar
 
 from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.utility.helpers import checked_cast, none_throws
@@ -57,7 +57,7 @@ class BaseConfig(ABC):
     def __hash__(self) -> int:
         return hash(self.file_path.resolve())
 
-    def __getstate__(self) -> Dict[str, Any]:
+    def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         initialization_type_key = "_initialization_type"
 
