@@ -40,7 +40,7 @@ exit_if_no_changes_are_detected = true
 ## directories, up to "max_depth" - 1) are also watched for changes by the
 ## background running mode.
 #
-# dir = <string>
+# directory = <string>
 ## Directory in which to search for snapshots (absolute filesystem path).
 ## WARNING: This directory must not be the same as or nested in the directory
 ## defined by the "destination_dir" option (shown further below).
@@ -63,7 +63,7 @@ exit_if_no_changes_are_detected = true
 ## wide).
 
 [[snapshot-search]]
-dir = "/.snapshots"
+directory = "/.snapshots"
 is_nested = false
 max_depth = 2
 
@@ -81,7 +81,7 @@ max_depth = 2
 ## a new writable snapshot from it. This option has no meaning for those
 ## snapshots that are already writable.
 #
-# destination_dir  = <string>
+# destination_directory  = <string>
 ## Directory in which writable snapshots are to be placed (absolute filesystem
 ## path). This option has no meaning in case the "modify_read_only_flag" option
 ## is set to "true". It needn't exist beforehand as it is created in case it
@@ -101,7 +101,7 @@ max_depth = 2
 [snapshot-manipulation]
 selection_count = 5
 modify_read_only_flag = false
-destination_dir = "/root/.refind-btrfs"
+destination_directory = "/root/.refind-btrfs"
 cleanup_exclusion = []
 
 # [boot-stanza-generation]

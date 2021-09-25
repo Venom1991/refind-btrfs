@@ -115,7 +115,7 @@ class TopLevelConfigKey(Enum):
 
 @unique
 class SnapshotSearchConfigKey(Enum):
-    DIRECTORY = "dir"
+    DIRECTORY = "directory"
     IS_NESTED = "is_nested"
     MAX_DEPTH = "max_depth"
 
@@ -124,7 +124,7 @@ class SnapshotSearchConfigKey(Enum):
 class SnapshotManipulationConfigKey(Enum):
     SELECTION_COUNT = "selection_count"
     MODIFY_READ_ONLY_FLAG = "modify_read_only_flag"
-    DESTINATION_DIRECTORY = "destination_dir"
+    DESTINATION_DIRECTORY = "destination_directory"
     CLEANUP_EXCLUSION = "cleanup_exclusion"
 
 

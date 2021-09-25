@@ -24,11 +24,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, List, Optional
+from typing import Any, Callable, Generator, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from injector import inject
-from more_itertools import unique_everseen
+from more_itertools import one, unique_everseen
 from tomlkit.exceptions import TOMLKitError
 from tomlkit.items import AoT, Table
 from tomlkit.toml_document import TOMLDocument
@@ -57,15 +57,22 @@ from refind_btrfs.common.enums import (
 from refind_btrfs.common.exceptions import PackageConfigError
 from refind_btrfs.device import NumIdRelation, Subvolume, UuidRelation
 
-from .helpers import (
-    checked_cast,
-    discern_path_relation_of,
-    has_items,
-    try_parse_uuid,
-)
+from .helpers import checked_cast, discern_path_relation_of, has_items, try_parse_uuid
+
+TSourceValue = TypeVar("TSourceValue")
+TDestinationValue = TypeVar("TDestinationValue")
 
 
 class FilePackageConfigProvider(BasePackageConfigProvider):
+    default_package_config = PackageConfig(
+        constants.EMPTY_UUID,
+        True,
+        True,
+        [SnapshotSearch(Path("/.snapshots"), False, 2)],
+        SnapshotManipulation(5, False, Path("/root/.refind-btrfs"), set()),
+        BootStanzaGeneration("refind.conf", True, False),
+    )
+
     @inject
     def __init__(
         self,
@@ -126,114 +133,93 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
     @staticmethod
     def _read_config_from(toml_document: TOMLDocument):
-        esp_uuid_key = TopLevelConfigKey.ESP_UUID.value
-        exit_if_root_is_snapshot_key = TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value
-        exit_if_no_changes_are_detected_key = (
-            TopLevelConfigKey.EXIT_IF_NO_CHANGES_ARE_DETECTED.value
+        container = cast(dict, toml_document)
+        default_package_config = FilePackageConfigProvider.default_package_config
+        esp_uuid = FilePackageConfigProvider._get_config_value(
+            container,
+            TopLevelConfigKey.ESP_UUID.value,
+            str,
+            default_package_config,
+            (UUID, try_parse_uuid),
+        )
+        exit_if_root_is_snapshot = FilePackageConfigProvider._get_config_value(
+            container,
+            TopLevelConfigKey.EXIT_IF_ROOT_IS_SNAPSHOT.value,
+            bool,
+            default_package_config,
+        )
+        exit_if_no_changes_are_detected = FilePackageConfigProvider._get_config_value(
+            container,
+            TopLevelConfigKey.EXIT_IF_NO_CHANGES_ARE_DETECTED.value,
+            bool,
+            default_package_config,
         )
         snapshot_searches_key = TopLevelConfigKey.SNAPSHOT_SEARCH.value
-        snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
-        boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
+        default_snapshot_searches = default_package_config.snapshot_searches
 
-        if esp_uuid_key not in toml_document:
-            raise PackageConfigError(f"Missing option '{esp_uuid_key}'!")
-
-        esp_uuid_value = toml_document[esp_uuid_key]
-
-        if not isinstance(esp_uuid_value, str):
-            raise PackageConfigError(f"The '{esp_uuid_key}' option must be a string!")
-
-        esp_uuid = try_parse_uuid(esp_uuid_value)
-
-        if esp_uuid is None:
-            raise PackageConfigError(f"Could not parse '{esp_uuid_value}' as an UUID!")
-
-        if exit_if_root_is_snapshot_key not in toml_document:
-            raise PackageConfigError(
-                f"Missing option '{exit_if_root_is_snapshot_key}'!"
-            )
-
-        exit_if_root_is_snapshot_value = toml_document[exit_if_root_is_snapshot_key]
-
-        if not isinstance(exit_if_root_is_snapshot_value, bool):
-            raise PackageConfigError(
-                f"The '{exit_if_root_is_snapshot_key}' option must be a bool!"
-            )
-
-        exit_if_root_is_snapshot = bool(exit_if_root_is_snapshot_value)
-
-        if exit_if_no_changes_are_detected_key not in toml_document:
-            raise PackageConfigError(
-                f"Missing option '{exit_if_no_changes_are_detected_key}'!"
-            )
-
-        exit_if_no_changes_are_detected_value = toml_document[
-            exit_if_no_changes_are_detected_key
-        ]
-
-        if not isinstance(exit_if_no_changes_are_detected_value, bool):
-            raise PackageConfigError(
-                f"The '{exit_if_no_changes_are_detected_key}' option must be a bool!"
-            )
-
-        exit_if_no_changes_are_detected = bool(exit_if_no_changes_are_detected_value)
-
-        if snapshot_searches_key not in toml_document:
-            raise PackageConfigError(
-                f"At least one '{snapshot_searches_key}' object is required!"
-            )
-
-        snapshot_searches = list(
-            unique_everseen(
-                FilePackageConfigProvider._map_to_snapshot_searches(
-                    checked_cast(AoT, toml_document[snapshot_searches_key])
+        if snapshot_searches_key in container:
+            snapshot_searches = list(
+                unique_everseen(
+                    FilePackageConfigProvider._map_to_snapshot_searches(
+                        checked_cast(AoT, container[snapshot_searches_key]),
+                        one(default_snapshot_searches),
+                    )
                 )
             )
-        )
+        else:
+            snapshot_searches = default_snapshot_searches
 
-        if snapshot_manipulation_key not in toml_document:
-            raise PackageConfigError(
-                f"The '{snapshot_manipulation_key}' object is required!"
+        snapshot_manipulation_key = TopLevelConfigKey.SNAPSHOT_MANIPULATION.value
+
+        if snapshot_manipulation_key in container:
+            snapshot_manipulation = (
+                FilePackageConfigProvider._map_to_snapshot_manipulation(
+                    checked_cast(
+                        Table,
+                        container[snapshot_manipulation_key],
+                    ),
+                    default_package_config.snapshot_manipulation,
+                )
             )
+        else:
+            snapshot_manipulation = default_package_config.snapshot_manipulation
 
-        snapshot_manipulation = FilePackageConfigProvider._map_to_snapshot_manipulation(
-            checked_cast(Table, toml_document[snapshot_manipulation_key])
-        )
-        output_directory = snapshot_manipulation.destination_directory
+        destination_directory = snapshot_manipulation.destination_directory
 
         for snapshot_search in snapshot_searches:
             search_directory = snapshot_search.directory
             path_relation = discern_path_relation_of(
-                (output_directory, search_directory)
+                (destination_directory, search_directory)
             )
 
             if path_relation == PathRelation.SAME:
                 raise PackageConfigError(
-                    "The search and output directories cannot be the same!"
+                    "The search and destination directories cannot be the same!"
                 )
 
             if path_relation == PathRelation.FIRST_NESTED_IN_SECOND:
                 raise PackageConfigError(
-                    f"The '{output_directory}' output directory is nested in "
+                    f"The '{destination_directory}' destination directory is nested in "
                     f"the '{search_directory}' search directory!"
                 )
 
             if path_relation == PathRelation.SECOND_NESTED_IN_FIRST:
                 raise PackageConfigError(
                     f"The '{search_directory}' search directory is nested in "
-                    f"the '{output_directory}' output directory!"
+                    f"the '{destination_directory}' destination directory!"
                 )
 
-        if boot_stanza_generation_key not in toml_document:
-            raise PackageConfigError(
-                f"The '{boot_stanza_generation_key}' object is required!"
-            )
+        boot_stanza_generation_key = TopLevelConfigKey.BOOT_STANZA_GENERATION.value
 
-        boot_stanza_generation = (
-            FilePackageConfigProvider._map_to_boot_stanza_generation(
-                checked_cast(Table, toml_document[boot_stanza_generation_key])
+        if boot_stanza_generation_key in container:
+            boot_stanza_generation = (
+                FilePackageConfigProvider._map_to_boot_stanza_generation(
+                    checked_cast(Table, container[boot_stanza_generation_key]),
+                    default_package_config.boot_stanza_generation,
+                )
             )
-        )
+        else:
+            boot_stanza_generation = default_package_config.boot_stanza_generation
 
         return PackageConfig(
             esp_uuid,
@@ -246,53 +232,43 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
     @staticmethod
     def _map_to_snapshot_searches(
-        snapshot_searches_value: AoT,
+        snapshot_search_values: AoT, default_snapshot_search: SnapshotSearch
     ) -> Generator[SnapshotSearch, None, None]:
-        directory_key = SnapshotSearchConfigKey.DIRECTORY.value
         max_depth_key = SnapshotSearchConfigKey.MAX_DEPTH.value
-        is_nested_key = SnapshotSearchConfigKey.IS_NESTED.value
-        all_keys = [directory_key, max_depth_key, is_nested_key]
 
-        for value in snapshot_searches_value:
-            for key in all_keys:
-                if key not in value:
-                    raise PackageConfigError(f"Missing option '{key}'!")
-
-            directory_value = value[directory_key]
-
-            if not isinstance(directory_value, str):
-                raise PackageConfigError(
-                    f"The '{directory_key}' option must be a string!"
-                )
-
-            directory = Path(directory_value)
+        for snapshot_search_value in snapshot_search_values.body:
+            container = cast(dict, snapshot_search_value)
+            directory = cast(
+                Path,
+                FilePackageConfigProvider._get_config_value(
+                    container,
+                    SnapshotSearchConfigKey.DIRECTORY.value,
+                    str,
+                    default_snapshot_search,
+                    (Path, None),
+                ),
+            )
 
             if not directory.exists():
-                raise PackageConfigError(
-                    f"The '{directory_value}' path does not exist!"
-                )
+                raise PackageConfigError(f"The '{directory}' path does not exist!")
 
             if not directory.is_dir():
                 raise PackageConfigError(
-                    f"The '{directory_value}' path does not represent a directory!"
+                    f"The '{directory}' path does not represent a directory!"
                 )
 
-            is_nested_value = value[is_nested_key]
-
-            if not isinstance(is_nested_value, bool):
-                raise PackageConfigError(
-                    f"The '{is_nested_key}' option must be a bool!"
-                )
-
-            is_nested = bool(is_nested_value)
-            max_depth_value = value[max_depth_key]
-
-            if not isinstance(max_depth_value, int):
-                raise PackageConfigError(
-                    f"The '{max_depth_key}' option must be an integer!"
-                )
-
-            max_depth = int(max_depth_value)
+            is_nested = FilePackageConfigProvider._get_config_value(
+                container,
+                SnapshotSearchConfigKey.IS_NESTED.value,
+                bool,
+                default_snapshot_search,
+            )
+            max_depth = cast(
+                int,
+                FilePackageConfigProvider._get_config_value(
+                    container, max_depth_key, int, default_snapshot_search
+                ),
+            )
 
             if max_depth <= 0:
                 raise PackageConfigError(
@@ -304,79 +280,62 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     @staticmethod
     def _map_to_snapshot_manipulation(
         snapshot_manipulation_value: Table,
+        default_snapshot_manipulation: SnapshotManipulation,
     ) -> SnapshotManipulation:
+        container = cast(dict, snapshot_manipulation_value)
         selection_count_key = SnapshotManipulationConfigKey.SELECTION_COUNT.value
-        modify_read_only_flag_key = (
-            SnapshotManipulationConfigKey.MODIFY_READ_ONLY_FLAG.value
+
+        if selection_count_key in container:
+            selection_count_value = container[selection_count_key]
+
+            if isinstance(selection_count_value, int):
+                selection_count = int(selection_count_value)
+
+                if selection_count <= 0:
+                    raise PackageConfigError(
+                        f"The '{selection_count_key}' option must be greater than zero!"
+                    )
+            elif isinstance(selection_count_value, str):
+                actual_string = str(selection_count_value).strip()
+                expected_string = constants.SNAPSHOT_SELECTION_COUNT_INFINITY
+
+                if actual_string != expected_string:
+                    raise PackageConfigError(
+                        f"In case the '{selection_count_key}' option is a string "
+                        f"it can only be set to '{expected_string}'!"
+                    )
+
+                selection_count = sys.maxsize
+            else:
+                raise PackageConfigError(
+                    f"The '{selection_count_key}' option must be either an integer or a string!"
+                )
+        else:
+            selection_count = default_snapshot_manipulation.selection_count
+
+        modify_read_only_flag = FilePackageConfigProvider._get_config_value(
+            container,
+            SnapshotManipulationConfigKey.MODIFY_READ_ONLY_FLAG.value,
+            bool,
+            default_snapshot_manipulation,
         )
-        destination_directory_key = (
-            SnapshotManipulationConfigKey.DESTINATION_DIRECTORY.value
+        destination_directory = FilePackageConfigProvider._get_config_value(
+            container,
+            SnapshotManipulationConfigKey.DESTINATION_DIRECTORY.value,
+            str,
+            default_snapshot_manipulation,
+            (Path, None),
         )
         cleanup_exclusion_key = SnapshotManipulationConfigKey.CLEANUP_EXCLUSION.value
-        all_keys = [
-            selection_count_key,
-            modify_read_only_flag_key,
-            destination_directory_key,
-            cleanup_exclusion_key,
-        ]
-
-        for key in all_keys:
-            if key not in snapshot_manipulation_value:
-                raise PackageConfigError(f"Missing option '{key}'!")
-
-        selection_count_value = snapshot_manipulation_value[selection_count_key]
-
-        if isinstance(selection_count_value, int):
-            selection_count = int(selection_count_value)
-
-            if selection_count <= 0:
-                raise PackageConfigError(
-                    f"The '{selection_count_key}' option must be greater than zero!"
-                )
-        elif isinstance(selection_count_value, str):
-            actual_str = str(selection_count_value).strip()
-            expected_str = constants.SNAPSHOT_SELECTION_COUNT_INFINITY
-
-            if actual_str != expected_str:
-                raise PackageConfigError(
-                    f"In case the '{selection_count_key}' option is a string "
-                    f"it can only be set to '{expected_str}'!"
-                )
-
-            selection_count = sys.maxsize
-        else:
-            raise PackageConfigError(
-                f"The '{selection_count_key}' option must be either an integer or a string!"
-            )
-
-        modify_read_only_flag_value = snapshot_manipulation_value[
-            modify_read_only_flag_key
-        ]
-
-        if not isinstance(modify_read_only_flag_value, bool):
-            raise PackageConfigError(
-                f"The '{modify_read_only_flag_key}' option must be a bool!"
-            )
-
-        modify_read_only_flag = bool(modify_read_only_flag_value)
-        destination_directory_value = snapshot_manipulation_value[
-            destination_directory_key
-        ]
-
-        if not isinstance(destination_directory_value, str):
-            raise PackageConfigError(
-                f"The '{destination_directory_key}' option must be a string!"
-            )
-
-        destination_directory = Path(destination_directory_value)
-        cleanup_exclusion_value = snapshot_manipulation_value[cleanup_exclusion_key]
-
-        if not isinstance(cleanup_exclusion_value, list):
-            raise PackageConfigError(
-                f"The '{cleanup_exclusion_key}' option must be a string!"
-            )
-
-        cleanup_exclusion = list(cleanup_exclusion_value)
+        cleanup_exclusion = cast(
+            list,
+            FilePackageConfigProvider._get_config_value(
+                container,
+                cleanup_exclusion_key,
+                list,
+                default_snapshot_manipulation,
+            ),
+        )
         uuids: List[UUID] = []
 
         if has_items(cleanup_exclusion):
@@ -387,9 +346,18 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                     )
 
                 uuid = try_parse_uuid(item)
+                type_name = UUID.__name__
 
                 if uuid is None:
-                    raise PackageConfigError(f"Could not parse '{item}' as an UUID!")
+                    raise PackageConfigError(
+                        f"Could not parse '{item}' as expected type ('{type_name}')!"
+                    )
+
+                if uuid == constants.EMPTY_UUID:
+                    raise PackageConfigError(
+                        f"The '{cleanup_exclusion_key}' array must "
+                        f"not contain empty '{type_name}' values!"
+                    )
 
                 uuids.append(uuid)
 
@@ -413,39 +381,67 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
     @staticmethod
     def _map_to_boot_stanza_generation(
         boot_stanza_generation_value: Table,
+        default_boot_stanza_generation: BootStanzaGeneration,
     ) -> BootStanzaGeneration:
-        refind_config_key = BootStanzaGenerationConfigKey.REFIND_CONFIG.value
-        include_paths_key = BootStanzaGenerationConfigKey.INCLUDE_PATHS.value
-        include_sub_menus_key = BootStanzaGenerationConfigKey.INCLUDE_SUB_MENUS.value
-        all_keys = [refind_config_key, include_paths_key, include_sub_menus_key]
-
-        for key in all_keys:
-            if key not in boot_stanza_generation_value:
-                raise PackageConfigError(f"Missing option '{key}'!")
-
-        refind_config_value = boot_stanza_generation_value[refind_config_key]
-
-        if not isinstance(refind_config_value, str):
-            raise PackageConfigError(
-                f"The '{refind_config_key}' option must be a string!"
-            )
-
-        refind_config = str(refind_config_value)
-        include_paths_value = boot_stanza_generation_value[include_paths_key]
-
-        if not isinstance(include_paths_value, bool):
-            raise PackageConfigError(
-                f"The '{include_paths_key}' option must be a bool!"
-            )
-
-        include_paths = bool(include_paths_value)
-        include_sub_menus_value = boot_stanza_generation_value[include_sub_menus_key]
-
-        if not isinstance(include_sub_menus_value, bool):
-            raise PackageConfigError(
-                f"The '{include_sub_menus_key}' option must be a bool!"
-            )
-
-        include_sub_menus = bool(include_sub_menus_value)
+        container = cast(dict, boot_stanza_generation_value)
+        refind_config = FilePackageConfigProvider._get_config_value(
+            container,
+            BootStanzaGenerationConfigKey.REFIND_CONFIG.value,
+            str,
+            default_boot_stanza_generation,
+        )
+        include_paths = FilePackageConfigProvider._get_config_value(
+            container,
+            BootStanzaGenerationConfigKey.INCLUDE_PATHS.value,
+            bool,
+            default_boot_stanza_generation,
+        )
+        include_sub_menus = FilePackageConfigProvider._get_config_value(
+            container,
+            BootStanzaGenerationConfigKey.INCLUDE_SUB_MENUS.value,
+            bool,
+            default_boot_stanza_generation,
+        )
 
         return BootStanzaGeneration(refind_config, include_paths, include_sub_menus)
+
+    @staticmethod
+    def _get_config_value(
+        container: dict,
+        key: str,
+        source_type: Type[TSourceValue],
+        default_config: object,
+        value_conversion: Optional[
+            Tuple[Type[TDestinationValue], Optional[Callable[[TSourceValue], Any]]]
+        ] = None,
+    ) -> Any:
+        if key in container:
+            source_value = container[key]
+
+            if not isinstance(source_value, source_type):
+                raise PackageConfigError(
+                    f"The '{key}' option must be of type '{source_type.__name__}'!"
+                )
+
+            if value_conversion is not None:
+                destination_type = value_conversion[0]
+                converter_func = value_conversion[1]
+
+                if converter_func is None:
+                    converter_func = cast(
+                        Callable[[TSourceValue], Any], destination_type
+                    )
+
+                destination_value = converter_func(source_value)
+
+                if destination_value is None:
+                    raise PackageConfigError(
+                        f"Could not parse '{source_value}' as "
+                        f"expected type ('{destination_type.__name__}')!"
+                    )
+
+                return checked_cast(destination_type, destination_value)
+
+            return checked_cast(source_type, source_value)
+
+        return getattr(default_config, key)

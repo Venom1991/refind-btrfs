@@ -31,7 +31,7 @@ from typing import Any, Dict, Optional, Type, TypeVar
 from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.utility.helpers import checked_cast, none_throws
 
-_TDerived = TypeVar("_TDerived")
+TDerived = TypeVar("TDerived")
 
 
 class BaseConfig(ABC):
@@ -69,8 +69,8 @@ class BaseConfig(ABC):
     def with_initialization_type(
         self,
         initialization_type: ConfigInitializationType,
-        derived_type: Type[_TDerived],
-    ) -> _TDerived:
+        derived_type: Type[TDerived],
+    ) -> TDerived:
         self._initialization_type = initialization_type
 
         return checked_cast(derived_type, self)

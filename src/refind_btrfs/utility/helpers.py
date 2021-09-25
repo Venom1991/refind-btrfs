@@ -35,6 +35,8 @@ from typeguard import check_type
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
 
+TParam = TypeVar("TParam")
+
 
 def check_access_rights() -> None:
     if os.getuid() != constants.ROOT_UID:
@@ -224,11 +226,8 @@ def replace_root_part_in(
     return normalize_dir_separators_in(substituted_full_path, separator_replacement)
 
 
-_T = TypeVar("_T")
-
-
 def replace_item_in(
-    items_list: List[_T], current: _T, replacement: Optional[_T] = None
+    items_list: List[TParam], current: TParam, replacement: Optional[TParam] = None
 ) -> None:
     if not has_items(items_list):
         return
@@ -242,21 +241,21 @@ def replace_item_in(
         items_list[index] = replacement
 
 
-def none_throws(value: Optional[_T], message: str = "Unexpected 'None'") -> _T:
+def none_throws(value: Optional[TParam], message: str = "Unexpected 'None'") -> TParam:
     if value is None:
         raise AssertionError(message)
 
     return value
 
 
-def default_if_none(value: Optional[_T], default: _T) -> _T:
+def default_if_none(value: Optional[TParam], default: TParam) -> TParam:
     if value is None:
         return default
 
     return value
 
 
-def checked_cast(destination_type: Type[_T], value: Any) -> _T:
+def checked_cast(destination_type: Type[TParam], value: Any) -> TParam:
     check_type("value", value, destination_type)
 
-    return cast(_T, value)
+    return cast(TParam, value)

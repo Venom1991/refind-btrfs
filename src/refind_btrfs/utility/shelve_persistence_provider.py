@@ -35,6 +35,8 @@ from refind_btrfs.common.enums import LocalDbKey
 from refind_btrfs.state_management.model import ProcessingResult
 from refind_btrfs.utility.helpers import checked_cast
 
+TItem = TypeVar("TItem")
+
 
 class ShelvePersistenceProvider(BasePersistenceProvider):
     def __init__(self) -> None:
@@ -133,9 +135,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
 
         return local_db.get(value_key) if actual_version >= current_version else None
 
-    _T = TypeVar("_T")
-
-    def _save_item(self, item: _T, value_key: str, local_db: Shelf) -> None:
+    def _save_item(self, item: TItem, value_key: str, local_db: Shelf) -> None:
         version_key = f"{value_key}_{constants.DB_ITEM_VERSION_SUFFIX}"
         current_version = self._current_versions[version_key]
 
