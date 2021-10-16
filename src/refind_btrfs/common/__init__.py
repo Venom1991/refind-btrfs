@@ -26,6 +26,8 @@ from .checkable_observer import CheckableObserver
 from .configurable_mixin import ConfigurableMixin
 from .package_config import (
     BootStanzaGeneration,
+    BtrfsLogo,
+    Icon,
     PackageConfig,
     SnapshotManipulation,
     SnapshotSearch,

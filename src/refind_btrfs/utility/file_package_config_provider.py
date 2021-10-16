@@ -36,6 +36,8 @@ from tomlkit.toml_file import TOMLFile
 
 from refind_btrfs.common import (
     BootStanzaGeneration,
+    BtrfsLogo,
+    Icon,
     PackageConfig,
     SnapshotManipulation,
     SnapshotSearch,
@@ -48,7 +50,14 @@ from refind_btrfs.common.abc.providers import (
 )
 from refind_btrfs.common.enums import (
     BootStanzaGenerationConfigKey,
+    BootStanzaIconGenerationMode,
+    BtrfsLogoConfigKey,
+    BtrfsLogoHorizontalAlignment,
+    BtrfsLogoSize,
+    BtrfsLogoVariant,
+    BtrfsLogoVerticalAlignment,
     ConfigInitializationType,
+    IconConfigKey,
     PathRelation,
     SnapshotManipulationConfigKey,
     SnapshotSearchConfigKey,
@@ -57,7 +66,13 @@ from refind_btrfs.common.enums import (
 from refind_btrfs.common.exceptions import PackageConfigError
 from refind_btrfs.device import NumIdRelation, Subvolume, UuidRelation
 
-from .helpers import checked_cast, discern_path_relation_of, has_items, try_parse_uuid
+from .helpers import (
+    checked_cast,
+    discern_path_relation_of,
+    has_items,
+    try_convert_str_to_enum,
+    try_parse_uuid,
+)
 
 TSourceValue = TypeVar("TSourceValue")
 TDestinationValue = TypeVar("TDestinationValue")
@@ -70,7 +85,21 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
         True,
         [SnapshotSearch(Path("/.snapshots"), False, 2)],
         SnapshotManipulation(5, False, Path("/root/.refind-btrfs"), set()),
-        BootStanzaGeneration("refind.conf", True, False),
+        BootStanzaGeneration(
+            "refind.conf",
+            True,
+            False,
+            Icon(
+                BootStanzaIconGenerationMode.DEFAULT,
+                Path("btrfs-snapshot-stanzas/icons/sample_icon.png"),
+                BtrfsLogo(
+                    BtrfsLogoVariant.ORIGINAL,
+                    BtrfsLogoSize.MEDIUM,
+                    BtrfsLogoHorizontalAlignment.CENTER,
+                    BtrfsLogoVerticalAlignment.CENTER,
+                ),
+            ),
+        ),
     )
 
     @inject
@@ -350,7 +379,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
                 if uuid is None:
                     raise PackageConfigError(
-                        f"Could not parse '{item}' as expected type ('{type_name}')!"
+                        f"Could not convert '{item}' to expected type ('{type_name}')!"
                     )
 
                 if uuid == constants.EMPTY_UUID:
@@ -403,7 +432,106 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             default_boot_stanza_generation,
         )
 
-        return BootStanzaGeneration(refind_config, include_paths, include_sub_menus)
+        icon_key = BootStanzaGenerationConfigKey.ICON.value
+
+        if icon_key in container:
+            icon = FilePackageConfigProvider._map_to_icon(
+                checked_cast(Table, container[icon_key]),
+                default_boot_stanza_generation.icon,
+            )
+        else:
+            icon = default_boot_stanza_generation.icon
+
+        return BootStanzaGeneration(
+            refind_config, include_paths, include_sub_menus, icon
+        )
+
+    @staticmethod
+    def _map_to_icon(icon_value: Table, default_icon: Icon) -> Icon:
+        container = cast(dict, icon_value)
+        mode = FilePackageConfigProvider._get_config_value(
+            container,
+            IconConfigKey.MODE.value,
+            str,
+            default_icon,
+            (
+                BootStanzaIconGenerationMode,
+                lambda value: try_convert_str_to_enum(
+                    value, BootStanzaIconGenerationMode
+                ),
+            ),
+        )
+        path = FilePackageConfigProvider._get_config_value(
+            container,
+            IconConfigKey.PATH.value,
+            str,
+            default_icon,
+            (Path, None),
+        )
+
+        btrfs_logo_key = IconConfigKey.BTRFS_LOGO.value
+
+        if btrfs_logo_key in container:
+            btrfs_logo = FilePackageConfigProvider._map_to_btrfs_logo(
+                checked_cast(Table, container[btrfs_logo_key]),
+                default_icon.btrfs_logo,
+            )
+        else:
+            btrfs_logo = default_icon.btrfs_logo
+
+        return Icon(mode, path, btrfs_logo)
+
+    @staticmethod
+    def _map_to_btrfs_logo(
+        btrfs_logo_value: Table, default_btrfs_logo: BtrfsLogo
+    ) -> BtrfsLogo:
+        container = cast(dict, btrfs_logo_value)
+        variant = FilePackageConfigProvider._get_config_value(
+            container,
+            BtrfsLogoConfigKey.VARIANT.value,
+            str,
+            default_btrfs_logo,
+            (
+                BtrfsLogoVariant,
+                lambda value: try_convert_str_to_enum(value, BtrfsLogoVariant),
+            ),
+        )
+        size = FilePackageConfigProvider._get_config_value(
+            container,
+            BtrfsLogoConfigKey.SIZE.value,
+            str,
+            default_btrfs_logo,
+            (
+                BtrfsLogoSize,
+                lambda value: try_convert_str_to_enum(value, BtrfsLogoSize),
+            ),
+        )
+        horizontal_alignment = FilePackageConfigProvider._get_config_value(
+            container,
+            BtrfsLogoConfigKey.HORIZONTAL_ALIGNMENT.value,
+            str,
+            default_btrfs_logo,
+            (
+                BtrfsLogoHorizontalAlignment,
+                lambda value: try_convert_str_to_enum(
+                    value, BtrfsLogoHorizontalAlignment
+                ),
+            ),
+        )
+        vertical_alignment = FilePackageConfigProvider._get_config_value(
+            container,
+            BtrfsLogoConfigKey.VERTICAL_ALIGNMENT.value,
+            str,
+            default_btrfs_logo,
+            (
+                BtrfsLogoVerticalAlignment,
+                lambda value: try_convert_str_to_enum(
+                    value, BtrfsLogoVerticalAlignment
+                ),
+            ),
+        )
+
+        return BtrfsLogo(variant, size, horizontal_alignment, vertical_alignment)
 
     @staticmethod
     def _get_config_value(
@@ -436,7 +564,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
                 if destination_value is None:
                     raise PackageConfigError(
-                        f"Could not parse '{source_value}' as "
+                        f"Could not convert '{source_value}' to "
                         f"expected type ('{destination_type.__name__}')!"
                     )
 

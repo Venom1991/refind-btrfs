@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import errno
 import os
 import re
+from enum import Enum
 from inspect import ismethod
 from pathlib import Path
 from typing import Any, Iterator, Optional, Sized, Type, TypeVar, cast
@@ -34,6 +35,7 @@ from typeguard import check_type
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import PathRelation
+
 
 TParam = TypeVar("TParam")
 
@@ -57,6 +59,16 @@ def try_parse_uuid(value: str) -> Optional[UUID]:
         return UUID(hex=value)
     except ValueError:
         return None
+
+
+def try_convert_str_to_enum(value: str, enum_type: Type[Enum]) -> Optional[Enum]:
+    upper_value = value.upper()
+    member_names = [member.name for member in enum_type]
+
+    if upper_value in member_names:
+        return enum_type[upper_value]
+
+    return None
 
 
 def try_convert_bytes_to_uuid(value: bytes) -> Optional[UUID]:

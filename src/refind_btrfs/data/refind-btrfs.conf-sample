@@ -47,7 +47,7 @@ exit_if_no_changes_are_detected = true
 #
 # is_nested = <bool>
 ## Whether to search for snapshots nested within another snapshot. Only one
-## level of nesting is supported and the search is performed in the same
+## level of nesting is supported and a search is performed in the same
 ## directory (if it exists) that is, in this context, relative to the found
 ## snapshot's root directory instead of the system's root directory. The same
 ## maximum search depth is used, as well.
@@ -133,3 +133,70 @@ cleanup_exclusion = []
 refind_config = "refind.conf"
 include_paths = true
 include_sub_menus = false
+
+# [boot-stanza-generation.icon]
+## Subobject used to configure the process of defining the generated boot
+## stanza's icon.
+#
+# mode = <string>
+## Selected mode of icon generation which can be defined as one of:
+##      • "default" - the source boot stanza's icon is reused, as is
+##      • "custom" - a user provided image file path is used as the icon
+##      • "embed_btrfs_logo" - the Btrfs logo is embedded into the source boot
+##                             stanza's icon
+#
+## path = <string>
+## Path of the user provided image file, relative to whichever directory the
+## file defined by the "refind_config" option was found. This option is taken
+## into consideration in case the "mode" option is set to "custom" but is
+## otherwise ignored.
+## WARNING: The format of the image located at this path must be one of those
+## which rEFInd itself supports, that is one of the following: PNG, JPEG, BMP
+## or ICNS.
+
+[boot-stanza-generation.icon]
+mode = "default"
+path = "btrfs-snapshot-stanzas/icons/sample_icon.png"
+
+# [boot-stanza-generation.icon.btrfs-logo]
+## Subobject used to configure the behavior of embedding the Btrfs logo into
+## the source boot stanza's icon. It is taken into consideration in case the
+## "mode" option is set to "embed_btrfs_logo" but is otherwise ignored.
+## WARNING: The source boot stanza icon's format must be PNG and its dimensions
+## (width or height) must exceed those defined by the "size" option.
+#
+# variant = <string>
+## Btrfs logo variant to be used for embedding which can be defined as one of:
+##      • "original" - dark variant, suitable for light themes (including the
+##                     default theme)
+##      • "inverted" - light variant created by inverting the original logo's
+##                     pixels' color values, suitable for dark themes
+#
+# size = <string>
+## Size of the chosen Btrfs logo's variant defined by the "type" option. Both
+## variants come in three different sizes which should be a sufficiently
+## flexible choice and as such suitable for a decent number of different OS
+## icons, both default and custom. It can be defined as one of:
+##      • "small" - 32x20 pixels
+##      • "medium" - 48x30 pixels
+##      • "large" - 64x40 pixels
+#
+# horizontal_alignment = <string>
+## Horizontal alignment (x-axis) of the embedded Btrfs logo which can be
+## defined as one of:
+##      • "left"
+##      • "center"
+##      • "right"
+#
+# vertical_alignment = <string>
+## Vertical alignment (y-axis) of the embedded Btrfs logo which can be defined
+## as one of:
+##      • "top"
+##      • "center"
+##      • "bottom"
+
+[boot-stanza-generation.icon.btrfs-logo]
+variant = "original"
+size = "medium"
+horizontal_alignment = "center"
+vertical_alignment = "center"

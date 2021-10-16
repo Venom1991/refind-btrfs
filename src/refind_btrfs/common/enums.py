@@ -35,15 +35,15 @@ class AutoNameToLower(Enum):
 
 
 @unique
-class RunMode(Enum):
+class RunMode(AutoNameToLower):
     ONE_TIME = "one-time"
-    BACKGROUND = "background"
+    BACKGROUND = auto()
 
 
 @unique
-class LsblkJsonKey(Enum):
-    BLOCKDEVICES = "blockdevices"
-    CHILDREN = "children"
+class LsblkJsonKey(AutoNameToLower):
+    BLOCKDEVICES = auto()
+    CHILDREN = auto()
 
 
 @unique
@@ -63,8 +63,8 @@ class LsblkColumn(Enum):
 
 
 @unique
-class FindmntJsonKey(Enum):
-    FILESYSTEMS = "filesystems"
+class FindmntJsonKey(AutoNameToLower):
+    FILESYSTEMS = auto()
 
 
 @unique
@@ -104,42 +104,92 @@ class ConfigInitializationType(Enum):
 
 
 @unique
-class TopLevelConfigKey(Enum):
-    EXIT_IF_ROOT_IS_SNAPSHOT = "exit_if_root_is_snapshot"
-    EXIT_IF_NO_CHANGES_ARE_DETECTED = "exit_if_no_changes_are_detected"
-    ESP_UUID = "esp_uuid"
+class TopLevelConfigKey(AutoNameToLower):
+    EXIT_IF_ROOT_IS_SNAPSHOT = auto()
+    EXIT_IF_NO_CHANGES_ARE_DETECTED = auto()
+    ESP_UUID = auto()
     SNAPSHOT_SEARCH = "snapshot-search"
     SNAPSHOT_MANIPULATION = "snapshot-manipulation"
     BOOT_STANZA_GENERATION = "boot-stanza-generation"
 
 
 @unique
-class SnapshotSearchConfigKey(Enum):
-    DIRECTORY = "directory"
-    IS_NESTED = "is_nested"
-    MAX_DEPTH = "max_depth"
+class SnapshotSearchConfigKey(AutoNameToLower):
+    DIRECTORY = auto()
+    IS_NESTED = auto()
+    MAX_DEPTH = auto()
 
 
 @unique
-class SnapshotManipulationConfigKey(Enum):
-    SELECTION_COUNT = "selection_count"
-    MODIFY_READ_ONLY_FLAG = "modify_read_only_flag"
-    DESTINATION_DIRECTORY = "destination_directory"
-    CLEANUP_EXCLUSION = "cleanup_exclusion"
+class SnapshotManipulationConfigKey(AutoNameToLower):
+    SELECTION_COUNT = auto()
+    MODIFY_READ_ONLY_FLAG = auto()
+    DESTINATION_DIRECTORY = auto()
+    CLEANUP_EXCLUSION = auto()
 
 
 @unique
-class BootStanzaGenerationConfigKey(Enum):
-    REFIND_CONFIG = "refind_config"
-    INCLUDE_PATHS = "include_paths"
-    INCLUDE_SUB_MENUS = "include_sub_menus"
+class BootStanzaGenerationConfigKey(AutoNameToLower):
+    REFIND_CONFIG = auto()
+    INCLUDE_PATHS = auto()
+    INCLUDE_SUB_MENUS = auto()
+    ICON = auto()
 
 
 @unique
-class LocalDbKey(Enum):
-    PACKAGE_CONFIG = "package_config"
-    REFIND_CONFIGS = "refind_configs"
-    PROCESSING_RESULT = "processing_result"
+class IconConfigKey(AutoNameToLower):
+    MODE = auto()
+    PATH = auto()
+    BTRFS_LOGO = "btrfs-logo"
+
+
+@unique
+class BootStanzaIconGenerationMode(AutoNameToLower):
+    DEFAULT = auto()
+    CUSTOM = auto()
+    EMBED_BTRFS_LOGO = auto()
+
+
+@unique
+class BtrfsLogoConfigKey(AutoNameToLower):
+    VARIANT = auto()
+    SIZE = auto()
+    HORIZONTAL_ALIGNMENT = auto()
+    VERTICAL_ALIGNMENT = auto()
+
+
+@unique
+class BtrfsLogoVariant(AutoNameToLower):
+    ORIGINAL = auto()
+    INVERTED = auto()
+
+
+@unique
+class BtrfsLogoSize(AutoNameToLower):
+    SMALL = auto()
+    MEDIUM = auto()
+    LARGE = auto()
+
+
+@unique
+class BtrfsLogoHorizontalAlignment(AutoNameToLower):
+    LEFT = auto()
+    CENTER = auto()
+    RIGHT = auto()
+
+
+@unique
+class BtrfsLogoVerticalAlignment(AutoNameToLower):
+    TOP = auto()
+    CENTER = auto()
+    BOTTOM = auto()
+
+
+@unique
+class LocalDbKey(AutoNameToLower):
+    PACKAGE_CONFIG = auto()
+    REFIND_CONFIGS = auto()
+    PROCESSING_RESULT = auto()
 
 
 @unique
@@ -169,9 +219,9 @@ class OSTypeParameter(Enum):
 
 
 @unique
-class GraphicsParameter(Enum):
-    ON = "on"
-    OFF = "off"
+class GraphicsParameter(AutoNameToLower):
+    ON = auto()
+    OFF = auto()
 
 
 @unique

@@ -28,6 +28,13 @@ from uuid import UUID
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.abc import BaseConfig
+from refind_btrfs.common.enums import (
+    BootStanzaIconGenerationMode,
+    BtrfsLogoHorizontalAlignment,
+    BtrfsLogoSize,
+    BtrfsLogoVariant,
+    BtrfsLogoVerticalAlignment,
+)
 from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import find_all_directories_in, has_items
 
@@ -57,10 +64,24 @@ class SnapshotManipulation(NamedTuple):
     cleanup_exclusion: Set[Subvolume]
 
 
+class BtrfsLogo(NamedTuple):
+    variant: BtrfsLogoVariant
+    size: BtrfsLogoSize
+    horizontal_alignment: BtrfsLogoHorizontalAlignment
+    vertical_alignment: BtrfsLogoVerticalAlignment
+
+
+class Icon(NamedTuple):
+    mode: BootStanzaIconGenerationMode
+    path: Path
+    btrfs_logo: BtrfsLogo
+
+
 class BootStanzaGeneration(NamedTuple):
     refind_config: str
     include_paths: bool
     include_sub_menus: bool
+    icon: Icon
 
 
 class PackageConfig(BaseConfig):

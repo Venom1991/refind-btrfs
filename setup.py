@@ -28,7 +28,7 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 setuptools.setup(
     name="refind-btrfs",
-    version="0.3.13",
+    version="0.4.0",
     author="Luka Žaja",
     author_email="luka.zaja@protonmail.com",
     description="Generate rEFInd manual boot stanzas from Btrfs snapshots",
@@ -65,5 +65,6 @@ setuptools.setup(
             "refind-btrfs=refind_btrfs:main",
         ],
     },
+    extras_require={"custom_icon": ["Pillow"]},
     python_requires=">=3.9",
 )
