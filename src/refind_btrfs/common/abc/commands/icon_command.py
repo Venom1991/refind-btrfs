@@ -21,4 +21,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from .migration import Migration
+from abc import ABC, abstractmethod

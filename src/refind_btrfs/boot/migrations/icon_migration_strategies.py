@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """ refind-btrfs - Generate rEFInd manual boot stanzas from Btrfs snapshots
-Copyright (C) 2020  Luka Žaja
+Copyright (C) 2020-2021  Luka Žaja
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -190,10 +190,14 @@ class EmbedBtrfsLogoStrategy(BaseIconMigrationStrategy):
                 try:
                     horizontal_alignment = btrfs_logo.horizontal_alignment
                     x_delta = current_icon_image_width - btrfs_logo_image_width
-                    x_offset = self._embed_offset_initializers[horizontal_alignment](x_delta)
+                    x_offset = self._embed_offset_initializers[horizontal_alignment](
+                        x_delta
+                    )
                     vertical_alignment = btrfs_logo.vertical_alignment
                     y_delta = current_icon_image_height - btrfs_logo_image_height
-                    y_offset = self._embed_offset_initializers[vertical_alignment](y_delta)
+                    y_offset = self._embed_offset_initializers[vertical_alignment](
+                        y_delta
+                    )
                     resized_btrfs_logo_image = Image.new(
                         btrfs_logo_image.mode, current_icon_image.size
                     )
