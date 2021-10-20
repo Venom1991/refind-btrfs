@@ -21,11 +21,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+from pathlib import Path
 from typing import Collection, Iterator, Optional
 
 from more_itertools import first
 
-from refind_btrfs.common import constants
+from refind_btrfs.common import BootStanzaGeneration, constants
 from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import has_items, none_throws
@@ -33,7 +34,7 @@ from refind_btrfs.utility.helpers import has_items, none_throws
 from ..boot_options import BootOptions
 from ..boot_stanza import BootStanza
 from ..sub_menu import SubMenu
-from .factory import Factory
+from .main_migration_strategies import MainMigrationFactory
 from .state import State
 
 
@@ -59,23 +60,27 @@ class Migration:
         self._source_subvolume = source_subvolume
         self._bootable_snapshots = list(bootable_snapshots)
 
-    def migrate(self, include_paths: bool, include_sub_menus: bool) -> BootStanza:
+    def migrate(
+        self, refind_config_path: Path, boot_stanza_generation: BootStanzaGeneration
+    ) -> BootStanza:
         boot_stanza = self._boot_stanza
         source_subvolume = self._source_subvolume
         bootable_snapshots = self._bootable_snapshots
+        include_sub_menus = boot_stanza_generation.include_sub_menus
         latest_migration_result: Optional[State] = None
         result_sub_menus: list[SubMenu] = []
 
         for destination_subvolume in bootable_snapshots:
             is_latest = self._is_latest_snapshot(destination_subvolume)
-            migration_strategy = Factory.migration_strategy(
+            boot_stanza_migration_strategy = MainMigrationFactory.migration_strategy(
                 boot_stanza,
+                is_latest,
+                refind_config_path,
                 source_subvolume,
                 destination_subvolume,
-                include_paths,
-                is_latest,
+                boot_stanza_generation,
             )
-            migration_result = migration_strategy.migrate()
+            migration_result = boot_stanza_migration_strategy.migrate()
 
             if is_latest:
                 latest_migration_result = migration_result
@@ -94,10 +99,11 @@ class Migration:
 
             if include_sub_menus:
                 migrated_sub_menus = self._migrate_sub_menus(
+                    refind_config_path,
                     source_subvolume,
                     destination_subvolume,
                     migration_result,
-                    include_paths,
+                    boot_stanza_generation,
                 )
 
                 result_sub_menus.extend(list(migrated_sub_menus))
@@ -109,7 +115,7 @@ class Migration:
             boot_stanza.volume,
             boot_stanza_migration_result.loader_path,
             boot_stanza_migration_result.initrd_path,
-            boot_stanza.icon_path,
+            boot_stanza_migration_result.icon_path,
             boot_stanza.os_type,
             boot_stanza.graphics,
             none_throws(boot_stanza_migration_result.boot_options),
@@ -119,10 +125,11 @@ class Migration:
 
     def _migrate_sub_menus(
         self,
+        refind_config_path: Path,
         source_subvolume: Subvolume,
         destination_subvolume: Subvolume,
         boot_stanza_result: State,
-        include_paths: bool,
+        boot_stanza_generation: BootStanzaGeneration,
     ) -> Iterator[SubMenu]:
         boot_stanza = self._boot_stanza
 
@@ -134,15 +141,16 @@ class Migration:
 
         for sub_menu in current_sub_menus:
             if sub_menu.can_be_used_for_bootable_snapshot():
-                migration_strategy = Factory.migration_strategy(
+                sub_menu_migration_strategy = MainMigrationFactory.migration_strategy(
                     sub_menu,
+                    is_latest,
+                    refind_config_path,
                     source_subvolume,
                     destination_subvolume,
-                    include_paths,
-                    is_latest,
+                    boot_stanza_generation,
                     boot_stanza_result,
                 )
-                migration_result = migration_strategy.migrate()
+                migration_result = sub_menu_migration_strategy.migrate()
 
                 yield SubMenu(
                     migration_result.name,

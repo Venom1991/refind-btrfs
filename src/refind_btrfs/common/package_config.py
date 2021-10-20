@@ -21,9 +21,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
+from __future__ import annotations
+
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Iterator, NamedTuple, Set
+from typing import Iterable, Iterator, NamedTuple, Optional, Set
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -35,7 +37,7 @@ from refind_btrfs.common.enums import (
     BtrfsLogoVariant,
     BtrfsLogoVerticalAlignment,
 )
-from refind_btrfs.device import Subvolume
+from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import find_all_directories_in, has_items
 
 
@@ -82,6 +84,18 @@ class BootStanzaGeneration(NamedTuple):
     include_paths: bool
     include_sub_menus: bool
     icon: Icon
+
+    def with_include_paths(
+        self, boot_device: Optional[BlockDevice]
+    ) -> BootStanzaGeneration:
+        include_paths = self.include_paths
+
+        if include_paths:
+            include_paths = boot_device is None
+
+        return BootStanzaGeneration(
+            self.refind_config, include_paths, self.include_sub_menus, self.icon
+        )
 
 
 class PackageConfig(BaseConfig):

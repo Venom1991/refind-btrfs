@@ -46,7 +46,7 @@ class ShelvePersistenceProvider(BasePersistenceProvider):
         self._current_versions = {
             f"{LocalDbKey.PACKAGE_CONFIG.value}_{version_suffix}": Version("1.2.0"),
             f"{LocalDbKey.REFIND_CONFIGS.value}_{version_suffix}": Version("1.0.0"),
-            f"{LocalDbKey.PROCESSING_RESULT.value}_{version_suffix}": Version("1.0.0"),
+            f"{LocalDbKey.PROCESSING_RESULT.value}_{version_suffix}": Version("1.1.0"),
         }
 
     def get_package_config(self) -> Optional[PackageConfig]:

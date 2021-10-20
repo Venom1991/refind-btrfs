@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import sys
 from datetime import datetime
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any, Callable, Iterator, Optional, Type, TypeVar, cast
 from uuid import UUID
@@ -461,6 +462,16 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                 ),
             ),
         )
+
+        if mode != BootStanzaIconGenerationMode.DEFAULT:
+            pil_spec = find_spec("PIL")
+
+            if pil_spec is None:
+                raise PackageConfigError(
+                    f"The '{mode}' mode of boot stanza icon generation "
+                    "requires that the 'Pillow' package is installed!"
+                )
+
         path = FilePackageConfigProvider._get_config_value(
             container,
             IconConfigKey.PATH.value,

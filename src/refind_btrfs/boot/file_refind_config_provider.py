@@ -167,7 +167,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 except OSError as e:
                     logger.exception("Path.open('r') call failed!")
                     raise RefindConfigError(
-                        f"Could not read from the '{config_file_path.name}' file!"
+                        f"Could not read from the '{config_file_path}' file!"
                     ) from e
                 else:
                     include_option = RefindOption.INCLUDE.value
@@ -287,6 +287,7 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                 actual_included_configs = [
                     self._read_config_from(included_config.file_path)
                     for included_config in current_included_configs
+                    if included_config.file_path.exists()
                 ]
                 current_refind_config = current_refind_config.with_included_configs(
                     actual_included_configs

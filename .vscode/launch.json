@@ -13,7 +13,8 @@
                 "--run-mode",
                 "one-time"
             ],
-            "sudo": true
+            "sudo": true,
+            "justMyCode": false
         }
     ]
 }

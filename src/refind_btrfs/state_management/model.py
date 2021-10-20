@@ -30,7 +30,7 @@ from injector import inject
 from more_itertools import only
 
 from refind_btrfs.boot import BootStanza, RefindConfig
-from refind_btrfs.common import BootStanzaGeneration, ConfigurableMixin
+from refind_btrfs.common import ConfigurableMixin
 from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
     BaseLoggerFactory,
@@ -90,11 +90,10 @@ class BootStanzaWithSnapshots(NamedTuple):
 
 class ProcessingResult(NamedTuple):
     bootable_snapshots: list[Subvolume]
-    boot_stanza_generation: Optional[BootStanzaGeneration]
 
     @classmethod
     def none(cls) -> ProcessingResult:
-        return cls([], None)
+        return cls([])
 
 
 # endregion
@@ -252,10 +251,9 @@ class Model(ConfigurableMixin):
         self._process_boot_stanzas()
 
         persistence_provider = self._persistence_provider
-        current_boot_stanza_generation = self.package_config.boot_stanza_generation
 
         persistence_provider.save_current_run_result(
-            ProcessingResult(bootable_snapshots, current_boot_stanza_generation)
+            ProcessingResult(bootable_snapshots)
         )
 
     def _process_snapshots(self) -> list[Subvolume]:
@@ -303,14 +301,13 @@ class Model(ConfigurableMixin):
     def _process_boot_stanzas(self) -> None:
         refind_config = self.refind_config
         root_device = none_throws(self.root_device)
+        boot_device = self.boot_device
         usable_boot_stanzas_with_snapshots = self.usable_boot_stanzas_with_snapshots
-        include_paths = self._should_include_paths_during_generation()
-        include_sub_menus = self._should_include_sub_menus_during_generation()
+        boot_stanza_generation = (
+            self.package_config.boot_stanza_generation.with_include_paths(boot_device)
+        )
         generated_refind_configs = refind_config.generate_new_from(
-            root_device,
-            usable_boot_stanzas_with_snapshots,
-            include_paths,
-            include_sub_menus,
+            root_device, usable_boot_stanzas_with_snapshots, boot_stanza_generation
         )
 
         refind_config_provider = self._refind_config_provider

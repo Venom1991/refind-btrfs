@@ -30,7 +30,7 @@ from typing import Collection, Iterable, Iterator, Optional
 
 from more_itertools import always_iterable
 
-from refind_btrfs.common import constants
+from refind_btrfs.common import BootStanzaGeneration, constants
 from refind_btrfs.common.abc import BaseConfig
 from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.device import BlockDevice, Subvolume
@@ -103,8 +103,7 @@ class RefindConfig(BaseConfig):
         self,
         block_device: BlockDevice,
         boot_stanzas_with_snapshots: dict[BootStanza, list[Subvolume]],
-        include_paths: bool,
-        include_sub_menus: bool,
+        boot_stanza_generation: BootStanzaGeneration,
     ) -> Iterator[RefindConfig]:
         file_path = self.file_path
         boot_stanzas = copy(none_throws(self.boot_stanzas))
@@ -134,7 +133,7 @@ class RefindConfig(BaseConfig):
                     boot_stanza, block_device, sorted_bootable_snapshots
                 )
                 migrated_boot_stanza = migration.migrate(
-                    include_paths, include_sub_menus
+                    file_path, boot_stanza_generation
                 )
                 boot_stanza_file_name = migrated_boot_stanza.file_name
 

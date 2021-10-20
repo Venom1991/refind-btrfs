@@ -44,12 +44,12 @@ class DeviceCommand(ABC):
         pass
 
     @get_partition_table_for.register(BlockDevice)
-    def _block_device_overload(self, argument: BlockDevice) -> PartitionTable:
-        return self._block_device_partition_table(argument)
+    def _block_device_overload(self, block_device: BlockDevice) -> PartitionTable:
+        return self._block_device_partition_table(block_device)
 
     @get_partition_table_for.register(Subvolume)
-    def _subvolume_overload(self, argument: Subvolume) -> PartitionTable:
-        return self._subvolume_partition_table(argument)
+    def _subvolume_overload(self, subvolume: Subvolume) -> PartitionTable:
+        return self._subvolume_partition_table(subvolume)
 
     @abstractmethod
     def _block_device_partition_table(

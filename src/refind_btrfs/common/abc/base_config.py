@@ -88,9 +88,13 @@ class BaseConfig(ABC):
             return True
 
         current_file_stat = none_throws(self.file_stat)
-        actual_file_stat = actual_file_path.stat()
 
-        return current_file_stat.st_mtime != actual_file_stat.st_mtime
+        if actual_file_path.exists():
+            actual_file_stat = actual_file_path.stat()
+
+            return current_file_stat.st_mtime != actual_file_stat.st_mtime
+
+        return True
 
     def is_of_initialization_type(
         self, initialization_type: ConfigInitializationType

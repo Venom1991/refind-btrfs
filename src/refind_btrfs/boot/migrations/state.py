@@ -30,5 +30,6 @@ class State(NamedTuple):
     name: str
     loader_path: Optional[str]
     initrd_path: Optional[str]
+    icon_path: Optional[str]
     boot_options: Optional[BootOptions]
     add_boot_options: Optional[BootOptions]
