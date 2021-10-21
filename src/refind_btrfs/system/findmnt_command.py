@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -57,6 +57,7 @@ class FindmntCommand(DeviceCommand):
             f"'{DeviceCommand.get_block_devices.__name__}' method!"
         )
 
+    # pylint: disable=unused-argument
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
             f"Class '{FindmntCommand.__name__}' does not implement the "

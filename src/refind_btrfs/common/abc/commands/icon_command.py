@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -22,3 +22,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from abc import ABC, abstractmethod
+from pathlib import Path
+
+from refind_btrfs.common import BtrfsLogo
+
+
+class IconCommand(ABC):
+    @abstractmethod
+    def validate_custom_icon(
+        self, refind_config_path: Path, source_icon_path: Path, custom_icon_path: Path
+    ) -> Path:
+        pass
+
+    @abstractmethod
+    def embed_btrfs_logo_into_source_icon(
+        self, refind_config_path: Path, source_icon_path: Path, btrfs_logo: BtrfsLogo
+    ) -> Path:
+        pass

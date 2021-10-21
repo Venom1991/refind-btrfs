@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -22,5 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from .base_device_command_factory import BaseDeviceCommandFactory
+from .base_icon_command_factory import BaseIconCommandFactory
 from .base_logger_factory import BaseLoggerFactory
 from .base_subvolume_command_factory import BaseSubvolumeCommandFactory

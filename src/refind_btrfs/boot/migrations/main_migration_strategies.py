@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -197,8 +197,8 @@ class BootStanzaMigrationStrategy(BaseMainMigrationStrategy):
                 destination_initrd_path = none_throws(destination_initrd_path_candidate)
 
         icon_migration_strategy = IconMigrationFactory.migration_strategy(
-            none_throws(current_state.icon_path),
             self._refind_config_path,
+            none_throws(current_state.icon_path),
             self._boot_stanza_generation.icon,
         )
 

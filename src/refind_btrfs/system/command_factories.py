@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -23,9 +23,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from injector import inject
 
-from refind_btrfs.common.abc.commands import DeviceCommand, SubvolumeCommand
+from refind_btrfs.common.abc.commands import (
+    DeviceCommand,
+    IconCommand,
+    SubvolumeCommand,
+)
 from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
+    BaseIconCommandFactory,
     BaseLoggerFactory,
     BaseSubvolumeCommandFactory,
 )
@@ -35,6 +40,7 @@ from .btrfsutil_command import BtrfsUtilCommand
 from .findmnt_command import FindmntCommand
 from .fstab_command import FstabCommand
 from .lsblk_command import LsblkCommand
+from .pillow_command import PillowCommand
 
 
 class SystemDeviceCommandFactory(BaseDeviceCommandFactory):
@@ -69,3 +75,12 @@ class BtrfsUtilSubvolumeCommandFactory(BaseSubvolumeCommandFactory):
 
     def subvolume_command(self) -> SubvolumeCommand:
         return BtrfsUtilCommand(self._logger_factory, self._package_config_provider)
+
+
+class PillowIconCommandFactory(BaseIconCommandFactory):
+    @inject
+    def __init__(self, logger_factory: BaseLoggerFactory) -> None:
+        self._logger_factory = logger_factory
+
+    def icon_command(self) -> IconCommand:
+        return PillowCommand(self._logger_factory)

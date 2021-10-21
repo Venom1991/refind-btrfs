@@ -21,6 +21,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 # endregion
 
-from .snapshot_event_handler import SnapshotEventHandler
-from .snapshot_observer import SnapshotObserver
-from .watchdog_runner import WatchdogRunner
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..commands import IconCommand
+
+
+class BaseIconCommandFactory(ABC):
+    @abstractmethod
+    def icon_command(self) -> IconCommand:
+        pass

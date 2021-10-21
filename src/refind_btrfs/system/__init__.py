@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -23,5 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from .command_factories import (
     BtrfsUtilSubvolumeCommandFactory,
+    PillowIconCommandFactory,
     SystemDeviceCommandFactory,
 )

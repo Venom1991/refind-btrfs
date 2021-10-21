@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -32,6 +32,7 @@ from refind_btrfs.common import CheckableObserver
 from refind_btrfs.common.abc import BaseRunner
 from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
+    BaseIconCommandFactory,
     BaseLoggerFactory,
     BaseSubvolumeCommandFactory,
 )
@@ -46,6 +47,7 @@ from refind_btrfs.service import SnapshotEventHandler, SnapshotObserver, Watchdo
 from refind_btrfs.state_management import Model, States
 from refind_btrfs.system import (
     BtrfsUtilSubvolumeCommandFactory,
+    PillowIconCommandFactory,
     SystemDeviceCommandFactory,
 )
 from refind_btrfs.utility.helpers import has_method
@@ -59,6 +61,7 @@ class CommonModule(Module):
     def configure(self, binder: Binder) -> None:
         binder.bind(BaseDeviceCommandFactory, to=SystemDeviceCommandFactory)
         binder.bind(BaseSubvolumeCommandFactory, to=BtrfsUtilSubvolumeCommandFactory)
+        binder.bind(BaseIconCommandFactory, to=PillowIconCommandFactory)
 
         # singletons
         binder.bind(

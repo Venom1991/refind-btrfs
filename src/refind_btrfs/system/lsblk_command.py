@@ -1,5 +1,5 @@
 # region Licensing
-# SPDX-FileCopyrightText: 2020 Luka Žaja <luka.zaja@protonmail.com>
+# SPDX-FileCopyrightText: 2020-2021 Luka Žaja <luka.zaja@protonmail.com>
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -95,6 +95,7 @@ class LsblkCommand(DeviceCommand, ConfigurableMixin):
 
         yield from LsblkCommand._map_to_block_devices(lsblk_blockdevices)
 
+    # pylint: disable=unused-argument
     def save_partition_table(self, partition_table: PartitionTable) -> None:
         raise NotImplementedError(
             f"Class '{LsblkCommand.__name__}' does not implement the "
