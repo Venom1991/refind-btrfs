@@ -32,6 +32,7 @@ from more_itertools import always_iterable
 
 from refind_btrfs.common import BootStanzaGeneration, constants
 from refind_btrfs.common.abc import BaseConfig
+from refind_btrfs.common.abc.factories import BaseIconCommandFactory
 from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import (
@@ -104,6 +105,7 @@ class RefindConfig(BaseConfig):
         block_device: BlockDevice,
         boot_stanzas_with_snapshots: dict[BootStanza, list[Subvolume]],
         boot_stanza_generation: BootStanzaGeneration,
+        icon_command_factory: BaseIconCommandFactory,
     ) -> Iterator[RefindConfig]:
         file_path = self.file_path
         boot_stanzas = copy(none_throws(self.boot_stanzas))
@@ -122,6 +124,8 @@ class RefindConfig(BaseConfig):
             )
         )
 
+        icon_command = icon_command_factory.icon_command()
+
         for boot_stanza in boot_stanzas:
             bootable_snapshots = boot_stanzas_with_snapshots.get(boot_stanza)
 
@@ -133,7 +137,7 @@ class RefindConfig(BaseConfig):
                     boot_stanza, block_device, sorted_bootable_snapshots
                 )
                 migrated_boot_stanza = migration.migrate(
-                    file_path, boot_stanza_generation
+                    file_path, boot_stanza_generation, icon_command
                 )
                 boot_stanza_file_name = migrated_boot_stanza.file_name
 

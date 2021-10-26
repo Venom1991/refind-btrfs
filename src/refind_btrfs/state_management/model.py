@@ -33,6 +33,7 @@ from refind_btrfs.boot import BootStanza, RefindConfig
 from refind_btrfs.common import ConfigurableMixin
 from refind_btrfs.common.abc.factories import (
     BaseDeviceCommandFactory,
+    BaseIconCommandFactory,
     BaseLoggerFactory,
     BaseSubvolumeCommandFactory,
 )
@@ -106,6 +107,7 @@ class Model(ConfigurableMixin):
         logger_factory: BaseLoggerFactory,
         device_command_factory: BaseDeviceCommandFactory,
         subvolume_command_factory: BaseSubvolumeCommandFactory,
+        icon_command_factory: BaseIconCommandFactory,
         package_config_provider: BasePackageConfigProvider,
         refind_config_provider: BaseRefindConfigProvider,
         persistence_provider: BasePersistenceProvider,
@@ -114,6 +116,7 @@ class Model(ConfigurableMixin):
 
         self._device_command_factory = device_command_factory
         self._subvolume_command_factory = subvolume_command_factory
+        self._icon_command_factory = icon_command_factory
         self._refind_config_provider = refind_config_provider
         self._persistence_provider = persistence_provider
         self._conditions = Conditions(logger_factory, self)
@@ -306,8 +309,12 @@ class Model(ConfigurableMixin):
         boot_stanza_generation = (
             self.package_config.boot_stanza_generation.with_include_paths(boot_device)
         )
+        icon_command_factory = self._icon_command_factory
         generated_refind_configs = refind_config.generate_new_from(
-            root_device, usable_boot_stanzas_with_snapshots, boot_stanza_generation
+            root_device,
+            usable_boot_stanzas_with_snapshots,
+            boot_stanza_generation,
+            icon_command_factory,
         )
 
         refind_config_provider = self._refind_config_provider

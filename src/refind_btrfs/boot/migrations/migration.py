@@ -27,6 +27,7 @@ from typing import Collection, Iterator, Optional
 from more_itertools import first
 
 from refind_btrfs.common import BootStanzaGeneration, constants
+from refind_btrfs.common.abc.commands import IconCommand
 from refind_btrfs.common.exceptions import RefindConfigError
 from refind_btrfs.device import BlockDevice, Subvolume
 from refind_btrfs.utility.helpers import has_items, none_throws
@@ -61,7 +62,10 @@ class Migration:
         self._bootable_snapshots = list(bootable_snapshots)
 
     def migrate(
-        self, refind_config_path: Path, boot_stanza_generation: BootStanzaGeneration
+        self,
+        refind_config_path: Path,
+        boot_stanza_generation: BootStanzaGeneration,
+        icon_command: IconCommand,
     ) -> BootStanza:
         boot_stanza = self._boot_stanza
         source_subvolume = self._source_subvolume
@@ -79,6 +83,7 @@ class Migration:
                 source_subvolume,
                 destination_subvolume,
                 boot_stanza_generation,
+                icon_command=icon_command,
             )
             migration_result = boot_stanza_migration_strategy.migrate()
 
@@ -148,7 +153,7 @@ class Migration:
                     source_subvolume,
                     destination_subvolume,
                     boot_stanza_generation,
-                    boot_stanza_result,
+                    inherit_from_state=boot_stanza_result,
                 )
                 migration_result = sub_menu_migration_strategy.migrate()
 

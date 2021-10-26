@@ -28,7 +28,8 @@ from functools import singledispatchmethod
 from pathlib import Path
 from typing import Any, Optional
 
-from refind_btrfs.common import BootStanzaGeneration, constants
+from refind_btrfs.common import BootStanzaGeneration, Icon, constants
+from refind_btrfs.common.abc.commands import IconCommand
 from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import (
     is_none_or_whitespace,
@@ -151,6 +152,10 @@ class BaseMainMigrationStrategy(ABC):
     def include_paths(self) -> bool:
         return self._boot_stanza_generation.include_paths
 
+    @property
+    def icon(self) -> Icon:
+        return self._boot_stanza_generation.icon
+
 
 class BootStanzaMigrationStrategy(BaseMainMigrationStrategy):
     def __init__(
@@ -161,6 +166,7 @@ class BootStanzaMigrationStrategy(BaseMainMigrationStrategy):
         source_subvolume: Subvolume,
         destination_subvolume: Subvolume,
         boot_stanza_generation: BootStanzaGeneration,
+        icon_command: IconCommand,
     ) -> None:
         super().__init__(
             is_latest,
@@ -177,6 +183,8 @@ class BootStanzaMigrationStrategy(BaseMainMigrationStrategy):
             destination_subvolume,
             boot_stanza_generation,
         )
+
+        self._icon_command = icon_command
 
     def migrate(self) -> State:
         include_paths = self.include_paths
@@ -197,9 +205,10 @@ class BootStanzaMigrationStrategy(BaseMainMigrationStrategy):
                 destination_initrd_path = none_throws(destination_initrd_path_candidate)
 
         icon_migration_strategy = IconMigrationFactory.migration_strategy(
+            self._icon_command,
             self._refind_config_path,
             none_throws(current_state.icon_path),
-            self._boot_stanza_generation.icon,
+            self.icon,
         )
 
         destination_icon_path = icon_migration_strategy.migrate()
@@ -222,8 +231,8 @@ class SubMenuMigrationStrategy(BaseMainMigrationStrategy):
         sub_menu: SubMenu,
         source_subvolume: Subvolume,
         destination_subvolume: Subvolume,
-        inherit_from_state: State,
         boot_stanza_generation: BootStanzaGeneration,
+        inherit_from_state: State,
     ) -> None:
         super().__init__(
             is_latest,
@@ -297,6 +306,7 @@ class MainMigrationFactory:
         source_subvolume: Subvolume,
         destination_subvolume: Subvolume,
         boot_stanza_generation: BootStanzaGeneration,
+        icon_command: Optional[IconCommand] = None,
         inherit_from_state: Optional[State] = None,
     ) -> BaseMainMigrationStrategy:
         raise NotImplementedError(
@@ -314,6 +324,7 @@ class MainMigrationFactory:
         source_subvolume: Subvolume,
         destination_subvolume: Subvolume,
         boot_stanza_generation: BootStanzaGeneration,
+        icon_command: Optional[IconCommand] = None,
         inherit_from_state: Optional[State] = None,
     ) -> BaseMainMigrationStrategy:
         return BootStanzaMigrationStrategy(
@@ -323,6 +334,7 @@ class MainMigrationFactory:
             source_subvolume,
             destination_subvolume,
             boot_stanza_generation,
+            none_throws(icon_command),
         )
 
     # pylint: disable=unused-argument
@@ -335,6 +347,7 @@ class MainMigrationFactory:
         source_subvolume: Subvolume,
         destination_subvolume: Subvolume,
         boot_stanza_generation: BootStanzaGeneration,
+        icon_command: Optional[IconCommand] = None,
         inherit_from_state: Optional[State] = None,
     ) -> BaseMainMigrationStrategy:
         return SubMenuMigrationStrategy(
@@ -343,6 +356,6 @@ class MainMigrationFactory:
             sub_menu,
             source_subvolume,
             destination_subvolume,
-            none_throws(inherit_from_state),
             boot_stanza_generation,
+            none_throws(inherit_from_state),
         )

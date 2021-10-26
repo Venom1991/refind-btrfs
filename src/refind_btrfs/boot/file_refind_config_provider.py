@@ -111,15 +111,16 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
         if has_items(boot_stanzas):
             config_file_path = config.file_path
             destination_directory = config_file_path.parent
+            refind_directory = destination_directory.parent
 
             if not destination_directory.exists():
                 logger.info(
-                    f"Creating the '{destination_directory.name}' destination directory."
+                    "Creating the "
+                    f"'{destination_directory.relative_to(refind_directory)}' "
+                    "destination directory."
                 )
 
                 destination_directory.mkdir()
-
-            refind_directory = destination_directory.parent
 
             try:
                 logger.info(

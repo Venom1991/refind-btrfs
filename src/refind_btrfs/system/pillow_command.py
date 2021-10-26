@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 # endregion
 
 from pathlib import Path
-from typing import Callable, Union
+from typing import Callable, Set, Tuple, Union
 
 from refind_btrfs.common import BtrfsLogo, constants
 from refind_btrfs.common.abc.commands import IconCommand
@@ -44,6 +44,7 @@ class PillowCommand(IconCommand):
         maximum_offset: Callable[[int], int] = lambda delta: delta
 
         self._logger = logger_factory.logger(__name__)
+        self._validated_icons: Set[Path] = set()
         self._embed_offset_initializers: dict[
             Union[BtrfsLogoHorizontalAlignment, BtrfsLogoVerticalAlignment],
             Callable[[int], int],
@@ -66,130 +67,170 @@ class PillowCommand(IconCommand):
                 f"The '{custom_icon_absolute_path}' path does not exist!"
             )
 
-        try:
-            # pylint: disable=import-outside-toplevel
-            from PIL import Image
+        validated_icons = self._validated_icons
 
-            with Image.open(custom_icon_absolute_path, "r") as custom_icon_image:
-                expected_formats = ["PNG", "JPEG", "BMP", "ICNS"]
-                custom_icon_image_format = custom_icon_image.format
+        if custom_icon_absolute_path not in validated_icons:
+            refind_directory = refind_config_path.parent
+            logger = self._logger
 
-                if custom_icon_image_format not in expected_formats:
-                    raise RefindConfigError(
-                        f"The '{custom_icon_absolute_path.name}' image's "
-                        f"format ('{custom_icon_image_format}') is not supported!"
-                    )
-        except OSError as e:
-            raise RefindConfigError(
-                f"Could not read the '{custom_icon_absolute_path}' file!"
-            ) from e
+            try:
+                # pylint: disable=import-outside-toplevel
+                from PIL import Image
 
-        return self._discern_destination_icon_relative_path(
+                logger.info(
+                    "Validating the "
+                    f"'{custom_icon_absolute_path.relative_to(refind_directory)}' file."
+                )
+
+                with Image.open(custom_icon_absolute_path, "r") as custom_icon_image:
+                    expected_formats = ["PNG", "JPEG", "BMP", "ICNS"]
+                    custom_icon_image_format = custom_icon_image.format
+
+                    if custom_icon_image_format not in expected_formats:
+                        raise RefindConfigError(
+                            f"The '{custom_icon_absolute_path.name}' image's "
+                            f"format ('{custom_icon_image_format}') is not supported!"
+                        )
+            except OSError as e:
+                logger.exception("Image.open('r') call failed!")
+                raise RefindConfigError(
+                    f"Could not read the '{custom_icon_absolute_path}' file!"
+                ) from e
+
+            validated_icons.add(custom_icon_absolute_path)
+
+        return PillowCommand._discern_destination_icon_relative_path(
             refind_config_path, source_icon_path, custom_icon_absolute_path
         )
 
     def embed_btrfs_logo_into_source_icon(
         self, refind_config_path: Path, source_icon_path: Path, btrfs_logo: BtrfsLogo
     ) -> Path:
-        source_icon_absolute_path = self._discern_source_icon_absolute_path(
+        source_icon_absolute_path = PillowCommand._discern_source_icon_absolute_path(
             refind_config_path, source_icon_path
         )
-        variant = btrfs_logo.variant
-        size = btrfs_logo.size
-        btrfs_logo_file_path = (
-            constants.BTRFS_LOGOS_DIR / f"{variant.value}_{size.value}.png"
+        absolute_paths = PillowCommand._discern_absolute_paths_for_btrfs_logo_embedding(
+            refind_config_path, source_icon_absolute_path, btrfs_logo
         )
+        btrfs_logo_absolute_path = absolute_paths[0]
+        destination_icon_absolute_path = absolute_paths[1]
 
-        try:
-            # pylint: disable=import-outside-toplevel
-            from PIL import Image
+        if not destination_icon_absolute_path.exists():
+            logger = self._logger
+            refind_directory = refind_config_path.parent
 
-            with Image.open(btrfs_logo_file_path) as btrfs_logo_image, Image.open(
-                source_icon_absolute_path
-            ) as source_icon_image:
-                expected_format = "PNG"
-                source_icon_image_format = source_icon_image.format
+            try:
+                # pylint: disable=import-outside-toplevel
+                from PIL import Image
 
-                if source_icon_image_format != expected_format:
-                    raise RefindConfigError(
-                        f"The '{source_icon_absolute_path.name}' image's "
-                        f"format ('{source_icon_image_format}') is not supported!"
-                    )
+                logger.info(
+                    "Embedding "
+                    f"the '{btrfs_logo_absolute_path.name}' "
+                    "logo into "
+                    f"the '{source_icon_absolute_path.relative_to(refind_directory)}' icon."
+                )
 
-                btrfs_logo_image_width = btrfs_logo_image.width
-                source_icon_image_width = source_icon_image.width
+                with Image.open(
+                    btrfs_logo_absolute_path
+                ) as btrfs_logo_image, Image.open(
+                    source_icon_absolute_path
+                ) as source_icon_image:
+                    expected_format = "PNG"
+                    source_icon_image_format = source_icon_image.format
 
-                if source_icon_image_width < btrfs_logo_image_width:
-                    raise RefindConfigError(
-                        f"The '{source_icon_absolute_path.name}' image's width "
-                        f"({source_icon_image_width} px) is less than "
-                        "the selected Btrfs logo's width!"
-                    )
+                    if source_icon_image_format != expected_format:
+                        raise RefindConfigError(
+                            f"The '{source_icon_absolute_path.name}' image's "
+                            f"format ('{source_icon_image_format}') is not supported!"
+                        )
 
-                btrfs_logo_image_height = btrfs_logo_image.height
-                source_icon_image_height = source_icon_image.height
+                    btrfs_logo_image_width = btrfs_logo_image.width
+                    source_icon_image_width = source_icon_image.width
 
-                if source_icon_image_height < btrfs_logo_image_height:
-                    raise RefindConfigError(
-                        f"The '{source_icon_absolute_path.name}' image's height "
-                        f"({source_icon_image_height} px) is less than "
-                        "the selected Btrfs logo's height!"
-                    )
+                    if source_icon_image_width < btrfs_logo_image_width:
+                        raise RefindConfigError(
+                            f"The '{source_icon_absolute_path.name}' image's width "
+                            f"({source_icon_image_width} px) is less than "
+                            "the selected Btrfs logo's width!"
+                        )
 
-                try:
-                    horizontal_alignment = btrfs_logo.horizontal_alignment
-                    x_delta = source_icon_image_width - btrfs_logo_image_width
-                    x_offset = self._embed_offset_initializers[horizontal_alignment](
-                        x_delta
-                    )
-                    vertical_alignment = btrfs_logo.vertical_alignment
-                    y_delta = source_icon_image_height - btrfs_logo_image_height
-                    y_offset = self._embed_offset_initializers[vertical_alignment](
-                        y_delta
-                    )
-                    resized_btrfs_logo_image = Image.new(
-                        btrfs_logo_image.mode, source_icon_image.size
-                    )
+                    btrfs_logo_image_height = btrfs_logo_image.height
+                    source_icon_image_height = source_icon_image.height
 
-                    resized_btrfs_logo_image.paste(
-                        btrfs_logo_image.copy(),
-                        (
-                            x_offset,
-                            y_offset,
-                        ),
-                    )
+                    if source_icon_image_height < btrfs_logo_image_height:
+                        raise RefindConfigError(
+                            f"The '{source_icon_absolute_path.name}' image's height "
+                            f"({source_icon_image_height} px) is less than "
+                            "the selected Btrfs logo's height!"
+                        )
 
-                    destination_icon_directory = (
-                        refind_config_path.parent
-                        / constants.SNAPSHOT_STANZAS_DIR_NAME
-                        / constants.ICONS_DIR
-                    )
-                    destination_icon_image = Image.alpha_composite(
-                        source_icon_image.copy(), resized_btrfs_logo_image
-                    )
+                    try:
+                        horizontal_alignment = btrfs_logo.horizontal_alignment
+                        x_delta = source_icon_image_width - btrfs_logo_image_width
+                        x_offset = self._embed_offset_initializers[
+                            horizontal_alignment
+                        ](x_delta)
+                        vertical_alignment = btrfs_logo.vertical_alignment
+                        y_delta = source_icon_image_height - btrfs_logo_image_height
+                        y_offset = self._embed_offset_initializers[vertical_alignment](
+                            y_delta
+                        )
+                        resized_btrfs_logo_image = Image.new(
+                            btrfs_logo_image.mode, source_icon_image.size
+                        )
 
-                    if not destination_icon_directory.exists():
-                        destination_icon_directory.mkdir(parents=True)
+                        resized_btrfs_logo_image.paste(
+                            btrfs_logo_image.copy(),
+                            (
+                                x_offset,
+                                y_offset,
+                            ),
+                        )
 
-                    destination_icon_absolute_path = (
-                        destination_icon_directory / source_icon_absolute_path.name
-                    )
+                        destination_icon_image = Image.alpha_composite(
+                            source_icon_image.copy(), resized_btrfs_logo_image
+                        )
+                        destination_directory = (
+                            refind_directory
+                            / constants.SNAPSHOT_STANZAS_DIR_NAME
+                            / constants.ICONS_DIR
+                        )
 
-                    destination_icon_image.save(destination_icon_absolute_path)
-                except OSError as e:
-                    raise RefindConfigError(
-                        f"Could not save the '{e.filename}' file!"
-                    ) from e
+                        if not destination_directory.exists():
+                            logger.info(
+                                "Creating the "
+                                f"'{destination_directory.relative_to(refind_directory)}' "
+                                "destination directory."
+                            )
 
-        except OSError as e:
-            raise RefindConfigError(f"Could not read the '{e.filename}' file!") from e
+                            destination_directory.mkdir(parents=True)
 
-        return self._discern_destination_icon_relative_path(
+                        logger.info(
+                            "Saving the "
+                            f"'{destination_icon_absolute_path.relative_to(refind_directory)}' "
+                            "file."
+                        )
+
+                        destination_icon_image.save(destination_icon_absolute_path)
+                    except OSError as e:
+                        logger.exception("Image.save() call failed!")
+                        raise RefindConfigError(
+                            f"Could not save the '{e.filename}' file!"
+                        ) from e
+
+            except OSError as e:
+                logger.exception("Image.open('r') call failed!")
+                raise RefindConfigError(
+                    f"Could not read the '{e.filename}' file!"
+                ) from e
+
+        return PillowCommand._discern_destination_icon_relative_path(
             refind_config_path, source_icon_path, destination_icon_absolute_path
         )
 
+    @staticmethod
     def _discern_source_icon_absolute_path(
-        self, refind_config_path: Path, icon_path: Path
+        refind_config_path: Path, icon_path: Path
     ) -> Path:
         refind_config_path_parents = refind_config_path.parents
         icon_path_parts = icon_path.parts
@@ -202,8 +243,8 @@ class PillowCommand(IconCommand):
             f"Could not discern the '{icon_path.name}' file's absolute path!"
         )
 
+    @staticmethod
     def _discern_destination_icon_relative_path(
-        self,
         refind_config_path: Path,
         source_icon_path: Path,
         destination_icon_path: Path,
@@ -218,3 +259,26 @@ class PillowCommand(IconCommand):
         raise RefindConfigError(
             f"Could not discern the '{destination_icon_path.name}' file's relative path!"
         )
+
+    @staticmethod
+    def _discern_absolute_paths_for_btrfs_logo_embedding(
+        refind_config_path: Path, source_icon_absolute_path: Path, btrfs_logo: BtrfsLogo
+    ) -> Tuple[Path, Path]:
+        variant = btrfs_logo.variant
+        size = btrfs_logo.size
+        horizontal_alignment = btrfs_logo.horizontal_alignment
+        vertical_alignment = btrfs_logo.vertical_alignment
+        btrfs_logos_directory = constants.BTRFS_LOGOS_DIR
+        btrfs_logo_name = f"{variant.value}_{size.value}.png"
+        btrfs_logo_absolute_path = btrfs_logos_directory / btrfs_logo_name
+        refind_directory = refind_config_path.parent
+        destination_directory = (
+            refind_directory / constants.SNAPSHOT_STANZAS_DIR_NAME / constants.ICONS_DIR
+        )
+        destination_icon_name = (
+            f"{source_icon_absolute_path.stem}_{btrfs_logo_absolute_path.stem}_"
+            f"h-{horizontal_alignment.value}_v-{vertical_alignment.value}.png"
+        )
+        destination_icon_absolute_path = destination_directory / destination_icon_name
+
+        return (btrfs_logo_absolute_path, destination_icon_absolute_path)
