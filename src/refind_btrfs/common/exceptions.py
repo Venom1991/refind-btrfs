@@ -63,6 +63,14 @@ class SubvolumeError(RefindBtrfsError):
     pass
 
 
+class SnapshotMountedAsRootError(SubvolumeError):
+    pass
+
+
+class SnapshotExcludedFromDeletionError(SubvolumeError):
+    pass
+
+
 class PackageConfigError(RefindBtrfsError):
     pass
 
@@ -83,10 +91,6 @@ class RefindSyntaxError(RefindBtrfsError):
         return (
             f"line - {self._line}, column - {self._column}, message - '{self._message}'"
         )
-
-
-class RootIsSnapshotError(RefindBtrfsError):
-    pass
 
 
 class NoChangesDetectedError(RefindBtrfsError):

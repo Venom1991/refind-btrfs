@@ -102,7 +102,7 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
 
         return None
 
-    def get_snapshots_for(self, parent: Subvolume) -> Iterator[Subvolume]:
+    def get_all_source_snapshots_for(self, parent: Subvolume) -> Iterator[Subvolume]:
         self._searched_directories.clear()
 
         snapshot_searches = self.package_config.snapshot_searches
@@ -112,9 +112,7 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
             is_nested = snapshot_search.is_nested
             max_depth = snapshot_search.max_depth
             search_result = self._search_for_snapshots_in(
-                parent,
-                directory,
-                max_depth,
+                directory, max_depth, parent=parent
             )
 
             if is_nested:
@@ -128,14 +126,19 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
 
                     if nested_directory.exists():
                         yield from self._search_for_snapshots_in(
-                            parent,
-                            nested_directory,
-                            max_depth,
+                            nested_directory, max_depth, parent=parent
                         )
 
                     yield snapshot
             else:
                 yield from search_result
+
+    def get_all_destination_snapshots(self) -> Iterator[Subvolume]:
+        snapshot_manipulation = self.package_config.snapshot_manipulation
+        destination_directory = snapshot_manipulation.destination_directory
+
+        if destination_directory.exists():
+            yield from self._search_for_snapshots_in(destination_directory, 1)
 
     def get_bootable_snapshot_from(self, source: Subvolume) -> Subvolume:
         if source.is_read_only:
@@ -188,34 +191,45 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
 
     def _search_for_snapshots_in(
         self,
-        parent: Subvolume,
         directory: Path,
         max_depth: int,
         current_depth: int = 0,
+        parent: Optional[Subvolume] = None,
     ) -> Iterator[Subvolume]:
         if current_depth > max_depth:
             return
 
         logger = self._logger
         is_initial_call = not bool(current_depth)
-        logical_path = parent.logical_path
         resolved_path = directory.resolve()
 
         if is_initial_call:
-            logger.info(
-                f"Searching for snapshots of the '{logical_path}' "
-                f"subvolume in the '{directory}' directory."
-            )
+            if parent is None:
+                logger.info(f"Getting all snapshots in the '{directory}' directory.")
+            else:
+                logical_path = parent.logical_path
+
+                logger.info(
+                    f"Searching for snapshots of the '{logical_path}' "
+                    f"subvolume in the '{directory}' directory."
+                )
 
         searched_directories = self._searched_directories
 
         if resolved_path not in searched_directories:
             subvolume = self.get_subvolume_from(resolved_path)
-            is_snapshot_of = subvolume is not None and subvolume.is_snapshot_of(parent)
+            can_subvolume_be_yielded = False
+
+            if subvolume is not None:
+                can_subvolume_be_yielded = (
+                    subvolume.is_snapshot_of(parent)
+                    if parent is not None
+                    else subvolume.is_snapshot()
+                )
 
             searched_directories.add(resolved_path)
 
-            if is_snapshot_of:
+            if can_subvolume_be_yielded:
                 yield none_throws(subvolume)
             else:
                 subdirectories = (
@@ -224,7 +238,7 @@ class BtrfsUtilCommand(SubvolumeCommand, ConfigurableMixin):
 
                 for subdirectory in subdirectories:
                     yield from self._search_for_snapshots_in(
-                        parent, subdirectory, max_depth, current_depth + 1
+                        subdirectory, max_depth, current_depth + 1, parent
                     )
 
     def _modify_read_only_flag_for(self, source: Subvolume) -> Subvolume:

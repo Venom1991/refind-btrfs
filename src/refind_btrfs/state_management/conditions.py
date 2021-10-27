@@ -32,7 +32,7 @@ from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.common.exceptions import (
     NoChangesDetectedError,
     RefindConfigError,
-    RootIsSnapshotError,
+    SnapshotMountedAsRootError,
     SubvolumeError,
 )
 from refind_btrfs.utility.helpers import (
@@ -118,7 +118,7 @@ class Conditions:
             if package_config.exit_if_root_is_snapshot:
                 parent_uuid = subvolume.parent_uuid
 
-                raise RootIsSnapshotError(
+                raise SnapshotMountedAsRootError(
                     f"Subvolume '{logical_path}' is itself a snapshot "
                     f"(parent UUID - '{parent_uuid}'), exiting..."
                 )

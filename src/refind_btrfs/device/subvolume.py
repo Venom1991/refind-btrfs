@@ -274,9 +274,11 @@ class Subvolume:
 
         return False
 
-    def can_be_removed(self, comparison_iterable: Iterable[Subvolume]) -> bool:
+    def can_be_removed(
+        self, parent_directory: Path, comparison_iterable: Iterable[Subvolume]
+    ) -> bool:
         if self not in comparison_iterable:
-            if self.is_newly_created():
+            if self.is_newly_created() or self.is_located_in(parent_directory):
                 return not any(
                     self.is_snapshot_of(subvolume) for subvolume in comparison_iterable
                 )

@@ -68,7 +68,7 @@ class Filesystem:
             subvolume = subvolume_command.get_subvolume_from(filesystem_path)
 
             if subvolume is not None:
-                snapshots = subvolume_command.get_snapshots_for(subvolume)
+                snapshots = subvolume_command.get_all_source_snapshots_for(subvolume)
 
                 self._subvolume = subvolume.with_snapshots(snapshots)
 

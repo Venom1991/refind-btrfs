@@ -36,7 +36,7 @@ from refind_btrfs.common import CheckableObserver, constants
 from refind_btrfs.common.abc import BaseRunner
 from refind_btrfs.common.abc.factories import BaseLoggerFactory
 from refind_btrfs.common.abc.providers import BasePackageConfigProvider
-from refind_btrfs.common.exceptions import RootIsSnapshotError
+from refind_btrfs.common.exceptions import SnapshotMountedAsRootError
 from refind_btrfs.utility.helpers import checked_cast
 
 
@@ -111,7 +111,7 @@ class WatchdogRunner(BaseRunner):
         else:
             try:
                 observer.check()
-            except RootIsSnapshotError:
+            except SnapshotMountedAsRootError:
                 pass
             except Exception:
                 exit_code = constants.EX_NOT_OK

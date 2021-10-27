@@ -45,7 +45,7 @@ from refind_btrfs.common.abc.providers import (
     BasePackageConfigProvider,
     BasePersistenceProvider,
 )
-from refind_btrfs.common.exceptions import SubvolumeError
+from refind_btrfs.common.exceptions import SnapshotExcludedFromDeletionError
 from refind_btrfs.device import Subvolume
 from refind_btrfs.state_management import RefindBtrfsMachine
 from refind_btrfs.utility.helpers import (
@@ -108,7 +108,7 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
                     logger.info(f"The '{deleted_directory}' snapshot has been deleted.")
 
                     machine.run()
-            except SubvolumeError as e:
+            except SnapshotExcludedFromDeletionError as e:
                 logger.warning(e.formatted_message)
 
     def _is_snapshot_created(self, created_directory: Path) -> bool:
@@ -157,7 +157,7 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
                         deleted_snapshots.add(deleted_snapshot)
 
                         if deleted_snapshot in cleanup_exclusion:
-                            raise SubvolumeError(
+                            raise SnapshotExcludedFromDeletionError(
                                 f"The deleted snapshot ('{deleted_directory}') "
                                 "is explicitly excluded from cleanup!"
                             )

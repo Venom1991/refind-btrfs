@@ -32,7 +32,11 @@ class SubvolumeCommand(ABC):
         pass
 
     @abstractmethod
-    def get_snapshots_for(self, parent: Subvolume) -> Iterator[Subvolume]:
+    def get_all_source_snapshots_for(self, parent: Subvolume) -> Iterator[Subvolume]:
+        pass
+
+    @abstractmethod
+    def get_all_destination_snapshots(self) -> Iterator[Subvolume]:
         pass
 
     @abstractmethod

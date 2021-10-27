@@ -96,6 +96,9 @@ class ProcessingResult(NamedTuple):
     def none(cls) -> ProcessingResult:
         return cls([])
 
+    def has_bootable_snapshots(self) -> bool:
+        return has_items(self.bootable_snapshots)
+
 
 # endregion
 
@@ -181,27 +184,37 @@ class Model(ConfigurableMixin):
 
     def initialize_prepared_snapshots(self) -> None:
         persistence_provider = self._persistence_provider
-        package_config = self.package_config
+        snapshot_manipulation = self.package_config.snapshot_manipulation
         subvolume = self.root_subvolume
-        snapshot_manipulation = package_config.snapshot_manipulation
         previous_run_result = persistence_provider.get_previous_run_result()
         selected_snapshots = none_throws(
             subvolume.select_snapshots(snapshot_manipulation.selection_count)
         )
+        destination_directory = snapshot_manipulation.destination_directory
         snapshots_union = snapshot_manipulation.cleanup_exclusion.union(
             selected_snapshots
         )
-        bootable_snapshots = previous_run_result.bootable_snapshots
-        snapshots_for_addition = [
-            snapshot
-            for snapshot in selected_snapshots
-            if snapshot.can_be_added(bootable_snapshots)
-        ]
-        snapshots_for_removal = [
-            snapshot
-            for snapshot in bootable_snapshots
-            if snapshot.can_be_removed(snapshots_union)
-        ]
+
+        if previous_run_result.has_bootable_snapshots():
+            bootable_snapshots = previous_run_result.bootable_snapshots
+            snapshots_for_addition = [
+                snapshot
+                for snapshot in selected_snapshots
+                if snapshot.can_be_added(bootable_snapshots)
+            ]
+            snapshots_for_removal = [
+                snapshot
+                for snapshot in bootable_snapshots
+                if snapshot.can_be_removed(destination_directory, snapshots_union)
+            ]
+        else:
+            destination_snapshots = self.destination_snapshots
+            snapshots_for_addition = selected_snapshots
+            snapshots_for_removal = [
+                snapshot
+                for snapshot in destination_snapshots.difference(snapshots_union)
+                if snapshot.can_be_removed(destination_directory, selected_snapshots)
+            ]
 
         if has_items(snapshots_for_addition):
             device_command_factory = self._device_command_factory
@@ -249,11 +262,10 @@ class Model(ConfigurableMixin):
         self._boot_stanzas_with_snapshots = boot_stanza_preparation_results
 
     def process_changes(self) -> None:
+        persistence_provider = self._persistence_provider
         bootable_snapshots = self._process_snapshots()
 
         self._process_boot_stanzas()
-
-        persistence_provider = self._persistence_provider
 
         persistence_provider.save_current_run_result(
             ProcessingResult(bootable_snapshots)
@@ -296,8 +308,7 @@ class Model(ConfigurableMixin):
 
         if has_items(snapshots_for_removal):
             for removal in snapshots_for_removal:
-                if removal.is_newly_created():
-                    subvolume_command.delete_snapshot(removal)
+                subvolume_command.delete_snapshot(removal)
 
         return actual_bootable_snapshots
 
@@ -407,6 +418,16 @@ class Model(ConfigurableMixin):
     @property
     def prepared_snapshots(self) -> PreparedSnapshots:
         return none_throws(self._prepared_snapshots)
+
+    @property
+    def destination_snapshots(self) -> set[Subvolume]:
+        subvolume_command_factory = self._subvolume_command_factory
+        subvolume_command = subvolume_command_factory.subvolume_command()
+        destination_snapshots = sorted(
+            subvolume_command.get_all_destination_snapshots(), reverse=True
+        )
+
+        return set(destination_snapshots)
 
     @property
     def usable_snapshots_for_addition(self) -> list[Subvolume]:
