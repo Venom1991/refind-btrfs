@@ -218,7 +218,7 @@ This is how an Arch Linux installation with three different kernels (XanMod, Sta
 
 ![rEFInd Screenshot Default](src/refind_btrfs/data/images/refind_screenshot_default.png)
 
-Here, each manual boot stanza uses its own custom icon based on the default Arch Linux OS icon. The Btrfs logo is then also embedded into these icons (by setting this option to "embed_btrfs_logo") and the resultant icons are defined as part of their corresponding generated boot stanzas.
+Here, each manual boot stanza uses its own custom icon based on the default Arch Linux OS icon. The Btrfs logo is then also embedded into these icons (by setting [this](https://github.com/Venom1991/refind-btrfs/blob/4e0e629680fc581143c684e6e90958cbe26db8fc/src/refind_btrfs/data/refind-btrfs.conf-sample#L158) option to "embed_btrfs_logo") and the resultant icons are defined as part of their corresponding generated boot stanzas.
 
 ## Implementation
 Most relevant dependencies:
