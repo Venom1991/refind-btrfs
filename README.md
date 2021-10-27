@@ -65,7 +65,7 @@ In case the custom generated boot stanza's icon feature (explained in the next s
 pip install refind-btrfs[custom_icon]
 ```
 
-You should also create an empty directory named "refind-btrfs" in /var/lib as the tool expects that it is present. Additionally, if you wish to be able to use the Btrfs logo embedding mode of custom icon generation you should also copy the "[icons](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data/icons/btrfs_logo)" directory into the previously created one.
+You should also create an empty directory named "refind-btrfs" in /var/lib as the tool expects that it is present. Additionally, if you wish to be able to use the Btrfs logo embedding mode of custom icon generation you should also copy the "[icons](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data/icons)" directory into the previously created one.
 
 ## Configuration
 Every option is thoroughly explained in the sample config [file](https://github.com/Venom1991/refind-btrfs/blob/master/src/refind_btrfs/data/refind-btrfs.conf-sample).  
