@@ -54,21 +54,30 @@ systemctl status refind-btrfs
 journalctl -u refind-btrfs -b
 ```
 
-Alternatively, there exists a PyPI [package](https://pypi.org/project/refind-btrfs/) but bear in mind that since [libbtrfsutil](https://github.com/kdave/btrfs-progs/tree/master/libbtrfsutil) isn't available on PyPI it needs to be already present in the system site packages (its Python bindings, to be precise) because it cannot be automatically pulled in as a dependency. Chances are that it is available for your distribution of choice (search for a package named "btrfs-progs") but you most probably already have it installed as I suppose you are using Btrfs, after all.  
+Alternatively, there exists a [PyPI](https://pypi.org/project/refind-btrfs/) package but bear in mind that since [libbtrfsutil](https://github.com/kdave/btrfs-progs/tree/master/libbtrfsutil) isn't available on PyPI it needs to be already present in the system site packages (its Python bindings, to be precise) because it cannot be automatically pulled in as a dependency. Chances are that it is available for your distribution of choice (search for a package named "btrfs-progs") but you most probably already have it installed as I suppose you are using Btrfs, after all.  
 Also, every file contained in [this](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data) directory should be copied to the following locations:
 * refind-btrfs script to /usr/bin (or wherever it is you keep your system-wide executables)
 * refind-btrfs.conf-sample as refind-btrfs.conf (without the "-sample" suffix) to /etc
 * refind-btrfs.service to /usr/lib/systemd/system (if you are using systemd and wish to utilize the snapshot directory watching feature)
 
-You should also create an empty directory named refind-btrfs in /var/lib as the tool expects that it is present.
+In case the custom generated boot stanza's icon feature (explained in the next section) is desired it can initially be enabled by installing this package with the following command:
+```
+pip install refind-btrfs[custom_icon]
+```
+
+You should also create an empty directory named "refind-btrfs" in /var/lib as the tool expects that it is present. Additionally, if you wish to be able to use the Btrfs logo embedding mode of custom icon generation you should also copy the "icons" directory into the previously created one.
 
 ## Configuration
 Every option is thoroughly explained in the sample config [file](https://github.com/Venom1991/refind-btrfs/blob/master/src/refind_btrfs/data/refind-btrfs.conf-sample).  
 In case you've opted to use the provided systemd service and wish to change the search directories (in this context, these are actually watched directories) in the config file while it is running you must restart it manually after doing so because the directory observer is started only once and an automatic restart is not performed.
 
-The default configuration is meant to enable seamless integration with Snapper simply because I'm using it but the tool itself doesn't depend on it and ought to function with different setups. Also, by default the tool is configured for creating new writable snapshots intended for booting instead of in-place modification of the found snapshots' read-only flags as I believe this is the safer (or perhaps even saner) choice.
+The default configuration is meant to enable seamless integration with Snapper simply because I'm using it but the tool itself doesn't depend on it and ought to function with different setups. Also, by default the tool is configured for creating new writable snapshots intended for booting instead of in-place modification of the found snapshots' read-only flags as I believe this is the safer (or perhaps even saner) choice.  
+[Timeshift](https://github.com/teejee2008/timeshift) users can try setting the default snapshot search directory to "/run/timeshift/backup/timeshift-btrfs/snapshots" and the corresponding maximum search depth to three.
 
 If you're having trouble with the ESP being automatically located, the "esp_uuid" option could prove to be useful. If an actual UUID is provided (not the default, empty one), this value will be used to compare partition UUIDs (returned by lsblk) instead of comparing their types with hardcoded GPT UUID or MBR ID values.
+
+Custom generated boot stanza icon support is also provided, by default the source boot stanza's icon is reused. It is possible to provide one's own custom icon's path or to embed the Btrfs logo (comes in two variants and three sizes per each variant) into the source boot stanza's icon instead. This combined icon is then used as the generated boot stanza's icon.  
+In order for these two additional modes of operation (not the default one) to work an optional dependency has to be installed - namely, the [Pillow](https://pillow.readthedocs.io/en/stable/#) library which can be installed from the official Arch Linux [repository](https://archlinux.org/packages/community/x86_64/python-pillow/) or from [PyPI](https://pypi.org/project/Pillow/).
 
 It is imperative that you don't just blindly try to boot into a given snapshot (simply because no errors were reported) before verifying the generated manual boot stanza, either by inspecting the file contents in which it was saved or by viewing the boot loader [options](https://www.rodsbooks.com/refind/using.html#boot_options) using rEFInd and also not before verifying the chosen snapshot's fstab file.
 
@@ -205,6 +214,12 @@ menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
 
 A couple of notable details are the fact that the "add_options" field (if it exists) of any given sub-menu belonging to a successive snapshot is merged with the "options" field of the corresponding snapshot's sub-menu and also the fact that the latest snapshot's sub-menus implicitly inherit those main stanza's fields which they themselves do not override in the original boot stanza. Consequently, these sub-menus' definitions are intentionally similar to those of their counterparts found in the original boot stanza.
 
+This is how an Arch Linux installation with three different kernels (XanMod, Stable and LTS) should appear in rEFInd after this tool has successfully completed its job:
+
+![rEFInd Screenshot Default](src/refind_btrfs/data/images/refind_screenshot_default.png)
+
+Here, each manual boot stanza uses its own custom icon based on the default Arch Linux OS icon. The Btrfs logo is then also embedded into these icons (by setting this option to "embed_btrfs_logo") and the resultant icons are defined as part of their corresponding generated boot stanzas.
+
 ## Implementation
 Most relevant dependencies:
 * block device and ESP information is gathered using [lsblk](https://man7.org/linux/man-pages/man8/lsblk.8.html) (supports JSON output)
@@ -225,6 +240,6 @@ With that said, being somehow able to preview changes proposed by this tool woul
 
 A more elaborate snapshot selection mechanism would be appreciated, comparable to what Snapper does, that is selecting a configurable number of daily, weekly, etc. snapshots to be included in the generated manual boot stanza.
 
-Generated boot stanzas use the same OS icon as the original boot stanza but a custom icon would help to visually differentiate these stanzas. Somehow incorporating the Btrfs logo into the currently used OS icon would perhaps suffice, either by generating a new icon on-demand or by creating and packaging a complete icon set ahead of time. It would also be useful if the formatting of the strings used to identify bootable snapshots was configurable, that is the format string itself.
+Generated boot stanzas' names are initialized using a hardcoded format string which is not ideal. It would be more convenient to provide a way for users to define their own format string using a combination of predefined variables (time of the source snapshot's creation, its numerical ID, etc.) along with some entirely arbitrary parts.
 
 But, before trying to implement any of these shiny features this project's source code should be properly documented and tests should be written for it because, presently, there aren't any. The latter is also a pretty considerable effort due to the sheer number of different test cases. Luckily, all of the external dependencies (OS commands, third-party library calls and similar) are abstracted away which means that no significant preparatory steps regarding the codebase to be tested are required beforehand.
