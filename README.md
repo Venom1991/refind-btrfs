@@ -76,7 +76,7 @@ The default configuration is meant to enable seamless integration with Snapper s
 
 If you're having trouble with the ESP being automatically located, the "esp_uuid" option could prove to be useful. If an actual UUID is provided (not the default, empty one), this value will be used to compare partition UUIDs (returned by lsblk) instead of comparing their types with hardcoded GPT UUID or MBR ID values.
 
-Custom generated boot stanza icon support is also provided, by default the source boot stanza's icon is reused. It is possible to provide one's own custom icon's path or to embed the Btrfs logo (comes in two variants and three sizes per each variant) into the source boot stanza's icon instead. This combined icon is then used as the generated boot stanza's icon.  
+Custom generated boot stanza icon support is also implemented, by default the source boot stanza's icon is reused. It is possible to provide one's own custom icon's path or to embed the Btrfs logo (comes in two variants and three sizes per each variant) into the source boot stanza's icon instead. This combined icon is then used as the generated boot stanza's icon.  
 In order for these two additional modes of operation (not the default one) to work an optional dependency has to be installed - namely, the [Pillow](https://python-pillow.org) library which can be installed from the official Arch Linux [repository](https://archlinux.org/packages/community/x86_64/python-pillow/) or from [PyPI](https://pypi.org/project/Pillow/).
 
 It is imperative that you don't just blindly try to boot into a given snapshot (simply because no errors were reported) before verifying the generated manual boot stanza, either by inspecting the file contents in which it was saved or by viewing the boot loader [options](https://www.rodsbooks.com/refind/using.html#boot_options) using rEFInd and also not before verifying the chosen snapshot's fstab file.
@@ -214,11 +214,15 @@ menuentry "Arch Linux - Stable (rwsnap_2020-12-14_05-00-00_ID502)" {
 
 A couple of notable details are the fact that the "add_options" field (if it exists) of any given sub-menu belonging to a successive snapshot is merged with the "options" field of the corresponding snapshot's sub-menu and also the fact that the latest snapshot's sub-menus implicitly inherit those main stanza's fields which they themselves do not override in the original boot stanza. Consequently, these sub-menus' definitions are intentionally similar to those of their counterparts found in the original boot stanza.
 
-This is how an Arch Linux installation with three different kernels (XanMod, Stable and LTS) should appear in rEFInd after this tool has successfully completed its job:
+This is how an Arch Linux installation with three different kernels (XanMod, Stable and LTS) should appear in rEFInd (the default theme is shown) after this tool has successfully completed its job:
 
 ![rEFInd Screenshot Default](src/refind_btrfs/data/images/refind_screenshot_default.png)
 
 Here, each manual boot stanza uses its own custom icon based on the default Arch Linux OS icon. The Btrfs logo is then also embedded into these icons (by setting [this](https://github.com/Venom1991/refind-btrfs/blob/4e0e629680fc581143c684e6e90958cbe26db8fc/src/refind_btrfs/data/refind-btrfs.conf-sample#L158) option to "embed_btrfs_logo") and the resultant icons are defined as part of their corresponding generated boot stanzas.
+
+By using a darker theme (such as the [Nord](https://github.com/jaltuna/refind-theme-nord) theme - shown in the following screenshot) and by using the "inverted" Btrfs logo's variant (as opposed to the "original" one, shown in the previous screenshot), the same Arch Linux installation should appear in rEFInd looking like this:
+
+![rEFInd Screenshot Nord](src/refind_btrfs/data/images/refind_screenshot_nord.png)
 
 ## Implementation
 Most relevant dependencies:
