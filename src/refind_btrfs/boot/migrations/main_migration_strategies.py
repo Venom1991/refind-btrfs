@@ -32,6 +32,7 @@ from refind_btrfs.common import BootStanzaGeneration, Icon, constants
 from refind_btrfs.common.abc.commands import IconCommand
 from refind_btrfs.device import Subvolume
 from refind_btrfs.utility.helpers import (
+    default_if_none,
     is_none_or_whitespace,
     none_throws,
     replace_root_part_in,
@@ -207,7 +208,7 @@ class BootStanzaMigrationStrategy(BaseMainMigrationStrategy):
         icon_migration_strategy = IconMigrationFactory.migration_strategy(
             self._icon_command,
             self._refind_config_path,
-            none_throws(current_state.icon_path),
+            default_if_none(current_state.icon_path, constants.EMPTY_STR),
             self.icon,
         )
 

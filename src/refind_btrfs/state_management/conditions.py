@@ -172,11 +172,17 @@ class Conditions:
 
                 return False
 
+        package_config = model.package_config
+        boot_stanza_generation = package_config.boot_stanza_generation
+        icon_generation_mode = boot_stanza_generation.icon.mode
+
         for boot_stanza in matched_boot_stanzas:
             try:
                 boot_stanza.validate_boot_files_check_result()
             except RefindConfigError as e:
                 logger.warning(e.formatted_message)
+
+            boot_stanza.validate_icon_path(icon_generation_mode)
 
         usable_boot_stanzas = model.usable_boot_stanzas
 

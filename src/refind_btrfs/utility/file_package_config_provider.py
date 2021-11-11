@@ -468,8 +468,8 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
             if pil_spec is None:
                 raise PackageConfigError(
-                    f"The '{mode}' mode of boot stanza icon generation "
-                    "requires that the 'Pillow' package is installed!"
+                    f"The '{mode.value}' mode of boot stanza icon "
+                    "generation requires that the 'Pillow' package is installed!"
                 )
 
         path = FilePackageConfigProvider._get_config_value(

@@ -34,6 +34,7 @@ from more_itertools import always_iterable, last
 from refind_btrfs.common import BootFilesCheckResult, constants
 from refind_btrfs.common.enums import (
     BootFilePathSource,
+    BootStanzaIconGenerationMode,
     GraphicsParameter,
     RefindOption,
 )
@@ -258,6 +259,21 @@ class BootStanza:
                 f"stanza which are not matched with the '{logical_path}' subvolume: "
                 f"{constants.DEFAULT_ITEMS_SEPARATOR.join(unmatched_boot_files)}!"
             )
+
+    def validate_icon_path(
+        self, icon_generation_mode: BootStanzaIconGenerationMode
+    ) -> None:
+        if icon_generation_mode != BootStanzaIconGenerationMode.DEFAULT:
+            normalized_name = self.normalized_name
+            icon_path = self.icon_path
+
+            if is_none_or_whitespace(icon_path):
+                raise RefindConfigError(
+                    f"The '{normalized_name}' boot stanza is missing the "
+                    f"'{RefindOption.ICON.value}' option which must be defined in case "
+                    f"'{icon_generation_mode.value}' is the selected mode of boot stanza "
+                    "icon generation!"
+                )
 
     def _get_all_boot_file_paths(
         self,
