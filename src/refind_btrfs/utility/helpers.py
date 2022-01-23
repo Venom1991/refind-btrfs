@@ -92,6 +92,17 @@ def is_none_or_whitespace(value: Optional[str]) -> bool:
     return is_empty(value) or value.isspace()
 
 
+def strip_quotes(value: Optional[str]) -> str:
+    if not is_none_or_whitespace(value):
+        return (
+            none_throws(value)
+            .strip(constants.SINGLE_QUOTE)
+            .strip(constants.DOUBLE_QUOTE)
+        )
+
+    return constants.EMPTY_STR
+
+
 def has_method(obj: Any, method_name: str) -> bool:
     if hasattr(obj, method_name):
         attr = getattr(obj, method_name)

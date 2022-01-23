@@ -101,8 +101,9 @@ CLOSE_BRACE : '}' ;
 HEX_INTEGER : HEX_DIGIT+ ;
 fragment HEX_DIGIT: [0-9a-fA-F] ;
 
-STRING: (QUOTED_STRING | UNQUOTED_STRING) ;
-fragment QUOTED_STRING : '"' (~[\n])+ '"' ;
+STRING: (SINGLE_QUOTED_STRING | DOUBLE_QUOTED_STRING | UNQUOTED_STRING) ;
+fragment SINGLE_QUOTED_STRING : '\'' (~[\n])+ '\'' ;
+fragment DOUBLE_QUOTED_STRING : '"' (~[\n])+ '"' ;
 fragment UNQUOTED_STRING : (~[ \t\n])+ ;
 
 mode STRICT_PARAMETER_MODE;

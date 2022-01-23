@@ -31,7 +31,12 @@ from refind_btrfs.common.enums import (
     RefindOption,
 )
 from refind_btrfs.device import BlockDevice
-from refind_btrfs.utility.helpers import is_empty, is_none_or_whitespace, none_throws
+from refind_btrfs.utility.helpers import (
+    is_empty,
+    is_none_or_whitespace,
+    none_throws,
+    strip_quotes,
+)
 
 from .boot_options import BootOptions
 
@@ -165,7 +170,7 @@ class SubMenu:
 
     @property
     def normalized_name(self) -> str:
-        return self.name.strip(constants.DOUBLE_QUOTE)
+        return strip_quotes(self.name)
 
     @property
     def loader_path(self) -> Optional[str]:

@@ -35,6 +35,7 @@ from refind_btrfs.utility.helpers import (
     is_none_or_whitespace,
     none_throws,
     replace_root_part_in,
+    strip_quotes,
 )
 
 
@@ -46,9 +47,7 @@ class BootOptions:
         other_options: list[tuple[int, str]] = []
 
         if not is_none_or_whitespace(raw_options):
-            split_options = (
-                none_throws(raw_options).strip(constants.DOUBLE_QUOTE).split()
-            )
+            split_options = strip_quotes(raw_options).split()
 
             for position, option in enumerate(split_options):
                 if not is_none_or_whitespace(option):
@@ -136,7 +135,7 @@ class BootOptions:
                 root_partition = none_throws(block_device.root)
                 filesystem = none_throws(root_partition.filesystem)
                 normalized_root_location = last(
-                    root_location.strip(constants.DOUBLE_QUOTE).split(
+                    strip_quotes(root_location).split(
                         constants.PARAMETERIZED_OPTION_SEPARATOR
                     )
                 )
@@ -199,8 +198,7 @@ class BootOptions:
     @classmethod
     def merge(cls, all_boot_options: Iterable[BootOptions]) -> BootOptions:
         all_boot_options_str = [
-            str(boot_options).strip(constants.DOUBLE_QUOTE)
-            for boot_options in all_boot_options
+            strip_quotes(str(boot_options)) for boot_options in all_boot_options
         ]
 
         return cls(constants.SPACE.join(all_boot_options_str).strip())

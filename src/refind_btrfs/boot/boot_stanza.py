@@ -45,6 +45,7 @@ from refind_btrfs.utility.helpers import (
     is_none_or_whitespace,
     none_throws,
     normalize_dir_separators_in,
+    strip_quotes,
 )
 
 from .boot_options import BootOptions
@@ -309,7 +310,7 @@ class BootStanza:
 
     @property
     def normalized_name(self) -> str:
-        return self.name.strip(constants.DOUBLE_QUOTE)
+        return strip_quotes(self.name)
 
     @property
     def volume(self) -> Optional[str]:
@@ -321,7 +322,7 @@ class BootStanza:
 
         if not is_none_or_whitespace(volume):
             whitespace_pattern = re.compile(constants.WHITESPACE_PATTERN)
-            stripped_volume = none_throws(volume).strip(constants.DOUBLE_QUOTE)
+            stripped_volume = strip_quotes(volume)
 
             return whitespace_pattern.sub("_", stripped_volume)
 

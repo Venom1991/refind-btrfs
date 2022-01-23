@@ -180,7 +180,7 @@ class PillowCommand(IconCommand):
                         )
 
                         resized_btrfs_logo_image.paste(
-                            btrfs_logo_image.copy(),
+                            btrfs_logo_image,
                             (
                                 x_offset,
                                 y_offset,
@@ -188,7 +188,7 @@ class PillowCommand(IconCommand):
                         )
 
                         destination_icon_image = Image.alpha_composite(
-                            source_icon_image.copy(), resized_btrfs_logo_image
+                            source_icon_image, resized_btrfs_logo_image
                         )
                         destination_directory = (
                             refind_directory

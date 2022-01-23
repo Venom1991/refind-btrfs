@@ -66,6 +66,7 @@ SUBVOLID_OPTION = "subvolid"
 
 SPACE = " "
 TAB = SPACE * 4
+SINGLE_QUOTE = "'"
 DOUBLE_QUOTE = '"'
 BACKSLASH = "\\"
 FORWARD_SLASH = "/"
