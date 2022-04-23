@@ -71,6 +71,7 @@ from .helpers import (
     checked_cast,
     discern_path_relation_of,
     has_items,
+    none_throws,
     try_convert_str_to_enum,
     try_parse_uuid,
 )
@@ -151,7 +152,9 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
                     ConfigInitializationType.PARSED, PackageConfig
                 )
 
-                persistence_provider.save_package_config(current_package_config)
+                persistence_provider.save_package_config(
+                    none_throws(current_package_config)
+                )
         elif current_package_config is None:
             current_package_config = persisted_package_config.with_initialization_type(
                 ConfigInitializationType.PERSISTED, PackageConfig
@@ -159,7 +162,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
 
         self._package_config = current_package_config
 
-        return current_package_config
+        return none_throws(current_package_config)
 
     @staticmethod
     def _read_config_from(toml_document: TOMLDocument):

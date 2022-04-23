@@ -1,6 +1,6 @@
 {
     "antlr4.generation": {
-        "alternativeJar": "/usr/share/java/antlr-4.9.3-complete.jar",
+        "alternativeJar": "/usr/share/java/antlr-4.10.1-complete.jar",
         "language": "Python3",
         "listeners": false,
         "mode": "external",
@@ -66,7 +66,6 @@
     "python.analysis.extraPaths": [
         "src/refind_btrfs"
     ],
-    "python.analysis.memory.keepLibraryAst": true,
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
     "python.envFile": "${workspaceFolder}/.env",
     "python.formatting.provider": "black",
@@ -76,7 +75,6 @@
     "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
     "python.linting.pylintEnabled": true,
     "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-    "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
     "search.exclude": {
         "**/.venv": true
     },
