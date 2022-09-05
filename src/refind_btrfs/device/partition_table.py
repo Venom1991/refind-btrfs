@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 from uuid import UUID
 
-from more_itertools import only
+from more_itertools import only, take
 
 from refind_btrfs.common import constants
 from refind_btrfs.common.enums import FstabColumn
@@ -137,10 +137,11 @@ class PartitionTable:
         comment_pattern = re.compile(r"^\s*#.*")
 
         if not comment_pattern.match(fstab_line):
-            split_fstab_entry = fstab_line.split()
+            columns_count = len(FstabColumn)
+            split_fstab_entry = take(columns_count, fstab_line.split())
 
-            return has_items(split_fstab_entry) and len(split_fstab_entry) == len(
-                FstabColumn
+            return (
+                has_items(split_fstab_entry) and len(split_fstab_entry) == columns_count
             )
 
         return False
