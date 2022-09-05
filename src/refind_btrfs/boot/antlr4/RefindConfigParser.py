@@ -1,4 +1,4 @@
-# Generated from /home/luka/Projects/Python/refind-btrfs/src/refind_btrfs/boot/antlr4/RefindConfigParser.g4 by ANTLR 4.10.1
+# Generated from /home/luka/Projects/Python/refind-btrfs/src/refind_btrfs/boot/antlr4/RefindConfigParser.g4 by ANTLR 4.11.1
 # encoding: utf-8
 from antlr4 import *
 from io import StringIO
@@ -132,7 +132,7 @@ class RefindConfigParser ( Parser ):
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
-        self.checkVersion("4.10.1")
+        self.checkVersion("4.11.1")
         self._interp = ParserATNSimulator(self, self.atn, self.decisionsToDFA, self.sharedContextCache)
         self._predicates = None
 
@@ -178,7 +178,7 @@ class RefindConfigParser ( Parser ):
             self.state = 43
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while _la==RefindConfigParser.MENU_ENTRY or _la==RefindConfigParser.INCLUDE:
+            while _la==6 or _la==17:
                 self.state = 40
                 self.config_option()
                 self.state = 45
@@ -231,12 +231,12 @@ class RefindConfigParser ( Parser ):
             self.state = 50
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [RefindConfigParser.MENU_ENTRY]:
+            if token in [6]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 48
                 self.boot_stanza()
                 pass
-            elif token in [RefindConfigParser.INCLUDE]:
+            elif token in [17]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 49
                 self.include()
@@ -309,7 +309,7 @@ class RefindConfigParser ( Parser ):
                 self.state = 57 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not ((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << RefindConfigParser.MENU_ENTRY) | (1 << RefindConfigParser.VOLUME) | (1 << RefindConfigParser.LOADER) | (1 << RefindConfigParser.INITRD) | (1 << RefindConfigParser.ICON) | (1 << RefindConfigParser.OS_TYPE) | (1 << RefindConfigParser.GRAPHICS) | (1 << RefindConfigParser.BOOT_OPTIONS) | (1 << RefindConfigParser.FIRMWARE_BOOTNUM) | (1 << RefindConfigParser.DISABLED))) != 0)):
+                if not (((_la) & ~0x3f) == 0 and ((1 << _la) & 114624) != 0):
                     break
 
             self.state = 59
@@ -434,52 +434,52 @@ class RefindConfigParser ( Parser ):
             self.state = 74
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [RefindConfigParser.VOLUME]:
+            if token in [7]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 64
                 self.volume()
                 pass
-            elif token in [RefindConfigParser.LOADER]:
+            elif token in [8]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 65
                 self.loader()
                 pass
-            elif token in [RefindConfigParser.INITRD]:
+            elif token in [9]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 66
                 self.main_initrd()
                 pass
-            elif token in [RefindConfigParser.ICON]:
+            elif token in [10]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 67
                 self.icon()
                 pass
-            elif token in [RefindConfigParser.OS_TYPE]:
+            elif token in [11]:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 68
                 self.os_type()
                 pass
-            elif token in [RefindConfigParser.GRAPHICS]:
+            elif token in [12]:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 69
                 self.graphics()
                 pass
-            elif token in [RefindConfigParser.BOOT_OPTIONS]:
+            elif token in [13]:
                 self.enterOuterAlt(localctx, 7)
                 self.state = 70
                 self.main_boot_options()
                 pass
-            elif token in [RefindConfigParser.FIRMWARE_BOOTNUM]:
+            elif token in [15]:
                 self.enterOuterAlt(localctx, 8)
                 self.state = 71
                 self.firmware_bootnum()
                 pass
-            elif token in [RefindConfigParser.DISABLED]:
+            elif token in [16]:
                 self.enterOuterAlt(localctx, 9)
                 self.state = 72
                 self.disabled()
                 pass
-            elif token in [RefindConfigParser.MENU_ENTRY]:
+            elif token in [6]:
                 self.enterOuterAlt(localctx, 10)
                 self.state = 73
                 self.sub_menu()
@@ -943,7 +943,7 @@ class RefindConfigParser ( Parser ):
                 self.state = 107 
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if not ((((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << RefindConfigParser.LOADER) | (1 << RefindConfigParser.INITRD) | (1 << RefindConfigParser.GRAPHICS) | (1 << RefindConfigParser.BOOT_OPTIONS) | (1 << RefindConfigParser.ADD_BOOT_OPTIONS) | (1 << RefindConfigParser.DISABLED))) != 0)):
+                if not (((_la) & ~0x3f) == 0 and ((1 << _la) & 94976) != 0):
                     break
 
             self.state = 109
@@ -1008,32 +1008,32 @@ class RefindConfigParser ( Parser ):
             self.state = 117
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [RefindConfigParser.LOADER]:
+            if token in [8]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 111
                 self.loader()
                 pass
-            elif token in [RefindConfigParser.INITRD]:
+            elif token in [9]:
                 self.enterOuterAlt(localctx, 2)
                 self.state = 112
                 self.sub_initrd()
                 pass
-            elif token in [RefindConfigParser.GRAPHICS]:
+            elif token in [12]:
                 self.enterOuterAlt(localctx, 3)
                 self.state = 113
                 self.graphics()
                 pass
-            elif token in [RefindConfigParser.BOOT_OPTIONS]:
+            elif token in [13]:
                 self.enterOuterAlt(localctx, 4)
                 self.state = 114
                 self.sub_boot_options()
                 pass
-            elif token in [RefindConfigParser.ADD_BOOT_OPTIONS]:
+            elif token in [14]:
                 self.enterOuterAlt(localctx, 5)
                 self.state = 115
                 self.add_boot_options()
                 pass
-            elif token in [RefindConfigParser.DISABLED]:
+            elif token in [16]:
                 self.enterOuterAlt(localctx, 6)
                 self.state = 116
                 self.disabled()
@@ -1087,7 +1087,7 @@ class RefindConfigParser ( Parser ):
             self.state = 121
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==RefindConfigParser.STRING:
+            if _la==21:
                 self.state = 120
                 self.match(RefindConfigParser.STRING)
 
@@ -1138,7 +1138,7 @@ class RefindConfigParser ( Parser ):
             self.state = 125
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if _la==RefindConfigParser.STRING:
+            if _la==21:
                 self.state = 124
                 self.match(RefindConfigParser.STRING)
 

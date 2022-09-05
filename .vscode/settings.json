@@ -1,6 +1,6 @@
 {
     "antlr4.generation": {
-        "alternativeJar": "/usr/share/java/antlr-4.10.1-complete.jar",
+        "alternativeJar": "/usr/share/java/antlr-4.11.1-complete.jar",
         "language": "Python3",
         "listeners": false,
         "mode": "external",
@@ -21,6 +21,7 @@
         "getpid",
         "getuid",
         "groupby",
+        "ICNS",
         "IMODE",
         "INITRD",
         "inplace",
