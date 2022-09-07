@@ -72,6 +72,7 @@ class PreparedSnapshots(NamedTuple):
 
 class BootStanzaWithSnapshots(NamedTuple):
     boot_stanza: BootStanza
+    is_excluded: bool
     matched_snapshots: list[Subvolume]
     unmatched_snapshots: list[Subvolume]
 
@@ -80,6 +81,9 @@ class BootStanzaWithSnapshots(NamedTuple):
 
     def has_unmatched_snapshots(self) -> bool:
         return has_items(self.unmatched_snapshots)
+
+    def is_usable(self) -> bool:
+        return not self.is_excluded and self.has_matched_snapshots()
 
     def replace_matched_snapshot(
         self, current_snapshot: Subvolume, replacement_snapshot: Subvolume
@@ -229,6 +233,7 @@ class Model(ConfigurableMixin):
     def combine_boot_stanzas_with_snapshots(self) -> None:
         usable_boot_stanzas = self.usable_boot_stanzas
         actual_bootable_snapshots = self.actual_bootable_snapshots
+        boot_stanza_generation = self.package_config.boot_stanza_generation
         include_paths = self._should_include_paths_during_generation()
         boot_stanza_preparation_results: list[BootStanzaWithSnapshots] = []
 
@@ -240,6 +245,10 @@ class Model(ConfigurableMixin):
                 checked_bootable_snapshots = (
                     snapshot.with_boot_files_check_result(boot_stanza)
                     for snapshot in actual_bootable_snapshots
+                )
+                is_excluded = any(
+                    boot_stanza.is_matched_with(loader_filename)
+                    for loader_filename in boot_stanza_generation.source_exclusion
                 )
 
                 for snapshot in checked_bootable_snapshots:
@@ -255,7 +264,7 @@ class Model(ConfigurableMixin):
 
             boot_stanza_preparation_results.append(
                 BootStanzaWithSnapshots(
-                    boot_stanza, matched_snapshots, unmatched_snapshots
+                    boot_stanza, is_excluded, matched_snapshots, unmatched_snapshots
                 )
             )
 
@@ -469,5 +478,5 @@ class Model(ConfigurableMixin):
         return {
             item.boot_stanza: item.matched_snapshots
             for item in boot_stanzas_with_snapshots
-            if item.has_matched_snapshots()
+            if item.is_usable()
         }

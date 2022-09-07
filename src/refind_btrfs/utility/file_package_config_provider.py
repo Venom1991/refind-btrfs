@@ -91,6 +91,7 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             "refind.conf",
             True,
             False,
+            set(),
             Icon(
                 BootStanzaIconGenerationMode.DEFAULT,
                 Path("btrfs-snapshot-stanzas/icons/sample_icon.png"),
@@ -435,6 +436,23 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             bool,
             default_boot_stanza_generation,
         )
+        source_exclusion_key = BootStanzaGenerationConfigKey.SOURCE_EXCLUSION.value
+        source_exclusion = cast(
+            list,
+            FilePackageConfigProvider._get_config_value(
+                container,
+                source_exclusion_key,
+                list,
+                default_boot_stanza_generation,
+            ),
+        )
+
+        if has_items(source_exclusion):
+            for item in source_exclusion:
+                if not isinstance(item, str):
+                    raise PackageConfigError(
+                        f"Every member of the '{source_exclusion_key}' array must be a string!"
+                    )
 
         icon_key = BootStanzaGenerationConfigKey.ICON.value
 
@@ -447,7 +465,11 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             icon = default_boot_stanza_generation.icon
 
         return BootStanzaGeneration(
-            refind_config, include_paths, include_sub_menus, icon
+            refind_config,
+            include_paths,
+            include_sub_menus,
+            set(cast(str, loader_filename) for loader_filename in source_exclusion),
+            icon,
         )
 
     @staticmethod

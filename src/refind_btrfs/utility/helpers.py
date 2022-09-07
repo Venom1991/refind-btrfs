@@ -128,16 +128,16 @@ def item_count_suffix(value: Sized) -> str:
     return constants.EMPTY_STR if is_singleton(value) else "s"
 
 
-def find_all_matched_files_in(root_directory: Path, file_name: str) -> Iterator[Path]:
+def find_all_matched_files_in(root_directory: Path, filename: str) -> Iterator[Path]:
     if root_directory.exists() and root_directory.is_dir():
         children = root_directory.iterdir()
 
         for child in children:
             if child.is_file():
-                if child.name == file_name:
+                if child.name == filename:
                     yield child
             elif child.is_dir():
-                yield from find_all_matched_files_in(child, file_name)
+                yield from find_all_matched_files_in(child, filename)
 
 
 def find_all_directories_in(

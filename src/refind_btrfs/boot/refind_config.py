@@ -139,14 +139,14 @@ class RefindConfig(BaseConfig):
                 migrated_boot_stanza = migration.migrate(
                     file_path, boot_stanza_generation, icon_command
                 )
-                boot_stanza_file_name = migrated_boot_stanza.file_name
+                boot_stanza_filename = migrated_boot_stanza.filename
 
-                if not is_none_or_whitespace(boot_stanza_file_name):
+                if not is_none_or_whitespace(boot_stanza_filename):
                     destination_directory = (
                         parent_directory / constants.SNAPSHOT_STANZAS_DIR_NAME
                     )
                     boot_stanza_config_file_path = (
-                        destination_directory / boot_stanza_file_name
+                        destination_directory / boot_stanza_filename
                     )
                     boot_stanza_config = RefindConfig(
                         boot_stanza_config_file_path.resolve()

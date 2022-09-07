@@ -23,11 +23,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import inspect
 import re
 from collections import defaultdict
-from functools import cached_property
+from functools import cached_property, singledispatchmethod
 from itertools import chain
-from typing import DefaultDict, Iterable, Iterator, Optional, Set
+from typing import Any, DefaultDict, Iterable, Iterator, Optional, Set
 
 from more_itertools import always_iterable, last
 
@@ -207,22 +208,14 @@ class BootStanza:
 
         return self
 
-    def is_matched_with(self, block_device: BlockDevice) -> bool:
-        if self.can_be_used_for_bootable_snapshot():
-            boot_options = self.boot_options
+    @singledispatchmethod
+    def is_matched_with(self, argument: Any) -> bool:
+        frame = none_throws(inspect.currentframe())
 
-            if boot_options.is_matched_with(block_device):
-                return True
-            else:
-                sub_menus = self.sub_menus
-
-                if has_items(sub_menus):
-                    return any(
-                        sub_menu.is_matched_with(block_device)
-                        for sub_menu in none_throws(sub_menus)
-                    )
-
-        return False
+        raise NotImplementedError(
+            f"Cannot call the '{inspect.getframeinfo(frame).function}' method "
+            f"for parameter of type '{type(argument).__name__}'!"
+        )
 
     def has_unmatched_boot_files(self) -> bool:
         boot_files_check_result = self.boot_files_check_result
@@ -275,6 +268,28 @@ class BootStanza:
                     f"'{icon_generation_mode.value}' is the selected mode of boot stanza "
                     "icon generation!"
                 )
+
+    @is_matched_with.register(BlockDevice)
+    def _is_matched_with_block_device(self, block_device: BlockDevice) -> bool:
+        if self.can_be_used_for_bootable_snapshot():
+            boot_options = self.boot_options
+
+            if boot_options.is_matched_with(block_device):
+                return True
+            else:
+                sub_menus = self.sub_menus
+
+                if has_items(sub_menus):
+                    return any(
+                        sub_menu.is_matched_with(block_device)
+                        for sub_menu in none_throws(sub_menus)
+                    )
+
+        return False
+
+    @is_matched_with.register(str)
+    def _is_matched_with_loader_filename(self, loader_filename: str) -> bool:
+        return self._loader_filename == loader_filename
 
     def _get_all_boot_file_paths(
         self,
@@ -369,17 +384,13 @@ class BootStanza:
         return self._sub_menus
 
     @cached_property
-    def file_name(self) -> str:
+    def filename(self) -> str:
         if self.can_be_used_for_bootable_snapshot():
             normalized_volume = self.normalized_volume
-            dir_separator_pattern = re.compile(constants.DIR_SEPARATOR_PATTERN)
-            split_loader_path = dir_separator_pattern.split(
-                none_throws(self.loader_path)
-            )
-            loader = last(split_loader_path)
+            loader_filename = self._loader_filename
             extension = constants.CONFIG_FILE_EXTENSION
 
-            return f"{normalized_volume}_{loader}{extension}".lower()
+            return f"{normalized_volume}_{loader_filename}{extension}".lower()
 
         return constants.EMPTY_STR
 
@@ -395,3 +406,17 @@ class BootStanza:
             result[key].add(value)
 
         return result
+
+    @cached_property
+    def _loader_filename(self) -> str:
+        loader_path = self.loader_path
+
+        if not is_none_or_whitespace(loader_path):
+            dir_separator_pattern = re.compile(constants.DIR_SEPARATOR_PATTERN)
+            split_loader_path = dir_separator_pattern.split(
+                none_throws(self.loader_path)
+            )
+
+            return last(split_loader_path)
+
+        return constants.EMPTY_STR

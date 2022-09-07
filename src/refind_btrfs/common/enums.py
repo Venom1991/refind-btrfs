@@ -133,6 +133,7 @@ class BootStanzaGenerationConfigKey(AutoNameToLower):
     REFIND_CONFIG = auto()
     INCLUDE_PATHS = auto()
     INCLUDE_SUB_MENUS = auto()
+    SOURCE_EXCLUSION = auto()
     ICON = auto()
 
 

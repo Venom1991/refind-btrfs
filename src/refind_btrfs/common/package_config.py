@@ -83,6 +83,7 @@ class BootStanzaGeneration(NamedTuple):
     refind_config: str
     include_paths: bool
     include_sub_menus: bool
+    source_exclusion: Set[str]
     icon: Icon
 
     def with_include_paths(
@@ -94,7 +95,11 @@ class BootStanzaGeneration(NamedTuple):
             include_paths = boot_device is None
 
         return BootStanzaGeneration(
-            self.refind_config, include_paths, self.include_sub_menus, self.icon
+            self.refind_config,
+            include_paths,
+            self.include_sub_menus,
+            self.source_exclusion,
+            self.icon,
         )
 
 

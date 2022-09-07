@@ -113,15 +113,15 @@ class Partition:
 
         return False
 
-    def search_paths_for(self, file_name: str) -> Optional[list[Path]]:
-        if is_none_or_whitespace(file_name):
-            raise ValueError("The 'file_name' parameter must be initialized!")
+    def search_paths_for(self, filename: str) -> Optional[list[Path]]:
+        if is_none_or_whitespace(filename):
+            raise ValueError("The 'filename' parameter must be initialized!")
 
         filesystem = none_throws(self.filesystem)
 
         if filesystem.is_mounted():
             search_directory = Path(filesystem.mount_point)
-            all_matches = find_all_matched_files_in(search_directory, file_name)
+            all_matches = find_all_matched_files_in(search_directory, filename)
 
             return list(all_matches)
 

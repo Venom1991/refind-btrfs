@@ -128,11 +128,24 @@ cleanup_exclusion = []
 ## "selection_count" value (greater than 10, for example) or, worse yet, by
 ## setting it to "inf" can potentially result in an overcrowded "Boot Options"
 ## menu.
+#
+## source_exclusion = <array<string>>
+## Array comprised of loader filenames ("loader") with which the matched source
+## boot stanzas can be arbitrarily excluded from processing, i.e., these boot
+## stanzas will not be taken into account during the generation phase.
+## For example, it can be defined as: ["vmlinuz-linux", "vmlinuz-linux-lts"].
+## WARNING: This array must not contain all of the matched source boot stanza's
+## loader filenames. If it does, an error is issued and a premature exit is
+## performed.
+## Also, a manual cleanup of the generated boot stanza (or stanzas) and its
+## inclusion within the rEFInd's main configuration file is required in case
+## the array's members were defined after the fact.
 
 [boot-stanza-generation]
 refind_config = "refind.conf"
 include_paths = true
 include_sub_menus = false
+source_exclusion = []
 
 # [boot-stanza-generation.icon]
 ## Subobject used to configure the process of defining the generated boot

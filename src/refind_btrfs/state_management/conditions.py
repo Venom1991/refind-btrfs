@@ -232,9 +232,28 @@ class Conditions:
         logger = self._logger
         model = self._model
         boot_stanzas_with_snapshots = model.boot_stanzas_with_snapshots
+        excluded_boot_stanzas_count = len(
+            list(item for item in boot_stanzas_with_snapshots if item.is_excluded)
+        )
+
+        if len(boot_stanzas_with_snapshots) == excluded_boot_stanzas_count:
+            logger.error(
+                "All of the matched boot stanzas are "
+                "explicitly excluded from processing!"
+            )
+
+            return False
 
         for item in boot_stanzas_with_snapshots:
-            if item.has_unmatched_snapshots():
+            boot_stanza = item.boot_stanza
+            normalized_name = boot_stanza.normalized_name
+
+            if item.is_excluded:
+                logger.info(
+                    f"Skipping the '{normalized_name}' boot stanza "
+                    "because it is explicitly excluded from processing."
+                )
+            elif item.has_unmatched_snapshots():
                 unmatched_snapshots = item.unmatched_snapshots
 
                 for snapshot in unmatched_snapshots:
@@ -243,14 +262,11 @@ class Conditions:
                     except SubvolumeError as e:
                         logger.warning(e.formatted_message)
 
-            if not item.has_matched_snapshots():
-                boot_stanza = item.boot_stanza
-                normalized_name = boot_stanza.normalized_name
-
-                logger.warning(
-                    "None of the prepared snapshots are matched "
-                    f"with the '{normalized_name}' boot stanza!"
-                )
+                if not item.has_matched_snapshots():
+                    logger.warning(
+                        "None of the prepared snapshots are matched "
+                        f"with the '{normalized_name}' boot stanza!"
+                    )
 
         usable_boot_stanzas_with_snapshots = model.usable_boot_stanzas_with_snapshots
 
