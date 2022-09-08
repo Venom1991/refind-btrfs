@@ -238,6 +238,10 @@ class Model(ConfigurableMixin):
         boot_stanza_preparation_results: list[BootStanzaWithSnapshots] = []
 
         for boot_stanza in usable_boot_stanzas:
+            is_excluded = any(
+                boot_stanza.is_matched_with(loader_filename)
+                for loader_filename in boot_stanza_generation.source_exclusion
+            )
             matched_snapshots: list[Subvolume] = []
             unmatched_snapshots: list[Subvolume] = []
 
@@ -245,10 +249,6 @@ class Model(ConfigurableMixin):
                 checked_bootable_snapshots = (
                     snapshot.with_boot_files_check_result(boot_stanza)
                     for snapshot in actual_bootable_snapshots
-                )
-                is_excluded = any(
-                    boot_stanza.is_matched_with(loader_filename)
-                    for loader_filename in boot_stanza_generation.source_exclusion
                 )
 
                 for snapshot in checked_bootable_snapshots:
