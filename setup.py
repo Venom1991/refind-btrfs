@@ -28,7 +28,7 @@ with open("README.md", "r", encoding="utf-8") as readme:
 
 setuptools.setup(
     name="refind-btrfs",
-    version="0.5.3",
+    version="0.5.4",
     author="Luka Žaja",
     author_email="luka.zaja@protonmail.com",
     description="Generate rEFInd manual boot stanzas from Btrfs snapshots",
@@ -49,16 +49,16 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     include_package_data=True,
     install_requires=[
-        "antlr4-python3-runtime ==4.11.1",
-        "injector ==0.20.1",
-        "more-itertools ==8.14.0",
-        "pid ==3.0.4",
-        "semantic-version ==2.10.0",
-        "systemd-python ==234",
-        "tomlkit ==0.11.4",
-        "transitions ==0.9.0",
-        "typeguard ==2.13.3",
-        "watchdog ==2.1.6",
+        "antlr4-python3-runtime",
+        "injector",
+        "more-itertools",
+        "pid",
+        "semantic-version",
+        "systemd-python",
+        "tomlkit",
+        "transitions",
+        "typeguard",
+        "watchdog",
     ],
     entry_points={
         "console_scripts": [

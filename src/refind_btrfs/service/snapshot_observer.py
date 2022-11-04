@@ -42,7 +42,7 @@ class SnapshotObserver(CheckableObserver):
 
         while self.should_keep_running():
             try:
-                self.dispatch_events(self.event_queue, self.timeout)
+                self.dispatch_events(self.event_queue)
             except queue.Empty:
                 continue
             except SnapshotMountedAsRootError as e:
