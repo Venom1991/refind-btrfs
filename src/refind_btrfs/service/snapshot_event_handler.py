@@ -65,7 +65,7 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
         persistence_provider: BasePersistenceProvider,
         machine: RefindBtrfsMachine,
     ) -> None:
-        super().__init__(package_config_provider)
+        ConfigurableMixin.__init__(self, package_config_provider)
 
         self._logger = logger_factory.logger(__name__)
         self._subvolume_command_factory = subvolume_command_factory

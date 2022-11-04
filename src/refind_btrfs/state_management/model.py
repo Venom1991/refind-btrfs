@@ -119,7 +119,7 @@ class Model(ConfigurableMixin):
         refind_config_provider: BaseRefindConfigProvider,
         persistence_provider: BasePersistenceProvider,
     ) -> None:
-        super().__init__(package_config_provider)
+        ConfigurableMixin.__init__(self, package_config_provider)
 
         self._device_command_factory = device_command_factory
         self._subvolume_command_factory = subvolume_command_factory

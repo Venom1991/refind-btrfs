@@ -54,7 +54,7 @@ class LsblkCommand(DeviceCommand, ConfigurableMixin):
         logger_factory: BaseLoggerFactory,
         package_config_provider: BasePackageConfigProvider,
     ) -> None:
-        super().__init__(package_config_provider)
+        ConfigurableMixin.__init__(self, package_config_provider)
 
         self._logger = logger_factory.logger(__name__)
 
