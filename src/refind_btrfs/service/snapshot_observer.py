@@ -23,9 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import queue
 
-from inspect import signature
-from typing import Any
-
 from injector import inject
 
 from refind_btrfs.common import CheckableObserver, constants
@@ -45,14 +42,7 @@ class SnapshotObserver(CheckableObserver):
 
         while self.should_keep_running():
             try:
-                arguments: list[Any] = [self.event_queue]
-                dispatch_events_signature = signature(self.dispatch_events)
-                parameters = dispatch_events_signature.parameters
-                
-                if "timeout" in parameters:
-                    arguments.append(self.timeout)
-
-                self.dispatch_events(*arguments)
+                self.dispatch_events(self.event_queue)
             except queue.Empty:
                 continue
             except SnapshotMountedAsRootError as e:
