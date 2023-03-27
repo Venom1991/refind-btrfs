@@ -26,7 +26,7 @@ from __future__ import annotations
 from copy import copy
 from itertools import chain
 from pathlib import Path
-from typing import Collection, Iterable, Iterator, Optional
+from typing import Collection, Iterable, Iterator, Optional, Self
 
 from more_itertools import always_iterable
 
@@ -53,14 +53,12 @@ class RefindConfig(BaseConfig):
         self._boot_stanzas: Optional[list[BootStanza]] = None
         self._included_configs: Optional[list[RefindConfig]] = None
 
-    def with_boot_stanzas(self, boot_stanzas: Iterable[BootStanza]) -> RefindConfig:
+    def with_boot_stanzas(self, boot_stanzas: Iterable[BootStanza]) -> Self:
         self._boot_stanzas = list(boot_stanzas)
 
         return self
 
-    def with_included_configs(
-        self, include_configs: Iterable[RefindConfig]
-    ) -> RefindConfig:
+    def with_included_configs(self, include_configs: Iterable[RefindConfig]) -> Self:
         self._included_configs = list(include_configs)
 
         return self

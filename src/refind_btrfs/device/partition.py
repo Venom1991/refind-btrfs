@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -60,13 +60,13 @@ class Partition:
     def __hash__(self) -> int:
         return hash(self.uuid)
 
-    def with_part_type(self, part_type: str) -> Partition:
+    def with_part_type(self, part_type: str) -> Self:
         self._part_type_code = try_parse_int(part_type, base=16)
         self._part_type_uuid = try_parse_uuid(part_type)
 
         return self
 
-    def with_filesystem(self, filesystem: Filesystem) -> Partition:
+    def with_filesystem(self, filesystem: Filesystem) -> Self:
         self._filesystem = filesystem
 
         return self

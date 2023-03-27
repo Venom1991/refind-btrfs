@@ -23,7 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Self
 
 from more_itertools import last
 
@@ -196,7 +196,7 @@ class BootOptions:
                 ]
 
     @classmethod
-    def merge(cls, all_boot_options: Iterable[BootOptions]) -> BootOptions:
+    def merge(cls, all_boot_options: Iterable[BootOptions]) -> Self:
         all_boot_options_str = [
             strip_quotes(str(boot_options)) for boot_options in all_boot_options
         ]

@@ -26,7 +26,7 @@ from __future__ import annotations
 import re
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Self
 from uuid import UUID
 
 from more_itertools import only, take
@@ -59,17 +59,17 @@ class PartitionTable:
     def __hash__(self) -> int:
         return hash(self.uuid)
 
-    def with_esp_uuid(self, esp_uuid: UUID) -> PartitionTable:
+    def with_esp_uuid(self, esp_uuid: UUID) -> Self:
         self._esp_uuid = esp_uuid
 
         return self
 
-    def with_fstab_file_path(self, fstab_file_path: Path) -> PartitionTable:
+    def with_fstab_file_path(self, fstab_file_path: Path) -> Self:
         self._fstab_file_path = fstab_file_path
 
         return self
 
-    def with_partitions(self, partitions: Iterable[Partition]) -> PartitionTable:
+    def with_partitions(self, partitions: Iterable[Partition]) -> Self:
         self._partitions = list(partitions)
 
         return self

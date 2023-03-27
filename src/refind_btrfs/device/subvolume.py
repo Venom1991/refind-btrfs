@@ -26,7 +26,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional, Set
+from typing import TYPE_CHECKING, Iterable, NamedTuple, Optional, Self, Set
 from uuid import UUID
 
 from more_itertools import take
@@ -108,7 +108,7 @@ class Subvolume:
 
         return False
 
-    def with_boot_files_check_result(self, boot_stanza: BootStanza) -> Subvolume:
+    def with_boot_files_check_result(self, boot_stanza: BootStanza) -> Self:
         boot_stanza_check_result = boot_stanza.boot_files_check_result
 
         if boot_stanza_check_result is not None:
@@ -143,12 +143,12 @@ class Subvolume:
 
         return self
 
-    def with_snapshots(self, snapshots: Iterable[Subvolume]) -> Subvolume:
+    def with_snapshots(self, snapshots: Iterable[Subvolume]) -> Self:
         self._snapshots = set(snapshots)
 
         return self
 
-    def as_named(self) -> Subvolume:
+    def as_named(self) -> Self:
         type_prefix = "ro" if self.is_read_only else "rw"
         type_prefix += "snap" if self.is_snapshot() else "subvol"
 
@@ -166,7 +166,7 @@ class Subvolume:
 
         return self
 
-    def as_located_in(self, parent_directory: Path) -> Subvolume:
+    def as_located_in(self, parent_directory: Path) -> Self:
         if not self.is_named():
             raise ValueError("The '_name' attribute must be initialized!")
 
@@ -176,12 +176,12 @@ class Subvolume:
 
         return self
 
-    def as_writable(self) -> Subvolume:
+    def as_writable(self) -> Self:
         self._is_read_only = False
 
         return self
 
-    def as_newly_created_from(self, other: Subvolume) -> Subvolume:
+    def as_newly_created_from(self, other: Subvolume) -> Self:
         self._created_from = other
 
         if other.has_static_partition_table():
@@ -191,7 +191,7 @@ class Subvolume:
 
         return self
 
-    def to_destination(self, directory: Path) -> Subvolume:
+    def to_destination(self, directory: Path) -> Self:
         return (
             Subvolume(
                 constants.EMPTY_PATH,

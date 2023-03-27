@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from functools import cached_property
 from pathlib import Path
-from typing import Iterable, Iterator, NamedTuple, Optional, Set
+from typing import Iterable, Iterator, NamedTuple, Optional, Self, Set
 from uuid import UUID
 
 from refind_btrfs.common import constants
@@ -86,9 +86,7 @@ class BootStanzaGeneration(NamedTuple):
     source_exclusion: Set[str]
     icon: Icon
 
-    def with_include_paths(
-        self, boot_device: Optional[BlockDevice]
-    ) -> BootStanzaGeneration:
+    def with_include_paths(self, boot_device: Optional[BlockDevice]) -> Self:
         include_paths = self.include_paths
 
         if include_paths:

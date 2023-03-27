@@ -28,7 +28,7 @@ import re
 from collections import defaultdict
 from functools import cached_property, singledispatchmethod
 from itertools import chain
-from typing import Any, DefaultDict, Iterable, Iterator, Optional, Set
+from typing import Any, DefaultDict, Iterable, Iterator, Optional, Self, Set
 
 from more_itertools import always_iterable, last
 
@@ -174,7 +174,7 @@ class BootStanza:
 
     def with_boot_files_check_result(
         self, subvolume: Subvolume, include_sub_menus: bool
-    ) -> BootStanza:
+    ) -> Self:
         normalized_name = self.normalized_name
         all_boot_file_paths = self.all_boot_file_paths
         logical_path = subvolume.logical_path
@@ -203,7 +203,7 @@ class BootStanza:
 
         return self
 
-    def with_sub_menus(self, sub_menus: Iterable[SubMenu]) -> BootStanza:
+    def with_sub_menus(self, sub_menus: Iterable[SubMenu]) -> Self:
         self._sub_menus = list(sub_menus)
 
         return self

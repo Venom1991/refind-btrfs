@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Self
 
 from refind_btrfs.common.abc.factories import BaseSubvolumeCommandFactory
 from refind_btrfs.utility.helpers import is_none_or_whitespace
@@ -44,13 +44,13 @@ class Filesystem:
         self._mount_options: Optional[MountOptions] = None
         self._subvolume: Optional[Subvolume] = None
 
-    def with_dump_and_fsck(self, dump: int, fsck: int) -> Filesystem:
+    def with_dump_and_fsck(self, dump: int, fsck: int) -> Self:
         self._dump = dump
         self._fsck = fsck
 
         return self
 
-    def with_mount_options(self, raw_mount_options: str) -> Filesystem:
+    def with_mount_options(self, raw_mount_options: str) -> Self:
         self._mount_options = (
             MountOptions(raw_mount_options)
             if not is_none_or_whitespace(raw_mount_options)

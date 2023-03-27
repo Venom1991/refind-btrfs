@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 from itertools import chain
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple, Optional, Self
 
 from injector import inject
 from more_itertools import only
@@ -56,7 +56,7 @@ class BlockDevices(NamedTuple):
     boot_device: Optional[BlockDevice]
 
     @classmethod
-    def none(cls) -> BlockDevices:
+    def none(cls) -> Self:
         return cls(None, None, None)
 
 
@@ -97,7 +97,7 @@ class ProcessingResult(NamedTuple):
     bootable_snapshots: list[Subvolume]
 
     @classmethod
-    def none(cls) -> ProcessingResult:
+    def none(cls) -> Self:
         return cls([])
 
     def has_bootable_snapshots(self) -> bool:

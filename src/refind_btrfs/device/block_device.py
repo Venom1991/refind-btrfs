@@ -24,7 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import re
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Self, Union
 
 from refind_btrfs.common.abc.factories import BaseDeviceCommandFactory
 from refind_btrfs.utility.helpers import has_items, none_throws
@@ -46,7 +46,7 @@ class BlockDevice:
         self._live_partition_table: Optional[PartitionTable] = None
         self._dependencies: Optional[list[BlockDevice]] = None
 
-    def with_dependencies(self, dependencies: Iterable[BlockDevice]) -> BlockDevice:
+    def with_dependencies(self, dependencies: Iterable[BlockDevice]) -> Self:
         self._dependencies = list(dependencies)
 
         return self
