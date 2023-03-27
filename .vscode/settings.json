@@ -1,6 +1,6 @@
 {
     "antlr4.generation": {
-        "alternativeJar": "/usr/share/java/antlr-4.11.1-complete.jar",
+        "alternativeJar": "C:\\Users\\Luka\\Projects\\Python\\antlr-4.12.0-complete.jar",
         "language": "Python3",
         "listeners": false,
         "mode": "external",
