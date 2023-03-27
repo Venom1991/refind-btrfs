@@ -28,8 +28,7 @@ EMPTY : WHITESPACE? NEWLINE -> skip ;
 COMMENT : '#' (~[\n])* NEWLINE? -> skip ;
 IGNORED_OPTION
     : (
-          'timeout'
-        | 'also_scan_dirs'
+          'also_scan_dirs'
         | 'banner'
         | 'banner_scale'
         | 'big_icon_size'
@@ -50,6 +49,7 @@ IGNORED_OPTION
         | 'enable_touch'
         | 'extra_kernel_version_strings'
         | 'fold_linux_kernels'
+        | 'follow_symlinks'
         | 'font'
         | 'hideui'
         | 'icons_dir'
@@ -69,8 +69,10 @@ IGNORED_OPTION
         | 'shutdown_after_timeout'
         | 'small_icon_size'
         | 'spoof_osx_version'
+        | 'support_gzipped_loaders'
         | 'textmode'
         | 'textonly'
+        | 'timeout'
         | 'uefi_deep_legacy_scan'
         | 'use_graphics_for'
         | 'use_nvram'
