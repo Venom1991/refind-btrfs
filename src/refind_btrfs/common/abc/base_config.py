@@ -26,12 +26,10 @@ from __future__ import annotations
 from abc import ABC
 from os import stat_result
 from pathlib import Path
-from typing import Any, Optional, Type, TypeVar
+from typing import Any, Optional, Self
 
 from refind_btrfs.common.enums import ConfigInitializationType
 from refind_btrfs.utility.helpers import checked_cast, none_throws
-
-TDerived = TypeVar("TDerived")
 
 
 class BaseConfig(ABC):
@@ -67,13 +65,11 @@ class BaseConfig(ABC):
         return state
 
     def with_initialization_type(
-        self,
-        initialization_type: ConfigInitializationType,
-        derived_type: Type[TDerived],
-    ) -> TDerived:
+        self, initialization_type: ConfigInitializationType
+    ) -> Self:
         self._initialization_type = initialization_type
 
-        return checked_cast(derived_type, self)
+        return self
 
     def refresh_file_stat(self):
         file_path = self.file_path

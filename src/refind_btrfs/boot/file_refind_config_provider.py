@@ -270,15 +270,13 @@ class FileRefindConfigProvider(BaseRefindConfigProvider):
                     RefindConfig(config_file_path)
                     .with_boot_stanzas(boot_stanzas)
                     .with_included_configs(included_configs)
-                    .with_initialization_type(
-                        ConfigInitializationType.PARSED, RefindConfig
-                    )
+                    .with_initialization_type(ConfigInitializationType.PARSED)
                 )
 
                 persistence_provider.save_refind_config(current_refind_config)
         elif current_refind_config is None:
             current_refind_config = persisted_refind_config.with_initialization_type(
-                ConfigInitializationType.PERSISTED, RefindConfig
+                ConfigInitializationType.PERSISTED
             )
 
             if current_refind_config.has_included_configs():

@@ -53,17 +53,17 @@ class BlockDevice:
 
     def initialize_partition_tables_using(
         self,
-        device_comand_factory: BaseDeviceCommandFactory,
+        device_command_factory: BaseDeviceCommandFactory,
     ) -> None:
         if not self.has_physical_partition_table():
-            physical_device_command = device_comand_factory.physical_device_command()
+            physical_device_command = device_command_factory.physical_device_command()
 
             self._physical_partition_table = (
                 physical_device_command.get_partition_table_for(self)
             )
 
         if not self.has_live_partition_table():
-            live_device_command = device_comand_factory.live_device_command()
+            live_device_command = device_command_factory.live_device_command()
 
             self._live_partition_table = live_device_command.get_partition_table_for(
                 self

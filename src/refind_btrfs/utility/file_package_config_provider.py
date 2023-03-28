@@ -149,16 +149,14 @@ class FilePackageConfigProvider(BasePackageConfigProvider):
             else:
                 current_package_config = FilePackageConfigProvider._read_config_from(
                     toml_document
-                ).with_initialization_type(
-                    ConfigInitializationType.PARSED, PackageConfig
-                )
+                ).with_initialization_type(ConfigInitializationType.PARSED)
 
                 persistence_provider.save_package_config(
                     none_throws(current_package_config)
                 )
         elif current_package_config is None:
             current_package_config = persisted_package_config.with_initialization_type(
-                ConfigInitializationType.PERSISTED, PackageConfig
+                ConfigInitializationType.PERSISTED
             )
 
         self._package_config = current_package_config
