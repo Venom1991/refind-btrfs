@@ -277,6 +277,6 @@ def default_if_none(value: Optional[TParam], default: TParam) -> TParam:
 
 
 def checked_cast(destination_type: Type[TParam], value: Any) -> TParam:
-    check_type("value", value, destination_type)
+    check_type(value, destination_type)
 
     return cast(TParam, value)
