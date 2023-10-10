@@ -68,7 +68,7 @@ pip install refind-btrfs[custom_icon]
 You should also create an empty directory named "refind-btrfs" in /var/lib as the tool expects that it is present. Additionally, if you wish to be able to use the Btrfs logo embedding mode of custom icon generation you should also copy the "[icons](https://github.com/Venom1991/refind-btrfs/tree/master/src/refind_btrfs/data/icons)" directory into the previously created one.
 
 ## Configuration
-Every option is thoroughly explained in the sample config [file](https://github.com/Venom1991/refind-btrfs/blob/master/src/refind_btrfs/data/refind-btrfs.conf-sample).  
+The configuration file can be found at `/etc/refind-btrfs.conf`, and each option is thoroughly explained in the sample config [file](https://github.com/Venom1991/refind-btrfs/blob/master/src/refind_btrfs/data/refind-btrfs.conf-sample).  
 In case you've opted to use the provided systemd service and wish to change the search directories (in this context, these are actually watched directories) in the config file while it is running you must restart it manually after doing so because the directory observer is started only once and an automatic restart is not performed.
 
 The default configuration is meant to enable seamless integration with Snapper simply because I'm using it but the tool itself doesn't depend on it and ought to function with different setups. Also, by default the tool is configured for creating new writable snapshots intended for booting instead of in-place modification of the found snapshots' read-only flags as I believe this is the safer (or perhaps even saner) choice.  
