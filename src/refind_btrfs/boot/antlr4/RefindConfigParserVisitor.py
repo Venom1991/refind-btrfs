@@ -1,6 +1,6 @@
-# Generated from c:\Users\Luka\Projects\Python\refind-btrfs\src\refind_btrfs\boot\antlr4\RefindConfigParser.g4 by ANTLR 4.12.0
+# Generated from c:/Users/Luka/Projects/Python/refind-btrfs/src/refind_btrfs/boot/antlr4/RefindConfigParser.g4 by ANTLR 4.13.1
 from antlr4 import *
-if __name__ is not None and "." in __name__:
+if "." in __name__:
     from .RefindConfigParser import RefindConfigParser
 else:
     from RefindConfigParser import RefindConfigParser
