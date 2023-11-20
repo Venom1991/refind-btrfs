@@ -82,7 +82,7 @@ class FindmntCommand(DeviceCommand):
         output = constants.COLUMN_SEPARATOR.join(
             [findmnt_column_key.value.upper() for findmnt_column_key in findmnt_columns]
         )
-        findmnt_command = f"findmnt --json --mtab --real --nofsroot --output {output}"
+        findmnt_command = f"findmnt --json --mtab --real --nofsroot --uniq --output {output}"
 
         try:
             logger.info(
