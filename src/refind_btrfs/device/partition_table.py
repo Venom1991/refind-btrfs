@@ -70,7 +70,7 @@ class PartitionTable:
         return self
 
     def with_partitions(self, partitions: Iterable[Partition]) -> Self:
-        self._partitions = list(partitions)
+        self._partitions = list(set(partitions))
 
         return self
 
