@@ -29,6 +29,7 @@ COMMENT : '#' (~[\n])* NEWLINE? -> skip ;
 IGNORED_OPTION
     : (
           'also_scan_dirs'
+        | 'also_scan_tools'
         | 'banner'
         | 'banner_scale'
         | 'big_icon_size'
@@ -53,6 +54,7 @@ IGNORED_OPTION
         | 'font'
         | 'hideui'
         | 'icons_dir'
+        | 'linux_prefixes'
         | 'log_level'
         | 'max_tags'
         | 'mouse_size'
