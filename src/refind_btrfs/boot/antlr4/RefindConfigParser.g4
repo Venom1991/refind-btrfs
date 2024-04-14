@@ -1,10 +1,10 @@
 /*
-SPDX-FileCopyrightText: 2020-2023 Luka Žaja <luka.zaja@protonmail.com>
+SPDX-FileCopyrightText: 2020-2024 Luka Žaja <luka.zaja@protonmail.com>
 
 SPDX-License-Identifier: GPL-3.0-or-later
 
 refind-btrfs - Generate rEFInd manual boot stanzas from Btrfs snapshots
-Copyright (C) 2020-2023 Luka Žaja
+Copyright (C) 2020-2024 Luka Žaja
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
