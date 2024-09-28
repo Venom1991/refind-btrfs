@@ -73,6 +73,7 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
         self._machine = machine
         self._deleted_snapshots: Set[Subvolume] = set()
         self._deletion_lock = Lock()
+        self._event_lock = Lock()
 
     def on_created(self, event: FileSystemEvent) -> None:
         is_dir_created_event = (
@@ -89,7 +90,9 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
 
                 logger.info(f"The '{created_directory}' snapshot has been created.")
 
+                self._event_lock.acquire()
                 machine.run()
+                self._event_lock.release()
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         is_dir_deleted_event = (
@@ -107,7 +110,10 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
 
                     logger.info(f"The '{deleted_directory}' snapshot has been deleted.")
 
+                    self._event_lock.acquire()
                     machine.run()
+                    self._event_lock.release()
+
             except SnapshotExcludedFromDeletionError as e:
                 logger.warning(e.formatted_message)
 
