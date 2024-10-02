@@ -90,9 +90,8 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
 
                 logger.info(f"The '{created_directory}' snapshot has been created.")
 
-                self._event_lock.acquire()
-                machine.run()
-                self._event_lock.release()
+                with self._event_lock:
+                    machine.run()
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         is_dir_deleted_event = (
@@ -107,12 +106,12 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
             try:
                 if self._is_snapshot_deleted(deleted_directory):
                     machine = self._machine
-
+                    
                     logger.info(f"The '{deleted_directory}' snapshot has been deleted.")
 
-                    self._event_lock.acquire()
-                    machine.run()
-                    self._event_lock.release()
+                    with self._event_lock:
+                        machine.run()
+
 
             except SnapshotExcludedFromDeletionError as e:
                 logger.warning(e.formatted_message)
