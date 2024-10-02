@@ -112,7 +112,6 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
                     with self._event_lock:
                         machine.run()
 
-
             except SnapshotExcludedFromDeletionError as e:
                 logger.warning(e.formatted_message)
 
