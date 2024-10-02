@@ -106,7 +106,7 @@ class SnapshotEventHandler(FileSystemEventHandler, ConfigurableMixin):
             try:
                 if self._is_snapshot_deleted(deleted_directory):
                     machine = self._machine
-                    
+
                     logger.info(f"The '{deleted_directory}' snapshot has been deleted.")
 
                     with self._event_lock:
