@@ -29,6 +29,7 @@ from collections import defaultdict
 from functools import cached_property, singledispatchmethod
 from itertools import chain
 from typing import Any, DefaultDict, Iterable, Iterator, Optional, Self, Set
+from pathlib import Path
 
 from more_itertools import always_iterable, last
 
@@ -189,13 +190,14 @@ class BootStanza:
             boot_file_paths = always_iterable(all_boot_file_paths.get(source))
 
             for boot_file_path in boot_file_paths:
-                append_func = (
-                    matched_boot_files.append
-                    if logical_path in boot_file_path
-                    else unmatched_boot_files.append
-                )
+                # Construct the full, absolute path to the file inside the subvolume
+                full_path_to_check = subvolume.filesystem_path / Path(boot_file_path).relative_to('/')
 
-                append_func(boot_file_path)
+                # Check if the file actually exists at that location
+                if full_path_to_check.exists():
+                    matched_boot_files.append(boot_file_path)
+                else:
+                    unmatched_boot_files.append(boot_file_path)
 
         self._boot_files_check_result = BootFilesCheckResult(
             normalized_name, logical_path, matched_boot_files, unmatched_boot_files
